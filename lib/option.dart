@@ -3,10 +3,20 @@ import 'package:meta/meta.dart';
 @immutable
 final class None<T extends Object?> extends Option<T> {
   const None();
+
+  @override
+  int get hashCode => runtimeType.hashCode;
+
+  @override
+  bool operator ==(covariant Option<T> other) {
+    if (other is Some<T>) return false;
+
+    return true;
+  }
 }
 
 @immutable
-class Option<T extends Object?> {
+sealed class Option<T extends Object?> {
   const Option();
 
   const factory Option.none() = None;
@@ -15,7 +25,17 @@ class Option<T extends Object?> {
 
 @immutable
 final class Some<T extends Object?> extends Option<T> {
+  const Some(this.value);
   final T value;
 
-  const Some(this.value);
+  @override
+  int get hashCode => value.hashCode;
+
+  @override
+  bool operator ==(covariant Option<T> other) {
+    return switch (other) {
+      None<T>() => false,
+      Some<T>() => value == other.value,
+    };
+  }
 }

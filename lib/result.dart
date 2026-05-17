@@ -108,6 +108,18 @@ sealed class Result<T extends Object?, E extends Object> {
     return false;
   }
 
+  Result<Y, E> map<Y extends Object?>(Y Function(T value) block) =>
+      switch (this) {
+        Err<T, E>(:final error) => .err(error),
+        Ok<T, E>(:final value) => .ok(block(value)),
+      };
+
+  Result<T, F> mapErr<F extends Object>(F Function(E error) block) =>
+      switch (this) {
+        Err<T, E>(:final error) => .err(block(error)),
+        Ok<T, E>(:final value) => .ok(value),
+      };
+
   Result<T, E> orThen(Result<T, E> Function() otherBlock) {
     if (this is Ok<T, E>) return this;
 

@@ -4,12 +4,20 @@ abstract interface class Spec<T> {
   const Spec();
 
   Spec<T> operator &(Spec<T> other) => _And(this, other);
+
   Spec<T> operator ^(Spec<T> other) => _Xor(this, other);
+
+  Spec<T> and(Spec<T> other) => _And(this, other);
 
   bool isSatisfiedBy(T candidate);
 
+  Spec<T> negated() => _Not(this);
+
+  Spec<T> or(Spec<T> other) => _Or(this, other);
+
+  Spec<T> xor(Spec<T> other) => _Xor(this, other);
+
   Spec<T> operator |(Spec<T> other) => _Or(this, other);
-  Spec<T> operator ~() => _Not(this);
 }
 
 @reopen
