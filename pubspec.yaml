@@ -1,7 +1,7 @@
 name: dev_utils
 description: A starting point for Dart libraries or applications.
 version: 1.0.0
-# repository: https://github.com/my_org/my_repo
+repository: https://github.com/ElanDeyan/dev_utils
 
 environment:
   sdk: ^3.11.5

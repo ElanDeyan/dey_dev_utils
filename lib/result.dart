@@ -1,6 +1,10 @@
 import 'package:dev_utils/option.dart';
 import 'package:meta/meta.dart';
 
+typedef CatchAllResult<T extends Object?> = Result<T, Object>;
+typedef FutureResult<T extends Object?, E extends Object> =
+    Future<Result<T, E>>;
+
 @immutable
 final class Err<T extends Object?, E extends Object> extends Result<T, E> {
   const Err(this.error, [this._stackTrace]);
