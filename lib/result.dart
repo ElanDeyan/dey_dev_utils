@@ -7,17 +7,18 @@ typedef FutureResult<T extends Object?, E extends Object> =
 
 @immutable
 final class Err<T extends Object?, E extends Object> extends Result<T, E> {
-  const Err(this.error, [this._stackTrace]);
+  Err(this.error, [StackTrace? stackTrace])
+    : stackTrace = stackTrace ?? .current;
+
   final E error;
-  final StackTrace? _stackTrace;
+  final StackTrace stackTrace;
 
   @override
-  int get hashCode => error.hashCode;
-
-  StackTrace get stackTrace => _stackTrace ?? .current;
+  int get hashCode => Object.hashAll([error]);
 
   @override
-  bool operator ==(covariant Result<T, E> other) {
+  bool operator ==(Object other) {
+    if (identical(this, other)) return true;
     if (other is Err<T, E>) return error == other.error;
 
     return false;
@@ -30,10 +31,11 @@ final class Ok<T extends Object?, E extends Object> extends Result<T, E> {
   final T value;
 
   @override
-  int get hashCode => value.hashCode;
+  int get hashCode => Object.hashAll([value]);
 
   @override
-  bool operator ==(covariant Result<T, E> other) {
+  bool operator ==(Object other) {
+    if (identical(this, other)) return true;
     if (other is Ok<T, E>) return value == other.value;
 
     return false;
@@ -44,7 +46,7 @@ final class Ok<T extends Object?, E extends Object> extends Result<T, E> {
 sealed class Result<T extends Object?, E extends Object> {
   const Result();
 
-  const factory Result.err(E error, [StackTrace? stackTrace]) = Err;
+  factory Result.err(E error, [StackTrace? stackTrace]) = Err;
 
   factory Result.guardSync(T Function() block) {
     try {
@@ -71,28 +73,28 @@ sealed class Result<T extends Object?, E extends Object> {
     Err() => null,
   };
 
-  Result<T, E> operator &(covariant Result<T, E> other) {
+  Result<T, E> operator &(Result<T, E> other) => and(other);
+
+  Result<T, E> and(Result<T, E> other) {
     if (this is Err<T, E>) return this;
     if (other is Err<T, E>) return other;
-
-    assert(this is Ok<T, E> && other is Ok<T, E>);
 
     return other;
   }
 
-  Result<T, E> andThen(Result<T, E> Function() otherBlock) {
-    if (this is Err<T, E>) return this;
-
-    final otherResult = otherBlock();
-    if (otherResult is Err<T, E>) return otherResult;
-
-    assert(this is Ok<T, E> && otherResult is Ok<T, E>);
-    return otherResult;
-  }
+  Result<U, E> andThen<U extends Object?>(
+    Result<U, E> Function(T value) otherBlock,
+  ) => switch (this) {
+    Ok(:final value) => otherBlock(value),
+    Err(:final error, :final stackTrace) => .err(error, stackTrace),
+  };
 
   T expect(String message) => switch (this) {
     Ok(:final value) => value,
-    Err() => throw Exception(message),
+    Err(:final stackTrace) => Error.throwWithStackTrace(
+      Exception(message),
+      stackTrace,
+    ),
   };
 
   E expectErr(String message) => switch (this) {
@@ -114,7 +116,7 @@ sealed class Result<T extends Object?, E extends Object> {
 
   Result<Y, E> map<Y extends Object?>(Y Function(T value) block) =>
       switch (this) {
-        Err<T, E>(:final error) => .err(error),
+        Err<T, E>(:final error, :final stackTrace) => .err(error, stackTrace),
         Ok<T, E>(:final value) => .ok(block(value)),
       };
 
@@ -124,29 +126,36 @@ sealed class Result<T extends Object?, E extends Object> {
         Ok<T, E>(:final value) => .ok(value),
       };
 
-  Result<T, E> orThen(Result<T, E> Function() otherBlock) {
+  Result<T, E> or(Result<T, E> other) {
     if (this is Ok<T, E>) return this;
+    if (other is Err<T, E>) return other;
 
-    final otherResult = otherBlock();
-    if (otherResult is Err<T, E>) return otherResult;
-
-    assert(this is Err<T, E> && otherResult is Ok<T, E>);
-    return otherResult;
+    return other;
   }
+
+  Result<T, F> orElse<F extends Object>(
+    Result<T, F> Function(E error, StackTrace? st) otherBlock,
+  ) => switch (this) {
+    Err(:final error, :final stackTrace) => otherBlock(error, stackTrace),
+    Ok(:final value) => .ok(value),
+  };
 
   T unwrap() => switch (this) {
     Ok(:final value) => value,
-    Err(:final error) => throw error,
+    Err(:final error, :final stackTrace) => Error.throwWithStackTrace(
+      error,
+      stackTrace,
+    ),
   };
 
-  T unwrapOr(T value) => switch (this) {
+  T unwrapOr(T defaultValue) => switch (this) {
     Ok(:final value) => value,
-    Err() => value,
+    Err() => defaultValue,
   };
 
-  T unwrapOrElse(T Function() block) => switch (this) {
+  T unwrapOrElse(T Function(E error) block) => switch (this) {
     Ok(:final value) => value,
-    Err() => block(),
+    Err(:final error) => block(error),
   };
 
   T? unwrapOrNull() => switch (this) {
@@ -159,14 +168,7 @@ sealed class Result<T extends Object?, E extends Object> {
     Err() => const .none(),
   };
 
-  Result<T, E> operator |(covariant Result<T, E> other) {
-    if (this is Ok<T, E>) return this;
-    if (other is Err<T, E>) return other;
-
-    assert(this is Err<T, E> && other is Ok<T, E>);
-
-    return other;
-  }
+  Result<T, E> operator |(Result<T, E> other) => or(other);
 
   static Future<Result<T, E>> guardAsync<T extends Object?, E extends Object>(
     Future<T> Function() asyncBlock,
@@ -183,22 +185,16 @@ sealed class Result<T extends Object?, E extends Object> {
 extension InspectResultExtension<T extends Object?, E extends Object>
     on Result<T, E> {
   Result<T, E> inspectErr(void Function(E value) block) {
-    try {
-      return this;
-    } finally {
-      if (this case Err(:final error)) {
-        block(error);
-      }
+    if (this case Err(:final error)) {
+      block(error);
     }
+    return this;
   }
 
   Result<T, E> inspectOk(void Function(T value) block) {
-    try {
-      return this;
-    } finally {
-      if (this case Ok(:final value)) {
-        block(value);
-      }
+    if (this case Ok(:final value)) {
+      block(value);
     }
+    return this;
   }
 }
