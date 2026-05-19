@@ -4,6 +4,7 @@ import 'package:meta/meta.dart';
 /// A result type that captures either a successful value or any error.
 ///
 /// This is useful for functions that may fail with any type of error.
+/// The error type is `Object`, making it a catch-all for any exception.
 /// Commonly used with try-catch blocks where the error type is unknown.
 ///
 /// Example:
@@ -20,8 +21,10 @@ typedef CatchAllResult<T extends Object?> = Result<T, Object>;
 
 /// A future result that will eventually resolve to either a value or an error.
 ///
-/// Represents an asynchronous operation that can either succeed with a value [T]
-/// or fail with a specific error type [E].
+/// Represents an asynchronous operation that can either succeed with a value
+/// of type [T] or fail with a specific error type [E].
+///
+/// Useful for async operations that need explicit error handling.
 typedef FutureResult<T extends Object?, E extends Object> =
     Future<Result<T, E>>;
 
@@ -40,6 +43,9 @@ typedef FutureResult<T extends Object?, E extends Object> =
 @immutable
 final class Err<T extends Object?, E extends Object> extends Result<T, E> {
   /// Creates an error result with the given [error] and optional [stackTrace].
+  ///
+  /// If [stackTrace] is not provided, the current stack trace is automatically
+  /// captured using [StackTrace.current].
   Err(this.error, [StackTrace? stackTrace])
     : stackTrace = stackTrace ?? .current;
 
@@ -124,9 +130,12 @@ sealed class Result<T extends Object?, E extends Object> {
 
   /// Executes a synchronous function and wraps the result.
   ///
-  /// If the function succeeds, returns [Ok] with the value.
-  /// If it throws an error of type [E], returns [Err] with the error and stack trace.
-  /// Other exceptions are not caught.
+  /// Attempts to execute [block] and wraps any exception in [Err].
+  /// Returns [Ok] with the value if the function succeeds.
+  /// Returns [Err] with the caught exception and stack trace if an exception
+  /// is thrown.
+  ///
+  /// Note: will catch only [E] or subtypes of [E].
   ///
   /// Example:
   /// ```dart
@@ -159,6 +168,9 @@ sealed class Result<T extends Object?, E extends Object> {
   bool get isOk => this is Ok<T, E>;
 
   /// Returns the success value if this is an [Ok], otherwise null.
+  /// **Warning:** If [T] is nullable, this method cannot distinguish between
+  /// `Ok(null)` and `Err(...)` — both return null. Use [toOption] instead
+  /// for nullable [T].
   T? get ok => switch (this) {
     Ok(:final value) => value,
     Err() => null,
@@ -169,20 +181,21 @@ sealed class Result<T extends Object?, E extends Object> {
   /// Returns this result if it's an error, otherwise returns [other].
   Result<T, E> operator &(Result<T, E> other) => and(other);
 
-  /// Chains operations: returns this result if it's an error, otherwise [other].
+  /// Chains operations: returns this result if it's an error, otherwise
+  /// [other].
   ///
-  /// Use this to perform sequential operations where the second depends on
-  /// the first succeeding.
+  /// This is useful for performing sequential operations where the second
+  /// depends on the first succeeding. If this result is [Err], it's returned
+  /// unchanged (short-circuit). If this is [Ok], the [other] result is returned.
   ///
   /// Example:
   /// ```dart
   /// Result<int, String> a = Ok(5);
   /// Result<int, String> b = Ok(10);
-  /// final result = a & b; // Returns b (Ok(10))
+  /// final result = a.and(b); // Returns b (Ok(10))
   /// ```
   Result<T, E> and(Result<T, E> other) {
     if (this is Err<T, E>) return this;
-    if (other is Err<T, E>) return other;
 
     return other;
   }
@@ -190,9 +203,10 @@ sealed class Result<T extends Object?, E extends Object> {
   /// Transforms the success value into a new result, or propagates the error.
   ///
   /// If this is [Ok], applies [otherBlock] to the value and returns its result.
-  /// If this is [Err], returns the same error wrapped in [Err].
+  /// If this is [Err], the error is propagated unchanged (short-circuit behavior).
   ///
-  /// Useful for chaining operations that might fail.
+  /// This is the monadic bind operation, useful for chaining operations
+  /// that might fail while maintaining error information.
   ///
   /// Example:
   /// ```dart
@@ -206,6 +220,12 @@ sealed class Result<T extends Object?, E extends Object> {
   ) => switch (this) {
     Ok(:final value) => otherBlock(value),
     Err(:final error, :final stackTrace) => .err(error, stackTrace),
+  };
+
+  /// Returns a new instance of this.
+  Result<T, E> clone() => switch (this) {
+    Err<T, E>(:final error, :final stackTrace) => .err(error, stackTrace),
+    Ok<T, E>(:final value) => .ok(value),
   };
 
   /// Unwraps the success value, or throws an exception with [message].
@@ -249,11 +269,10 @@ sealed class Result<T extends Object?, E extends Object> {
   ///   print('Not found');
   /// }
   /// ```
-  bool isErrAnd(bool Function(E error) predicate) {
-    if (this case Err(:final error) when predicate(error)) return true;
-
-    return false;
-  }
+  bool isErrAnd(bool Function(E error) predicate) => switch (this) {
+    Err(:final error) => predicate(error),
+    Ok() => false,
+  };
 
   /// Checks if this is a success and the value matches the [predicate].
   ///
@@ -265,11 +284,10 @@ sealed class Result<T extends Object?, E extends Object> {
   ///   print('Positive value');
   /// }
   /// ```
-  bool isOkAnd(bool Function(T value) predicate) {
-    if (this case Ok(:final value) when predicate(value)) return true;
-
-    return false;
-  }
+  bool isOkAnd(bool Function(T value) predicate) => switch (this) {
+    Ok(:final value) => predicate(value),
+    Err() => false,
+  };
 
   /// Transforms the success value using [block], leaving errors unchanged.
   ///
@@ -299,7 +317,10 @@ sealed class Result<T extends Object?, E extends Object> {
   /// ```
   Result<T, F> mapErr<F extends Object>(F Function(E error) block) =>
       switch (this) {
-        Err<T, E>(:final error) => .err(block(error)),
+        Err<T, E>(:final error, :final stackTrace) => .err(
+          block(error),
+          stackTrace,
+        ),
         Ok<T, E>(:final value) => .ok(value),
       };
 
@@ -315,7 +336,6 @@ sealed class Result<T extends Object?, E extends Object> {
   /// ```
   Result<T, E> or(Result<T, E> other) {
     if (this is Ok<T, E>) return this;
-    if (other is Err<T, E>) return other;
 
     return other;
   }
@@ -333,10 +353,23 @@ sealed class Result<T extends Object?, E extends Object> {
   /// );
   /// ```
   Result<T, F> orElse<F extends Object>(
-    Result<T, F> Function(E error, StackTrace? st) otherBlock,
+    Result<T, F> Function(E error, StackTrace st) otherBlock,
   ) => switch (this) {
     Err(:final error, :final stackTrace) => otherBlock(error, stackTrace),
     Ok(:final value) => .ok(value),
+  };
+
+  /// Converts this result into an [Option].
+  ///
+  /// Converts [Ok] to [Some] and [Err] to [None], discarding error information.
+  ///
+  /// Example:
+  /// ```dart
+  /// final option = result.toOption(); // Option<T>
+  /// ```
+  Option<T> toOption() => switch (this) {
+    Ok(:final value) => .some(value),
+    Err() => const .none(),
   };
 
   /// Unwraps the success value, or throws the error.
@@ -358,7 +391,8 @@ sealed class Result<T extends Object?, E extends Object> {
 
   /// Returns the success value, or [defaultValue] if this is an error.
   ///
-  /// A safe way to extract a value with a fallback.
+  /// A safe way to extract a value with a guaranteed fallback. This method
+  /// never throws and always returns a value.
   ///
   /// Example:
   /// ```dart
@@ -371,6 +405,7 @@ sealed class Result<T extends Object?, E extends Object> {
 
   /// Returns the success value, or computes a default from the error.
   ///
+  /// Applies [block] to the error to compute a fallback value if this is [Err].
   /// Useful when the default value depends on what the error was.
   ///
   /// Example:
@@ -384,28 +419,22 @@ sealed class Result<T extends Object?, E extends Object> {
 
   /// Returns the success value as nullable, or null if this is an error.
   ///
-  /// Useful when null is an acceptable default for errors.
+  /// A safe way to extract a value when null is an acceptable default for
+  /// errors.
+  ///
+  /// Never throws an exception.
+  ///
+  /// **Warning:** If [T] is nullable, this method cannot distinguish between
+  /// `Ok(null)` and `Err(...)` — both return null. Use [toOption] instead
+  /// for nullable [T].
   ///
   /// Example:
   /// ```dart
-  /// final value = result.unwrapOrNull(); // Nullable
+  /// final value = result.unwrapOrNull(); // Nullable<T>
   /// ```
   T? unwrapOrNull() => switch (this) {
     Ok(:final value) => value,
     Err() => null,
-  };
-
-  /// Converts this result into an [Option].
-  ///
-  /// Converts [Ok] to [Some] and [Err] to [None], discarding error information.
-  ///
-  /// Example:
-  /// ```dart
-  /// final option = result.unwrapOrOption(); // Option<T>
-  /// ```
-  Option<T> unwrapOrOption() => switch (this) {
-    Ok(:final value) => .some(value),
-    Err() => const .none(),
   };
 
   /// Combines two results using the [or] operator (|).
@@ -415,9 +444,14 @@ sealed class Result<T extends Object?, E extends Object> {
 
   /// Executes an asynchronous function and wraps the result.
   ///
-  /// If the async function succeeds, returns [Ok] with the value.
-  /// If it throws an error of type [E], returns [Err] with the error and stack trace.
-  /// Other exceptions are not caught.
+  /// Attempts to execute [asyncBlock] and wraps any exception in [Err].
+  /// Returns [Ok] with the value if the async function succeeds.
+  /// Returns [Err] with the caught exception and stack trace if an exception is thrown.
+  ///
+  /// This is the async counterpart to [Result.guardSync].
+  ///
+  /// Note: it will only catch [E] or subtypes of [E]. Other errors will be
+  /// thrown.
   ///
   /// Example:
   /// ```dart
@@ -437,13 +471,38 @@ sealed class Result<T extends Object?, E extends Object> {
   }
 }
 
+/// Extension methods for flattening nested result types.
+///
+/// Useful when you have a [Result] containing another [Result] and need to
+/// flatten it into a single result. This is the join/mu operation in monad terminology.
+extension FlattenResultExtension<T extends Object?, E extends Object>
+    on Result<Result<T, E>, E> {
+  /// Flattens a nested [Result] into a single [Result].
+  ///
+  /// Converts [Result<Result<T, E>, E>] into [Result<T, E>].
+  ///
+  /// Example:
+  /// ```dart
+  /// final nested = Ok(Ok(42));
+  /// final flat = nested.flatten(); // Ok(42)
+  /// ```
+  Result<T, E> flatten() => switch (this) {
+    Ok(:final value) => value,
+    Err(:final error, :final stackTrace) => .err(error, stackTrace),
+  };
+}
+
 /// Extension methods for inspecting result values without transforming them.
 ///
 /// Useful for logging, debugging, or side effects while preserving the result.
+/// These methods allow you to peek at the value or error without consuming
+/// the result, enabling fluent method chaining.
 extension InspectResultExtension<T extends Object?, E extends Object>
     on Result<T, E> {
   /// Executes a side effect if this is an error, then returns this unchanged.
   ///
+  /// The [block] callback is invoked with the error value if this is [Err].
+  /// The result is returned unchanged, allowing for method chaining.
   /// Useful for logging errors without changing the result.
   ///
   /// Example:
@@ -452,7 +511,7 @@ extension InspectResultExtension<T extends Object?, E extends Object>
   ///   .inspectErr((e) => print('Error: $e'))
   ///   .unwrapOr(defaultValue);
   /// ```
-  Result<T, E> inspectErr(void Function(E value) block) {
+  Result<T, E> inspectErr(void Function(E error) block) {
     if (this case Err(:final error)) {
       block(error);
     }
@@ -461,6 +520,8 @@ extension InspectResultExtension<T extends Object?, E extends Object>
 
   /// Executes a side effect if this is a success, then returns this unchanged.
   ///
+  /// The [block] callback is invoked with the success value if this is [Ok].
+  /// The result is returned unchanged, allowing for method chaining.
   /// Useful for logging successful values without changing the result.
   ///
   /// Example:
