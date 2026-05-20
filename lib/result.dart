@@ -65,6 +65,9 @@ final class Err<T extends Object?, E extends Object> extends Result<T, E> {
 
     return false;
   }
+
+  @override
+  String toString() => 'Err<$T, $E>(error: $error)';
 }
 
 /// Represents a successful result containing a value.
@@ -97,6 +100,9 @@ final class Ok<T extends Object?, E extends Object> extends Result<T, E> {
 
     return false;
   }
+
+  @override
+  String toString() => 'Ok<$T, $E>(value: $value)';
 }
 
 /// A type-safe way to handle operations that may fail.
