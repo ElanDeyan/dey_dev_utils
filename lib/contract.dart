@@ -1,8 +1,8 @@
 /// Design by Contract: Mixin for enforcing object invariants.
 ///
-/// An invariant is a condition that must always be true for an object throughout
-/// its lifetime. By implementing [Invariant], you declare what invariants your
-/// class maintains.
+/// An invariant is a condition that must always be true for an object
+/// throughout its lifetime. By implementing [Invariant], you declare what
+/// invariants your class maintains.
 ///
 /// Use this mixin to:
 /// - Document and enforce class invariants
@@ -65,8 +65,8 @@ mixin Invariant {
 ///
 /// Design by Contract is a way to ensure functions and operations receive
 /// valid inputs and produce valid outputs. These methods provide fluent syntax
-/// for checking preconditions (conditions that must be true before using a value)
-/// and postconditions (conditions that must be true after an operation).
+/// for checking preconditions (conditions that must be true before using a
+/// value) and postconditions (conditions that must be true after an operation).
 ///
 /// **Important:** Due to the try-finally implementation, both methods check
 /// their conditions in the finally block. While this ensures the check always
