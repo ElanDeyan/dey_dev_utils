@@ -1,12 +1,11 @@
 name: dev_utils
-description: A starting point for Dart libraries or applications.
-version: 1.0.0
+description: A collection of utilities for development and testing in Dart.
+version: 1.0.0-dev.0
 repository: https://github.com/ElanDeyan/dev_utils
 
 environment:
   sdk: ^3.11.5
 
-# Add regular dependencies here.
 dependencies:
   collection: ^1.19.1
   meta: ^1.18.2
