@@ -42,6 +42,8 @@ final class Once<T extends Object?> {
   /// Initially null, and populated after the first [call] invocation.
   T? _value;
 
+  bool _computed = false;
+
   /// Gets or computes the lazy-initialized value.
   ///
   /// On the first call, executes the initialization function, caches the result,
@@ -55,5 +57,12 @@ final class Once<T extends Object?> {
   /// final settings1 = config(); // Loads config
   /// final settings2 = config(); // Returns cached config
   /// ```
-  T call() => _value ??= _init();
+  T call() {
+    if (!_computed) {
+      _value = _init();
+      _computed = true;
+    }
+
+    return _value ??= _init();
+  }
 }

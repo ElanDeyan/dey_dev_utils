@@ -135,8 +135,11 @@ extension ComparableResult<T extends Object> on Comparable<T> {
   /// assert(10.isHigherThanOrEqualTo(5) == true);
   /// assert(5.isHigherThanOrEqualTo(10) == false);
   /// ```
-  bool isHigherThanOrEqualTo(T other) =>
-      compareWith(other) == .higher || compareWith(other) == .equal;
+  bool isHigherThanOrEqualTo(T other) {
+    final result = compareWith(other);
+
+    return result == .higher || result == .equal;
+  }
 
   /// Checks if this value is less than [other].
   ///
@@ -159,6 +162,9 @@ extension ComparableResult<T extends Object> on Comparable<T> {
   /// assert(5.isLessThanOrEqualTo(10) == true);
   /// assert(10.isLessThanOrEqualTo(5) == false);
   /// ```
-  bool isLessThanOrEqualTo(T other) =>
-      compareWith(other) == .less || compareWith(other) == .equal;
+  bool isLessThanOrEqualTo(T other) {
+    final result = compareWith(other);
+
+    return result == .less || result == .equal;
+  }
 }

@@ -85,11 +85,9 @@ extension AlsoExtension<T extends Object> on T {
   /// // number is still 42
   /// ```
   T also(void Function(T value) block) {
-    try {
-      return this;
-    } finally {
-      block(this);
-    }
+    block(this);
+
+    return this;
   }
 }
 
@@ -111,11 +109,9 @@ extension InspectExtension<T extends Object> on T {
   ///   .processData();
   /// ```
   T inspect(void Function(T value) block) {
-    try {
-      return this;
-    } finally {
-      block(this);
-    }
+    block(this);
+
+    return this;
   }
 }
 
