@@ -91,6 +91,87 @@ extension AlsoExtension<T extends Object> on T {
   }
 }
 
+/// Extension for conditionally transforming values.
+///
+/// This extension provides methods to apply transformations based on conditions,
+/// returning either the transformed value or the original value unchanged.
+/// Unlike [TakeExtension], which returns null or the value, this applies
+/// transformations that always return a value of the same type.
+///
+/// Common use cases:
+/// - Building configuration objects with conditional properties
+/// - Applying transformations based on runtime conditions
+/// - Fluent builder patterns with conditional steps
+/// - Debugging-enabled features
+///
+/// Example:
+/// ```dart
+/// final config = Config()
+///   .applyIf(isProduction, (c) => c.copyWith(debug: false))
+///   .applyIfLazy((c) => c.environment == 'test', (c) => c.copyWith(timeout: 5000));
+/// ```
+extension ApplyExtension<T extends Object> on T {
+  /// Conditionally transforms this value and returns the result.
+  ///
+  /// If [condition] is true, applies the [block] transformation to this value
+  /// and returns the result. Otherwise, returns this value unchanged.
+  /// The [block] function always receives this value and can return any
+  /// transformation of it.
+  ///
+  /// Use this for simple boolean conditions where you have a transform to apply
+  /// if the condition is true.
+  ///
+  /// Example:
+  /// ```dart
+  /// final user = User(name: 'Alice', role: 'user')
+  ///   .applyIf(isAdmin, (u) => u.copyWith(role: 'admin', level: 10));
+  /// // If isAdmin is true, user becomes an admin with level 10
+  /// // If isAdmin is false, user remains unchanged
+  /// ```
+  T applyIf(bool condition, T Function(T value) block) {
+    if (condition) {
+      return block(this);
+    }
+
+    return this;
+  }
+
+  /// Conditionally transforms this value based on a lazy predicate.
+  ///
+  /// Evaluates the [predicate] with this value. If it returns true, applies
+  /// the [block] transformation and returns the result. Otherwise, returns
+  /// this value unchanged.
+  ///
+  /// Use this when the condition depends on properties of the value itself,
+  /// avoiding the need to compute the condition before calling the method.
+  ///
+  /// Example:
+  /// ```dart
+  /// final builder = StringBuilder('Hello')
+  ///   .applyIfLazy(
+  ///     (sb) => sb.length < 100,
+  ///     (sb) => sb.append(' World!'),
+  ///   );
+  /// // Appends only if current length is less than 100
+  /// ```
+  ///
+  /// Another example with configuration:
+  /// ```dart
+  /// final settings = Settings(maxRetries: 3)
+  ///   .applyIfLazy(
+  ///     (s) => s.maxRetries < 5,
+  ///     (s) => s.copyWith(maxRetries: 5, enableBackoff: true),
+  ///   );
+  /// ```
+  T applyIfLazy(bool Function(T value) predicate, T Function(T value) block) {
+    if (predicate(this)) {
+      return block(this);
+    }
+
+    return this;
+  }
+}
+
 /// Extension for inspecting values for debugging purposes.
 ///
 /// **Note:** This extension is functionally identical to [AlsoExtension.also].
