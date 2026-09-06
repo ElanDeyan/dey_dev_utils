@@ -1,4 +1,9 @@
+@experimental
+library;
+
 import 'dart:developer' as developer;
+
+import 'package:meta/meta.dart';
 
 /// Executes an asynchronous operation while logging its execution time and status.
 ///
@@ -48,6 +53,7 @@ import 'dart:developer' as developer;
 /// See also:
 /// - [developer.log] for understanding the logging backend.
 /// - For sync operations, consider using [tracedSync].
+@experimental
 Future<T> tracedAsync<T>(String label, Future<T> Function() block) async {
   developer.log('▶ $label started');
   final sw = Stopwatch()..start();
@@ -120,6 +126,7 @@ Future<T> tracedAsync<T>(String label, Future<T> Function() block) async {
 /// See also:
 /// - [developer.log] for understanding the logging backend.
 /// - For async operations, consider using [tracedAsync].
+@experimental
 T tracedSync<T>(String label, T Function() block) {
   developer.log('▶ $label started');
   final sw = Stopwatch()..start();

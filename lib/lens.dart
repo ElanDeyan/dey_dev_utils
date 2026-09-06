@@ -1,3 +1,8 @@
+@experimental
+library;
+
+import 'package:meta/meta.dart';
+
 /// A functional lens for focusing on a part of a larger whole.
 ///
 /// A [Lens] provides a composable way to get and update nested data structures
@@ -44,6 +49,7 @@
 /// final person = Person(name: 'Alice', address: Address(street: '123 Main', city: 'NYC'));
 /// final updated = cityLens.set(person, 'LA'); // Person with LA, name unchanged
 /// ```
+@experimental
 final class Lens<Whole extends Object?, Part extends Object?> {
   /// Creates a lens with the given [get] and [set] functions.
   ///

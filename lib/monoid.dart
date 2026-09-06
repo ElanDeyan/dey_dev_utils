@@ -1,3 +1,8 @@
+@experimental
+library;
+
+import 'package:meta/meta.dart';
+
 /// A monoid: a set of values with an associative binary operation and identity element.
 ///
 /// A [Monoid] captures a fundamental algebraic structure consisting of:
@@ -65,6 +70,7 @@
 /// final words = ['Hello', ' ', 'World'];
 /// final result = words.fold(str.empty, str.combine); // 'Hello World'
 /// ```
+@experimental
 abstract interface class Monoid<T extends Object?> {
   /// Creates a monoid instance.
   ///

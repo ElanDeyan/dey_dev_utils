@@ -1,3 +1,8 @@
+@experimental
+library;
+
+import 'package:meta/meta.dart';
+
 /// The Specification Pattern: compose business rules as reusable, testable predicates.
 ///
 /// A Spec represents a single business rule that an object either satisfies or doesn't.
@@ -47,6 +52,7 @@
 /// // Complex compositions
 /// final canReceiveNewsletter = HasValidEmail() & (IsEligibleVoter() | HasOptedIn());
 /// ```
+@experimental
 sealed class Spec<T> {
   const Spec();
 

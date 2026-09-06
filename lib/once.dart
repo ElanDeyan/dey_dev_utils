@@ -1,3 +1,8 @@
+@experimental
+library;
+
+import 'package:meta/meta.dart';
+
 /// Lazy initialization wrapper that computes a value only once and caches it.
 ///
 /// [Once] ensures expensive computations or resource allocations are performed
@@ -24,6 +29,7 @@
 /// - Expensive resource loading (files, network requests)
 /// - Heavy computations deferred to first use
 /// - Caching configuration or expensive lookups
+@experimental
 final class Once<T extends Object?> {
   /// Creates a lazy initializer with the given [_init] function.
   ///

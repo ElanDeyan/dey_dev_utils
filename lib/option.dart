@@ -1,5 +1,9 @@
+@experimental
+library;
+
 import 'package:meta/meta.dart';
 
+@experimental
 @immutable
 final class None<T extends Object?> extends Option<T> {
   const None();
@@ -15,6 +19,7 @@ final class None<T extends Object?> extends Option<T> {
   }
 }
 
+@experimental
 @immutable
 sealed class Option<T extends Object?> {
   const Option();
@@ -23,6 +28,7 @@ sealed class Option<T extends Object?> {
   const factory Option.some(T value) = Some<T>;
 }
 
+@experimental
 @immutable
 final class Some<T extends Object?> extends Option<T> {
   const Some(this.value);

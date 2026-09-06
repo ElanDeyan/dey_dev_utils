@@ -1,4 +1,9 @@
+@experimental
+library;
+
 import 'dart:developer' as developer;
+
+import 'package:meta/meta.dart';
 
 /// A compensation function that undoes a previous operation.
 ///
@@ -13,6 +18,7 @@ import 'dart:developer' as developer;
 ///   await database.deleteUser(userId);
 /// };
 /// ```
+@experimental
 typedef Compensation = Future<void> Function();
 
 /// A saga: a sequence of async operations with automatic compensation on failure.
@@ -104,6 +110,7 @@ typedef Compensation = Future<void> Function();
 ///   // All prior steps have been compensated automatically
 /// }
 /// ```
+@experimental
 final class Saga {
   final _steps = <SagaStep>[];
   final _compensations = <Compensation>[];
@@ -237,6 +244,7 @@ final class Saga {
 ///   },
 /// );
 /// ```
+@experimental
 class SagaStep<T extends Object?> {
   /// Creates a saga step with the given name, execute, and compensate functions.
   ///

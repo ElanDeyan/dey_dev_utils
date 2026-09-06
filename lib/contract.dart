@@ -1,3 +1,8 @@
+@experimental
+library;
+
+import 'package:meta/meta.dart';
+
 /// Design by Contract: Mixin for enforcing object invariants.
 ///
 /// An invariant is a condition that must always be true for an object
@@ -25,6 +30,7 @@
 ///   bool invariant() => _balance >= 0; // Balance must never be negative
 /// }
 /// ```
+@experimental
 mixin Invariant {
   /// Asserts that the invariant is satisfied for [operation].
   ///
@@ -80,6 +86,7 @@ mixin Invariant {
 ///   .pre(user.age >= 18, 'User must be adult')
 ///   .post((u) => u.email.contains('@'), 'Valid email required');
 /// ```
+@experimental
 extension ContractOps<T> on T {
   /// Checks a postcondition on this value and returns it.
   ///

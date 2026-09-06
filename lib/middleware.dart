@@ -1,3 +1,8 @@
+@experimental
+library;
+
+import 'package:meta/meta.dart';
+
 /// The default identity handler that passes input through unchanged.
 ///
 /// This serves as the terminal handler in the middleware chain - the innermost
@@ -21,6 +26,7 @@ Future<T> _handler<T extends Object?>(T t) async => t;
 ///   return input.toUpperCase();
 /// }
 /// ```
+@experimental
 typedef Handler<T extends Object?> = Future<T> Function(T);
 
 /// A middleware function that wraps or intercepts a handler.
@@ -58,6 +64,7 @@ typedef Handler<T extends Object?> = Future<T> Function(T);
 ///   };
 /// };
 /// ```
+@experimental
 typedef Middleware<T extends Object?> = Handler<T> Function(Handler<T>);
 
 /// A composable pipeline of middleware that processes values asynchronously.
@@ -135,6 +142,7 @@ typedef Middleware<T extends Object?> = Handler<T> Function(Handler<T>);
 /// // Duration: 0ms
 /// // End: HELLO
 /// ```
+@experimental
 class Pipeline<T extends Object?> {
   /// Stores the list of middleware in the order they were registered.
   final List<Middleware<T>> _middlewares = [];

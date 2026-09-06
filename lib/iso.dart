@@ -1,4 +1,8 @@
+@experimental
+library;
+
 import 'package:dev_utils/lens.dart';
+import 'package:meta/meta.dart';
 
 /// An isomorphism: a reversible transformation between two types.
 ///
@@ -30,6 +34,7 @@ import 'package:dev_utils/lens.dart';
 /// assert(stringToInt.from(42) == '42');
 /// assert(stringToInt.from(stringToInt.to('42')) == '42'); // Round-trip
 /// ```
+@experimental
 final class Iso<A extends Object?, B extends Object?> {
   /// Creates an isomorphism with the given [to] and [from] transformations.
   ///

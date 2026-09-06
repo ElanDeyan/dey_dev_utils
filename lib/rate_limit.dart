@@ -1,4 +1,9 @@
+@experimental
+library;
+
 import 'dart:async';
+
+import 'package:meta/meta.dart';
 
 /// Delays execution of a function, resetting the timer on each call.
 ///
@@ -23,6 +28,7 @@ import 'dart:async';
 /// ```
 ///
 /// Remember to call [dispose] when done to clean up the timer.
+@experimental
 final class Debouncer {
   /// Creates a debouncer with the given [_duration].
   ///
@@ -91,6 +97,7 @@ final class Debouncer {
 /// strictly more than the interval time to have passed before allowing another
 /// execution. Standard behavior would use `>=` to allow execution at the exact
 /// interval boundary. Adjust if needed for your use case.
+@experimental
 final class Throttle {
   /// Creates a throttle with the given [interval].
   ///

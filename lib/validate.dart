@@ -1,3 +1,6 @@
+@experimental
+library;
+
 import 'package:collection/collection.dart';
 import 'package:dev_utils/result.dart';
 import 'package:meta/meta.dart';
@@ -23,6 +26,7 @@ import 'package:meta/meta.dart';
 /// // Access all errors at once for display
 /// final errorList = result.errors.toList();
 /// ```
+@experimental
 @immutable
 final class Invalid<T extends Object?> extends Validated<T> {
   /// Creates an Invalid result with the given error messages.
@@ -79,6 +83,7 @@ final class Invalid<T extends Object?> extends Validated<T> {
 ///   .check((email) => email.contains('@'), error: 'Invalid format')
 ///   .check((email) => !email.startsWith('.'), error: 'Cannot start with period');
 /// ```
+@experimental
 @immutable
 final class Valid<T extends Object?> extends Validated<T> {
   /// Creates a Valid result with the given [value].
@@ -145,6 +150,7 @@ final class Valid<T extends Object?> extends Validated<T> {
 ///   final errors = (validation as Invalid).errors.toList();
 /// }
 /// ```
+@experimental
 @immutable
 sealed class Validated<T extends Object?> {
   const Validated();
@@ -303,6 +309,7 @@ sealed class Validated<T extends Object?> {
 ///   showErrors(invalid.errors); // Show all errors to user
 /// }
 /// ```
+@experimental
 extension ValidatedOps<T> on Validated<T> {
   /// Applies an additional validation rule to this result.
   ///
