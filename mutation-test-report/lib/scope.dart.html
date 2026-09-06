@@ -1,0 +1,770 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<style>
+.collapsible {
+  color: black;
+  cursor: pointer;
+  padding: 0px;
+  width: 100%;
+  border: none;
+  text-align: left;
+  outline: none;
+}
+
+.hit {
+  background-color: #DAE7FE;
+}
+
+.covered {
+  background-color: #9EFF83;
+}
+.instrumented {
+  background-color: #FF8983;
+}
+
+.hit:hover {
+  color: white;
+  background-color: #6688D4;
+}
+
+.problem {
+  background-color: #FF6230;
+}
+
+.problem:hover {
+  background-color: #FF0000;
+}
+
+span.lineNumber
+{
+  display: inline-block;
+  color: black;
+  background-color: #EFE383;
+}
+
+.addedLine {
+background-color: rgb(200, 255, 200)
+}
+.changedTokens {
+background-color: rgb(50, 255, 50)
+}
+
+pre
+{
+  font-family: monospace;
+  white-space: pre;
+}
+
+pre.fileContents
+{
+  margin: 0px;
+}
+
+.content {
+  padding: 0 18px;
+  max-height: 0;
+  overflow: hidden;
+  transition: max-height 0.5s ease-out;
+  background-color: #f1f1f1;
+}
+table{
+    border-collapse: collapse;
+}
+
+hr.ruler
+{
+  height:3px;
+  border-width:0;
+  color:#6688D4;
+  background-color:#6688D4
+}
+td.title
+{
+  text-align: center;
+  padding-bottom: 10px;
+  font-family: Helvetica, sans-serif;
+  font-size: 20pt;
+  font-style: italic;
+  font-weight: bold;
+}
+td.footer {
+  text-align: center;
+  padding-bottom: 10px;
+  font-family: Helvetica, sans-serif;
+  font-size: 12pt;
+}
+
+td.ItemLabel
+{
+  text-align: right;
+  padding-right: 6px;
+  font-family: sans-serif;
+  font-weight: bold;
+  vertical-align: top;
+  white-space: nowrap;
+}
+
+td.mutationLabel
+{
+  text-align: right;
+  padding-right: 6px;
+  font-weight: bold;
+  vertical-align: top;
+}
+
+td.mutationText
+{
+  text-align: left;
+  vertical-align: top;
+}
+
+td.ItemText
+{
+  text-align: left;
+  padding-right: 6px;
+  font-family: sans-serif;
+  font-weight: bold;
+  color:#6688D4;
+  white-space: nowrap;
+}
+
+td.ItemReport
+{
+  text-align: right;
+  color: #284FA8;
+  font-family: sans-serif;
+  font-weight: bold;
+  white-space: nowrap;
+  padding-left: 6px;
+  padding-right: 6px;
+  background-color: #DAE7FE;
+  border-collapse: unset;
+  border: 2px;
+  border-color: white;
+  border-style: solid;
+}
+
+td.FileLink
+{
+  text-align: left;
+  color: #284FA8;
+  font-family: sans-serif;
+  font-weight: bold;
+  white-space: nowrap;
+  padding-left: 6px;
+  padding-right: 6px;
+  background-color: #DAE7FE;
+  border-collapse: unset;
+  border: 2px;
+  border-color: white;
+  border-style: solid;
+}
+
+td.ItemReportHigh
+{
+  text-align: right;
+  color: black;
+  font-family: sans-serif;
+  font-weight: bold;
+  white-space: nowrap;
+  padding-left: 6px;
+  padding-right: 6px;
+  background-color: #A7FC9D;
+  border-collapse: unset;
+  border: 2px;
+  border-color: white;
+  border-style: solid;
+}
+
+td.ItemReportMedium
+{
+  text-align: right;
+  color: black;
+  font-family: sans-serif;
+  font-weight: bold;
+  white-space: nowrap;
+  padding-left: 6px;
+  padding-right: 6px;
+  background-color: #FFEA20;
+  border-collapse: unset;
+  border: 2px;
+  border-color: white;
+  border-style: solid;
+}
+
+td.ItemReportLow
+{
+  text-align: right;
+  color: black;
+  font-family: sans-serif;
+  font-weight: bold;
+  white-space: nowrap;
+  padding-left: 6px;
+  padding-right: 6px;
+  background-color: #FF0000;
+  border-collapse: unset;
+  border: 2px;
+  border-color: white;
+  border-style: solid;
+}
+
+td.MiddleHeader
+{
+  text-align: center;
+  padding-right: 6px;
+  padding-left: 6px;
+  font-family: sans-serif;
+  white-space: nowrap;
+}
+
+td.ItemHead
+{
+  text-align: center;
+  color: white;
+  font-family: sans-serif;
+  font-weight: bold;
+  white-space: nowrap;
+  padding-left: 6px;
+  padding-right: 6px;
+  background-color: #6688D4;
+  border-collapse: unset;
+  border: 1px;
+  border-color: white;
+  border-style: solid;
+}
+
+td.barHi
+{
+  background-color: #00eb00;
+}
+
+td.barMed
+{
+  background-color: #FFEA20;
+}
+
+td.barLo
+{
+  background-color: #ff0000;
+}
+
+td.barBg
+{
+  background-color: #FFFFFF;
+}
+
+.match {
+  text-align: right;
+  position: relative;
+}
+
+.match .tooltip {
+  visibility: hidden;
+  background-color: #bbb;
+  color: black;
+  text-align: center;
+  border-radius: 6px;
+  padding: 5px 5px;
+  position: absolute;
+  z-index: 1;
+  top: 100%;
+  right: 0%;
+}
+
+.match:hover .tooltip {
+  visibility: visible;
+}
+
+@media (prefers-color-scheme: dark) {
+  body {
+    color: #c9d1d9;
+    background: #141517;
+  }
+  td.ItemReport, td.FileLink, td.ItemReportHigh, td.ItemReportMedium, td.ItemReportLow, td.ItemHead {
+    border-color: #152035;
+  }
+  td.ItemReport, td.FileLink {
+    color: #DAE7FE;
+    background-color: #141517;
+  }
+  td.ItemReportHigh, td.ItemReportMedium, td.ItemReportLow, td.barBg {
+    background-color: #141517;
+  }
+  td.ItemReportHigh {
+    color: #A7FC9D;
+  }
+  td.ItemReportMedium {
+    color: #FFEA20;
+  }
+  td.ItemReportLow {
+    color: #FF0000;
+  }
+  span.lineNumber {
+    color: white;
+    background-color: #26334F;
+  }
+  .collapsible {
+    color: #c9d1d9;
+  }
+  .content {
+    color: #c9d1d9;
+    background-color: #1B2539;
+  }
+  .hit {
+    background-color: #26334F;
+  }
+  .covered {
+    background-color: #0A3302;
+  }
+  .instrumented {
+    background-color: #391D1D;
+  }
+  .addedLine {
+    background-color: rgb(37, 83, 37);
+  }
+  .changedTokens {
+    background-color: rgb(32, 145, 32);
+  }
+  .problem {
+    background-color: #62200B;
+  }
+  a:link, a:visited  {
+	  color: #58a6ff;
+	}
+  .match .tooltip {
+    background-color: black;
+    color: #fff;
+  }
+}
+
+</style>
+</head>
+<body>
+<table width ="100%" cellspacing="0" border="0">
+    <tr><td class="title">Mutation test report</td></tr>
+     <tr><td><hr class="ruler"/></td></tr>
+
+     <tr>
+     <td width="100%">
+     <table width="100%" cellpadding="1" border="0">
+     <tbody><tr>
+     <td class="ItemLabel" width="10%">Current display:</td>
+     <td class="ItemText" width="35%">lib/scope.dart - <a href="../mutation-test-report.html">back to top</a></td>
+     <td width="10%"></td>
+     <td class="MiddleHeader" width="15%">Detected</td>
+     <td class="MiddleHeader" width="15%">Total</td>
+     <td class="MiddleHeader" width="15%">Percentage</td>
+     </tr>
+
+     <tr>
+     <td class="ItemLabel" width="10%">Date:</td>
+     <td class="ItemText" width="35%">2026-09-06 19:43:54.103457</td>
+     <td class="ItemLabel" width="10%">Mutations:</td>
+     <td class="ItemReport" width="15%">7</td>
+     <td class="ItemReport" width="15%">7</td>
+     <td class="ItemReportHigh" width="15%">100.0 %</td>
+     </tr>
+     
+     <tr>
+     <td class="ItemLabel" width="10%">Builtin rules:</td>
+     <td class="ItemText" width="35%">true</td>
+     <td class="ItemLabel" width="10%">Blocked:</td>
+     <td class="ItemReport" width="15%">0</td>
+     <td class="ItemReport" width="15%">7</td>
+     <td class="ItemReportHigh" width="15%">0.0 %</td>
+     </tr>
+     </tbody>
+     </table>
+     </td>
+     </tr>
+     
+
+     
+     <tr><td><hr class="ruler"/></td></tr>
+</table>
+
+<pre class="fileHeader">          Source code</pre>
+<pre class="fileContents">
+<a name="1"><span class="lineNumber">       1 </span>// ignore_for_file: avoid_positional_boolean_parameters</a>
+<a name="2"><span class="lineNumber">       2 </span></a>
+<a name="3"><span class="lineNumber">       3 </span>/// Executes a code block and returns its result.</a>
+<a name="4"><span class="lineNumber">       4 </span>///</a>
+<a name="5"><span class="lineNumber">       5 </span>/// This is a utility for wrapping computation in a function scope.</a>
+<a name="6"><span class="lineNumber">       6 </span>/// Primarily useful as a base for scope manipulation or when you need</a>
+<a name="7"><span class="lineNumber">       7 </span>/// to control the execution context of a block of code.</a>
+<a name="8"><span class="lineNumber">       8 </span>///</a>
+<a name="9"><span class="lineNumber">       9 </span>/// Example:</a>
+<a name="10"><span class="lineNumber">      10 </span>/// ```dart</a>
+<a name="11"><span class="lineNumber">      11 </span>/// final result = run(() {</a>
+<a name="12"><span class="lineNumber">      12 </span>///   print('Doing computation...');</a>
+<a name="13"><span class="lineNumber">      13 </span>///   return 49;</a>
+<a name="14"><span class="lineNumber">      14 </span>/// });</a>
+<a name="15"><span class="lineNumber">      15 </span>/// ```</a>
+<a name="16"><span class="lineNumber">      16 </span>R run&lt;R extends Object?&gt;(R Function() block) =&gt; block();</a>
+<a name="17"><span class="lineNumber">      17 </span></a>
+<a name="18"><span class="lineNumber">      18 </span>/// Executes a block with a value and ensures cleanup via disposal.</a>
+<a name="19"><span class="lineNumber">      19 </span>///</a>
+<a name="20"><span class="lineNumber">      20 </span>/// This implements the resource management pattern (similar to try-with-resources</a>
+<a name="21"><span class="lineNumber">      21 </span>/// in Java). The [block] function is called with [value], and [dispose] is</a>
+<a name="22"><span class="lineNumber">      22 </span>/// is called in a `finally` block, regardless of whether the block succeeds or</a>
+<a name="23"><span class="lineNumber">      23 </span>/// throws.</a>
+<a name="24"><span class="lineNumber">      24 </span>///</a>
+<a name="25"><span class="lineNumber">      25 </span>/// Use this for:</a>
+<a name="26"><span class="lineNumber">      26 </span>/// - File/stream handling</a>
+<a name="27"><span class="lineNumber">      27 </span>/// - Database connection management</a>
+<a name="28"><span class="lineNumber">      28 </span>/// - Cleanup of temporary resources</a>
+<a name="29"><span class="lineNumber">      29 </span>/// - Any resource with a defined lifecycle</a>
+<a name="30"><span class="lineNumber">      30 </span>///</a>
+<a name="31"><span class="lineNumber">      31 </span>/// Parameters:</a>
+<a name="32"><span class="lineNumber">      32 </span>/// - [value]: The resource to use</a>
+<a name="33"><span class="lineNumber">      33 </span>/// - [block]: Function that uses the resource and returns a result</a>
+<a name="34"><span class="lineNumber">      34 </span>/// - [dispose]: Optional cleanup function called in finally</a>
+<a name="35"><span class="lineNumber">      35 </span>///</a>
+<a name="36"><span class="lineNumber">      36 </span>/// If both [block] and [dispose] throw, the exception from [dispose] replaces</a>
+<a name="37"><span class="lineNumber">      37 </span>/// the exception from [block], as with a Dart `finally` clause.</a>
+<a name="38"><span class="lineNumber">      38 </span>///</a>
+<a name="39"><span class="lineNumber">      39 </span>/// Example:</a>
+<a name="40"><span class="lineNumber">      40 </span>/// ```dart</a>
+<a name="41"><span class="lineNumber">      41 </span>/// final content = use(</a>
+<a name="42"><span class="lineNumber">      42 </span>///   File('data.txt'),</a>
+<a name="43"><span class="lineNumber">      43 </span>///   (file) =&gt; file.readAsStringSync(),</a>
+<a name="44"><span class="lineNumber">      44 </span>///   dispose: (file) =&gt; print('File closed'),</a>
+<a name="45"><span class="lineNumber">      45 </span>/// );</a>
+<a name="46"><span class="lineNumber">      46 </span>/// ```</a>
+<a name="47"><span class="lineNumber">      47 </span>R use&lt;R extends Object?, T extends Object?&gt;(</a>
+<a name="48"><span class="lineNumber">      48 </span>  T value,</a>
+<a name="49"><span class="lineNumber">      49 </span>  R Function(T value) block, {</a>
+<a name="50"><span class="lineNumber">      50 </span>  void Function(T value)? dispose,</a>
+<a name="51"><span class="lineNumber">      51 </span>}) {</a>
+<a name="52"><span class="lineNumber">      52 </span>  try {</a>
+<a name="53"><span class="lineNumber">      53 </span>    return block(value);</a>
+<a name="54"><button class="collapsible hit"><pre class="fileContents"><span class="lineNumber">      54 </span>  } finally {</pre></button>
+<div class="content">
+<b>Detected mutations:</b>
+<table class="mutationTable" width="100%">
+<tr><td class="mutationLabel" width="5%">1 :</td><td class="mutationText" width="87%"><span class="addedLine">+   } finally <span class="changedTokens">{
+    </span></span></td><td class="match">RegExp: pattern=([{]\s*)([^\(;=\s}]+\([^;]+\)\s*;) flags=m<span class="tooltip">Id: builtin.function.removeVoidCall1</span></td></tr></table>
+
+</div></a><a name="55"><span class="lineNumber">      55 </span>    dispose?.call(value);</a>
+<a name="56"><span class="lineNumber">      56 </span>  }</a>
+<a name="57"><span class="lineNumber">      57 </span>}</a>
+<a name="58"><span class="lineNumber">      58 </span></a>
+<a name="59"><span class="lineNumber">      59 </span>/// Extension for executing side effects while returning the original value.</a>
+<a name="60"><span class="lineNumber">      60 </span>///</a>
+<a name="61"><span class="lineNumber">      61 </span>/// This extension provides a convenient way to perform operations (like logging</a>
+<a name="62"><span class="lineNumber">      62 </span>/// or validation) without transforming the value. The block executes as a</a>
+<a name="63"><span class="lineNumber">      63 </span>/// side effect, and the original value is always returned.</a>
+<a name="64"><span class="lineNumber">      64 </span>///</a>
+<a name="65"><span class="lineNumber">      65 </span>/// Common use cases:</a>
+<a name="66"><span class="lineNumber">      66 </span>/// - Logging intermediate values in a chain</a>
+<a name="67"><span class="lineNumber">      67 </span>/// - Validation checks</a>
+<a name="68"><span class="lineNumber">      68 </span>/// - Debugging value transformations</a>
+<a name="69"><span class="lineNumber">      69 </span>/// - Side effects in fluent APIs</a>
+<a name="70"><span class="lineNumber">      70 </span>///</a>
+<a name="71"><span class="lineNumber">      71 </span>/// Example:</a>
+<a name="72"><span class="lineNumber">      72 </span>/// ```dart</a>
+<a name="73"><span class="lineNumber">      73 </span>/// final user = fetchUser()</a>
+<a name="74"><span class="lineNumber">      74 </span>///   .also((u) =&gt; print('Fetched: ${u.name}'))</a>
+<a name="75"><span class="lineNumber">      75 </span>///   .also((u) =&gt; analytics.track('user_loaded'));</a>
+<a name="76"><span class="lineNumber">      76 </span>/// ```</a>
+<a name="77"><span class="lineNumber">      77 </span>extension AlsoExtension&lt;T extends Object&gt; on T {</a>
+<a name="78"><span class="lineNumber">      78 </span>  /// Executes a side effect block and returns this value unchanged.</a>
+<a name="79"><span class="lineNumber">      79 </span>  ///</a>
+<a name="80"><span class="lineNumber">      80 </span>  /// If [block] throws, the exception propagates and this value is not</a>
+<a name="81"><span class="lineNumber">      81 </span>  /// returned.</a>
+<a name="82"><span class="lineNumber">      82 </span>  ///</a>
+<a name="83"><span class="lineNumber">      83 </span>  /// Example:</a>
+<a name="84"><span class="lineNumber">      84 </span>  /// ```dart</a>
+<a name="85"><span class="lineNumber">      85 </span>  /// final number = 42</a>
+<a name="86"><span class="lineNumber">      86 </span>  ///   .also((n) =&gt; print('Value is: $n'));</a>
+<a name="87"><span class="lineNumber">      87 </span>  /// // Prints: Value is: 42</a>
+<a name="88"><span class="lineNumber">      88 </span>  /// // number is still 42</a>
+<a name="89"><span class="lineNumber">      89 </span>  /// ```</a>
+<a name="90"><button class="collapsible hit"><pre class="fileContents"><span class="lineNumber">      90 </span>  T also(void Function(T value) block) {</pre></button>
+<div class="content">
+<b>Detected mutations:</b>
+<table class="mutationTable" width="100%">
+<tr><td class="mutationLabel" width="5%">1 :</td><td class="mutationText" width="87%"><span class="addedLine">+   T also(void Function(T value) block) <span class="changedTokens">{
+    </span></span></td><td class="match">RegExp: pattern=([{]\s*)([^\(;=\s}]+\([^;]+\)\s*;) flags=m<span class="tooltip">Id: builtin.function.removeVoidCall1</span></td></tr></table>
+
+</div></a><a name="91"><span class="lineNumber">      91 </span>    block(this);</a>
+<a name="92"><span class="lineNumber">      92 </span></a>
+<a name="93"><span class="lineNumber">      93 </span>    return this;</a>
+<a name="94"><span class="lineNumber">      94 </span>  }</a>
+<a name="95"><span class="lineNumber">      95 </span>}</a>
+<a name="96"><span class="lineNumber">      96 </span></a>
+<a name="97"><span class="lineNumber">      97 </span>/// Extension for conditionally transforming values.</a>
+<a name="98"><span class="lineNumber">      98 </span>///</a>
+<a name="99"><span class="lineNumber">      99 </span>/// This extension provides methods to apply transformations based on conditions,</a>
+<a name="100"><span class="lineNumber">     100 </span>/// returning either the transformed value or the original value unchanged.</a>
+<a name="101"><span class="lineNumber">     101 </span>/// Unlike [TakeExtension], which returns null or the value, this applies</a>
+<a name="102"><span class="lineNumber">     102 </span>/// transformations that always return a value of the same type.</a>
+<a name="103"><span class="lineNumber">     103 </span>///</a>
+<a name="104"><span class="lineNumber">     104 </span>/// Common use cases:</a>
+<a name="105"><span class="lineNumber">     105 </span>/// - Building configuration objects with conditional properties</a>
+<a name="106"><span class="lineNumber">     106 </span>/// - Applying transformations based on runtime conditions</a>
+<a name="107"><span class="lineNumber">     107 </span>/// - Fluent builder patterns with conditional steps</a>
+<a name="108"><span class="lineNumber">     108 </span>/// - Debugging-enabled features</a>
+<a name="109"><span class="lineNumber">     109 </span>///</a>
+<a name="110"><span class="lineNumber">     110 </span>/// Example:</a>
+<a name="111"><span class="lineNumber">     111 </span>/// ```dart</a>
+<a name="112"><span class="lineNumber">     112 </span>/// final config = Config()</a>
+<a name="113"><span class="lineNumber">     113 </span>///   .applyIf(isProduction, (c) =&gt; c.copyWith(debug: false))</a>
+<a name="114"><span class="lineNumber">     114 </span>///   .applyIfLazy((c) =&gt; c.environment == 'test', (c) =&gt; c.copyWith(timeout: 5000));</a>
+<a name="115"><span class="lineNumber">     115 </span>/// ```</a>
+<a name="116"><span class="lineNumber">     116 </span>extension ApplyExtension&lt;T extends Object&gt; on T {</a>
+<a name="117"><span class="lineNumber">     117 </span>  /// Conditionally transforms this value and returns the result.</a>
+<a name="118"><span class="lineNumber">     118 </span>  ///</a>
+<a name="119"><span class="lineNumber">     119 </span>  /// If [condition] is true, applies the [block] transformation to this value</a>
+<a name="120"><span class="lineNumber">     120 </span>  /// and returns the result. Otherwise, returns this value unchanged. The</a>
+<a name="121"><span class="lineNumber">     121 </span>  /// [block] must return another value of the same type [T].</a>
+<a name="122"><span class="lineNumber">     122 </span>  ///</a>
+<a name="123"><span class="lineNumber">     123 </span>  /// Use this for simple boolean conditions where you have a transform to apply</a>
+<a name="124"><span class="lineNumber">     124 </span>  /// if the condition is true.</a>
+<a name="125"><span class="lineNumber">     125 </span>  ///</a>
+<a name="126"><span class="lineNumber">     126 </span>  /// Example:</a>
+<a name="127"><span class="lineNumber">     127 </span>  /// ```dart</a>
+<a name="128"><span class="lineNumber">     128 </span>  /// final user = User(name: 'Alice', role: 'user')</a>
+<a name="129"><span class="lineNumber">     129 </span>  ///   .applyIf(isAdmin, (u) =&gt; u.copyWith(role: 'admin', level: 10));</a>
+<a name="130"><span class="lineNumber">     130 </span>  /// // If isAdmin is true, user becomes an admin with level 10</a>
+<a name="131"><span class="lineNumber">     131 </span>  /// // If isAdmin is false, user remains unchanged</a>
+<a name="132"><span class="lineNumber">     132 </span>  /// ```</a>
+<a name="133"><span class="lineNumber">     133 </span>  T applyIf(bool condition, T Function(T value) block) {</a>
+<a name="134"><button class="collapsible hit"><pre class="fileContents"><span class="lineNumber">     134 </span>    if (condition) {</pre></button>
+<div class="content">
+<b>Detected mutations:</b>
+<table class="mutationTable" width="100%">
+<tr><td class="mutationLabel" width="5%">1 :</td><td class="mutationText" width="87%"><span class="addedLine">+    <span class="changedTokens"> if (!(condition)) {</span></span></td><td class="match">RegExp: pattern=[\s]if[\s]*\((.*?)\)[\s]*{ flags=ms<span class="tooltip">Id: builtin.if</span></td></tr></table>
+
+</div></a><a name="135"><span class="lineNumber">     135 </span>      return block(this);</a>
+<a name="136"><span class="lineNumber">     136 </span>    }</a>
+<a name="137"><span class="lineNumber">     137 </span></a>
+<a name="138"><span class="lineNumber">     138 </span>    return this;</a>
+<a name="139"><span class="lineNumber">     139 </span>  }</a>
+<a name="140"><span class="lineNumber">     140 </span></a>
+<a name="141"><span class="lineNumber">     141 </span>  /// Conditionally transforms this value based on a lazy predicate.</a>
+<a name="142"><span class="lineNumber">     142 </span>  ///</a>
+<a name="143"><span class="lineNumber">     143 </span>  /// Evaluates the [predicate] with this value. If it returns true, applies</a>
+<a name="144"><span class="lineNumber">     144 </span>  /// the [block] transformation and returns the result. Otherwise, returns</a>
+<a name="145"><span class="lineNumber">     145 </span>  /// this value unchanged.</a>
+<a name="146"><span class="lineNumber">     146 </span>  ///</a>
+<a name="147"><span class="lineNumber">     147 </span>  /// Use this when the condition depends on properties of the value itself,</a>
+<a name="148"><span class="lineNumber">     148 </span>  /// avoiding the need to compute the condition before calling the method.</a>
+<a name="149"><span class="lineNumber">     149 </span>  ///</a>
+<a name="150"><span class="lineNumber">     150 </span>  /// Example:</a>
+<a name="151"><span class="lineNumber">     151 </span>  /// ```dart</a>
+<a name="152"><span class="lineNumber">     152 </span>  /// final builder = StringBuilder('Hello')</a>
+<a name="153"><span class="lineNumber">     153 </span>  ///   .applyIfLazy(</a>
+<a name="154"><span class="lineNumber">     154 </span>  ///     (sb) =&gt; sb.length &lt; 100,</a>
+<a name="155"><span class="lineNumber">     155 </span>  ///     (sb) =&gt; sb.append(' World!'),</a>
+<a name="156"><span class="lineNumber">     156 </span>  ///   );</a>
+<a name="157"><span class="lineNumber">     157 </span>  /// // Appends only if current length is less than 100</a>
+<a name="158"><span class="lineNumber">     158 </span>  /// ```</a>
+<a name="159"><span class="lineNumber">     159 </span>  ///</a>
+<a name="160"><span class="lineNumber">     160 </span>  /// Another example with configuration:</a>
+<a name="161"><span class="lineNumber">     161 </span>  /// ```dart</a>
+<a name="162"><span class="lineNumber">     162 </span>  /// final settings = Settings(maxRetries: 3)</a>
+<a name="163"><span class="lineNumber">     163 </span>  ///   .applyIfLazy(</a>
+<a name="164"><span class="lineNumber">     164 </span>  ///     (s) =&gt; s.maxRetries &lt; 5,</a>
+<a name="165"><span class="lineNumber">     165 </span>  ///     (s) =&gt; s.copyWith(maxRetries: 5, enableBackoff: true),</a>
+<a name="166"><span class="lineNumber">     166 </span>  ///   );</a>
+<a name="167"><span class="lineNumber">     167 </span>  /// ```</a>
+<a name="168"><span class="lineNumber">     168 </span>  T applyIfLazy(bool Function(T value) predicate, T Function(T value) block) {</a>
+<a name="169"><button class="collapsible hit"><pre class="fileContents"><span class="lineNumber">     169 </span>    if (predicate(this)) {</pre></button>
+<div class="content">
+<b>Detected mutations:</b>
+<table class="mutationTable" width="100%">
+<tr><td class="mutationLabel" width="5%">1 :</td><td class="mutationText" width="87%"><span class="addedLine">+    <span class="changedTokens"> if (!(predicate(this))) {</span></span></td><td class="match">RegExp: pattern=[\s]if[\s]*\((.*?)\)[\s]*{ flags=ms<span class="tooltip">Id: builtin.if</span></td></tr></table>
+
+</div></a><a name="170"><span class="lineNumber">     170 </span>      return block(this);</a>
+<a name="171"><span class="lineNumber">     171 </span>    }</a>
+<a name="172"><span class="lineNumber">     172 </span></a>
+<a name="173"><span class="lineNumber">     173 </span>    return this;</a>
+<a name="174"><span class="lineNumber">     174 </span>  }</a>
+<a name="175"><span class="lineNumber">     175 </span>}</a>
+<a name="176"><span class="lineNumber">     176 </span></a>
+<a name="177"><span class="lineNumber">     177 </span>/// Extension for transforming values using a block function.</a>
+<a name="178"><span class="lineNumber">     178 </span>///</a>
+<a name="179"><span class="lineNumber">     179 </span>/// This extension provides functional transformation capabilities,</a>
+<a name="180"><span class="lineNumber">     180 </span>/// similar to map/flatMap patterns from functional programming.</a>
+<a name="181"><span class="lineNumber">     181 </span>/// Useful for chaining transformations in a readable way.</a>
+<a name="182"><span class="lineNumber">     182 </span>///</a>
+<a name="183"><span class="lineNumber">     183 </span>/// Example:</a>
+<a name="184"><span class="lineNumber">     184 </span>/// ```dart</a>
+<a name="185"><span class="lineNumber">     185 </span>/// final doubled = 5</a>
+<a name="186"><span class="lineNumber">     186 </span>///   .let((n) =&gt; n * 2)</a>
+<a name="187"><span class="lineNumber">     187 </span>///   .let((n) =&gt; '$n is the result');</a>
+<a name="188"><span class="lineNumber">     188 </span>/// ```</a>
+<a name="189"><span class="lineNumber">     189 </span>extension LetExtension&lt;T extends Object&gt; on T {</a>
+<a name="190"><span class="lineNumber">     190 </span>  /// Transforms this value using [block] and returns the result.</a>
+<a name="191"><span class="lineNumber">     191 </span>  ///</a>
+<a name="192"><span class="lineNumber">     192 </span>  /// The [block] receives this value and can return any type [R].</a>
+<a name="193"><span class="lineNumber">     193 </span>  /// Use this for value transformations in a fluent, readable style.</a>
+<a name="194"><span class="lineNumber">     194 </span>  ///</a>
+<a name="195"><span class="lineNumber">     195 </span>  /// Example:</a>
+<a name="196"><span class="lineNumber">     196 </span>  /// ```dart</a>
+<a name="197"><span class="lineNumber">     197 </span>  /// final user = userData</a>
+<a name="198"><span class="lineNumber">     198 </span>  ///   .let((data) =&gt; User.fromJson(data))</a>
+<a name="199"><span class="lineNumber">     199 </span>  ///   .let((user) =&gt; user.copyWith(verified: true));</a>
+<a name="200"><span class="lineNumber">     200 </span>  /// ```</a>
+<a name="201"><span class="lineNumber">     201 </span>  R let&lt;R extends Object?&gt;(R Function(T value) block) =&gt; block(this);</a>
+<a name="202"><span class="lineNumber">     202 </span>}</a>
+<a name="203"><span class="lineNumber">     203 </span></a>
+<a name="204"><span class="lineNumber">     204 </span>/// Extension for conditionally filtering values.</a>
+<a name="205"><span class="lineNumber">     205 </span>///</a>
+<a name="206"><span class="lineNumber">     206 </span>/// Provides methods to return the value (as-is) or null based on conditions,</a>
+<a name="207"><span class="lineNumber">     207 </span>/// useful for filtering in chains or implementing optional transformations.</a>
+<a name="208"><span class="lineNumber">     208 </span>extension TakeExtension&lt;T extends Object&gt; on T {</a>
+<a name="209"><span class="lineNumber">     209 </span>  /// Returns this value if [condition] is true, otherwise null.</a>
+<a name="210"><span class="lineNumber">     210 </span>  ///</a>
+<a name="211"><span class="lineNumber">     211 </span>  /// A simple boolean check that conditionally returns the value.</a>
+<a name="212"><span class="lineNumber">     212 </span>  /// Useful for filtering in chains.</a>
+<a name="213"><span class="lineNumber">     213 </span>  ///</a>
+<a name="214"><span class="lineNumber">     214 </span>  /// Example:</a>
+<a name="215"><span class="lineNumber">     215 </span>  /// ```dart</a>
+<a name="216"><span class="lineNumber">     216 </span>  /// final adult = person.takeIf(person.age &gt;= 18);</a>
+<a name="217"><span class="lineNumber">     217 </span>  /// // adult is person if age &gt;= 18, null otherwise</a>
+<a name="218"><span class="lineNumber">     218 </span>  /// ```</a>
+<a name="219"><span class="lineNumber">     219 </span>  T? takeIf(bool condition) {</a>
+<a name="220"><button class="collapsible hit"><pre class="fileContents"><span class="lineNumber">     220 </span>    if (condition) return this;</pre></button>
+<div class="content">
+<b>Detected mutations:</b>
+<table class="mutationTable" width="100%">
+<tr><td class="mutationLabel" width="5%">1 :</td><td class="mutationText" width="87%"><span class="addedLine">+    <span class="changedTokens"> if (!(condition) return this;
+
+    return null;
+  }
+
+  /// Returns this value if [predicate] returns true for it, otherwise null.
+  ///
+  /// A lazy predicate-based check that evaluates the condition using
+  /// the value itself. Useful for conditional filtering based on the
+  /// value's properties.
+  ///
+  /// Example:
+  /// ```dart
+  /// final validAge = age.takeIfLazy((a) =&gt; a &gt;= 18 &amp;&amp; a &lt;= 120);
+  /// ```
+  T? takeIfLazy(bool Function(T value) predicate)) {</span></span></td><td class="match">RegExp: pattern=[\s]if[\s]*\((.*?)\)[\s]*{ flags=ms<span class="tooltip">Id: builtin.if</span></td></tr></table>
+
+</div></a><a name="221"><span class="lineNumber">     221 </span></a>
+<a name="222"><span class="lineNumber">     222 </span>    return null;</a>
+<a name="223"><span class="lineNumber">     223 </span>  }</a>
+<a name="224"><span class="lineNumber">     224 </span></a>
+<a name="225"><span class="lineNumber">     225 </span>  /// Returns this value if [predicate] returns true for it, otherwise null.</a>
+<a name="226"><span class="lineNumber">     226 </span>  ///</a>
+<a name="227"><span class="lineNumber">     227 </span>  /// A lazy predicate-based check that evaluates the condition using</a>
+<a name="228"><span class="lineNumber">     228 </span>  /// the value itself. Useful for conditional filtering based on the</a>
+<a name="229"><span class="lineNumber">     229 </span>  /// value's properties.</a>
+<a name="230"><span class="lineNumber">     230 </span>  ///</a>
+<a name="231"><span class="lineNumber">     231 </span>  /// Example:</a>
+<a name="232"><span class="lineNumber">     232 </span>  /// ```dart</a>
+<a name="233"><span class="lineNumber">     233 </span>  /// final validAge = age.takeIfLazy((a) =&gt; a &gt;= 18 &amp;&amp; a &lt;= 120);</a>
+<a name="234"><span class="lineNumber">     234 </span>  /// ```</a>
+<a name="235"><span class="lineNumber">     235 </span>  T? takeIfLazy(bool Function(T value) predicate) {</a>
+<a name="236"><button class="collapsible hit"><pre class="fileContents"><span class="lineNumber">     236 </span>    if (predicate(this)) return this;</pre></button>
+<div class="content">
+<b>Detected mutations:</b>
+<table class="mutationTable" width="100%">
+<tr><td class="mutationLabel" width="5%">1 :</td><td class="mutationText" width="87%"><span class="addedLine">+    <span class="changedTokens"> if (!(predicate(this)) return this;
+
+    return null;
+  }
+
+  /// Returns this value if [condition] is false, otherwise null.
+  ///
+  /// The opposite of [takeIf]. Useful for negated conditions.
+  ///
+  /// Example:
+  /// ```dart
+  /// final notEmpty = text.takeUnless(text.isEmpty);
+  /// // Returns text if it's not empty, null if empty
+  /// ```
+  T? takeUnless(bool condition)) {</span></span></td><td class="match">RegExp: pattern=[\s]if[\s]*\((.*?)\)[\s]*{ flags=ms<span class="tooltip">Id: builtin.if</span></td></tr></table>
+
+</div></a><a name="237"><span class="lineNumber">     237 </span></a>
+<a name="238"><span class="lineNumber">     238 </span>    return null;</a>
+<a name="239"><span class="lineNumber">     239 </span>  }</a>
+<a name="240"><span class="lineNumber">     240 </span></a>
+<a name="241"><span class="lineNumber">     241 </span>  /// Returns this value if [condition] is false, otherwise null.</a>
+<a name="242"><span class="lineNumber">     242 </span>  ///</a>
+<a name="243"><span class="lineNumber">     243 </span>  /// The opposite of [takeIf]. Useful for negated conditions.</a>
+<a name="244"><span class="lineNumber">     244 </span>  ///</a>
+<a name="245"><span class="lineNumber">     245 </span>  /// Example:</a>
+<a name="246"><span class="lineNumber">     246 </span>  /// ```dart</a>
+<a name="247"><span class="lineNumber">     247 </span>  /// final notEmpty = text.takeUnless(text.isEmpty);</a>
+<a name="248"><span class="lineNumber">     248 </span>  /// // Returns text if it's not empty, null if empty</a>
+<a name="249"><span class="lineNumber">     249 </span>  /// ```</a>
+<a name="250"><span class="lineNumber">     250 </span>  T? takeUnless(bool condition) {</a>
+<a name="251"><button class="collapsible hit"><pre class="fileContents"><span class="lineNumber">     251 </span>    if (!condition) return this;</pre></button>
+<div class="content">
+<b>Detected mutations:</b>
+<table class="mutationTable" width="100%">
+<tr><td class="mutationLabel" width="5%">1 :</td><td class="mutationText" width="87%"><span class="addedLine">+    <span class="changedTokens"> if (!(!condition) return this;
+
+    return null;
+  }
+
+  /// Returns this value if [predicate] returns false for it, otherwise null.
+  ///
+  /// The opposite of [takeIfLazy]. Useful for negated predicate conditions.
+  ///
+  /// Example:
+  /// ```dart
+  /// final validNumber = input.takeUnlessLazy((n) =&gt; n &lt; 0);
+  /// // Returns input if it's not negative, null if negative
+  /// ```
+  T? takeUnlessLazy(bool Function(T value) predicate)) {</span></span></td><td class="match">RegExp: pattern=[\s]if[\s]*\((.*?)\)[\s]*{ flags=ms<span class="tooltip">Id: builtin.if</span></td></tr></table>
+
+</div></a><a name="252"><span class="lineNumber">     252 </span></a>
+<a name="253"><span class="lineNumber">     253 </span>    return null;</a>
+<a name="254"><span class="lineNumber">     254 </span>  }</a>
+<a name="255"><span class="lineNumber">     255 </span></a>
+<a name="256"><span class="lineNumber">     256 </span>  /// Returns this value if [predicate] returns false for it, otherwise null.</a>
+<a name="257"><span class="lineNumber">     257 </span>  ///</a>
+<a name="258"><span class="lineNumber">     258 </span>  /// The opposite of [takeIfLazy]. Useful for negated predicate conditions.</a>
+<a name="259"><span class="lineNumber">     259 </span>  ///</a>
+<a name="260"><span class="lineNumber">     260 </span>  /// Example:</a>
+<a name="261"><span class="lineNumber">     261 </span>  /// ```dart</a>
+<a name="262"><span class="lineNumber">     262 </span>  /// final validNumber = input.takeUnlessLazy((n) =&gt; n &lt; 0);</a>
+<a name="263"><span class="lineNumber">     263 </span>  /// // Returns input if it's not negative, null if negative</a>
+<a name="264"><span class="lineNumber">     264 </span>  /// ```</a>
+<a name="265"><span class="lineNumber">     265 </span>  T? takeUnlessLazy(bool Function(T value) predicate) {</a>
+<a name="266"><span class="lineNumber">     266 </span>    if (!predicate(this)) return this;</a>
+<a name="267"><span class="lineNumber">     267 </span></a>
+<a name="268"><span class="lineNumber">     268 </span>    return null;</a>
+<a name="269"><span class="lineNumber">     269 </span>  }</a>
+<a name="270"><span class="lineNumber">     270 </span>}</a>
+<a name="271"><span class="lineNumber">     271 </span></a>
+</pre>
+<script>
+var coll = document.getElementsByClassName("collapsible");
+var i;
+
+for (i = 0; i < coll.length; i++) {
+  coll[i].addEventListener("click", function() {
+    this.classList.toggle("active");
+    var content = this.nextElementSibling;
+    if (content.style.maxHeight){
+      content.style.maxHeight = null;
+    } else {
+      content.style.maxHeight = content.scrollHeight + "px";
+    }
+	for (k = 0; k < coll.length; k++) {
+      var content2 = coll[k].nextElementSibling;
+      if (content2.style.maxHeight && content.parentElement == content2){
+      content2.style.maxHeight = content2.scrollHeight + content.scrollHeight + "px";
+    }
+      
+    }
+    
+  });
+}
+</script><table width ="100%" cellspacing="0" border="0">
+  <tr><td><hr class="ruler"/></td></tr>
+  <tr><td class="footer">Generated by mutation-test version: 1.8.0</td></tr>
+</table>
+</body>
+</html>
