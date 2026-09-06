@@ -19,8 +19,8 @@ final class None<T extends Object?> extends Option<T> {
 sealed class Option<T extends Object?> {
   const Option();
 
-  const factory Option.none() = None;
-  const factory Option.some(T value) = Some;
+  const factory Option.none() = None<T>;
+  const factory Option.some(T value) = Some<T>;
 }
 
 @immutable
