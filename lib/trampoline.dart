@@ -62,8 +62,8 @@ sealed class Bounce<T extends Object?> {
 ///
 /// Example:
 /// ```dart
-/// final result = Done(42);
-/// // Trampoline will extract and return 42
+/// final result = Done(30);
+/// // Trampoline will extract and return 30
 /// ```
 final class Done<T extends Object?> extends Bounce<T> {
   /// Creates a completed result with the given [value].

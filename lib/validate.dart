@@ -2,7 +2,7 @@
 library;
 
 import 'package:collection/collection.dart';
-import 'package:dev_utils/result.dart';
+import 'package:dey_dev_utils/result.dart';
 import 'package:meta/meta.dart';
 
 /// Represents a failed validation with accumulated error messages.

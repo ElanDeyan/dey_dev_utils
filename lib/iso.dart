@@ -1,7 +1,7 @@
 @experimental
 library;
 
-import 'package:dev_utils/lens.dart';
+import 'package:dey_dev_utils/lens.dart';
 import 'package:meta/meta.dart';
 
 /// An isomorphism: a reversible transformation between two types.
@@ -30,9 +30,9 @@ import 'package:meta/meta.dart';
 /// );
 ///
 /// // Use it
-/// assert(stringToInt.to('42') == 42);
-/// assert(stringToInt.from(42) == '42');
-/// assert(stringToInt.from(stringToInt.to('42')) == '42'); // Round-trip
+/// assert(stringToInt.to('30') == 30);
+/// assert(stringToInt.from(30) == '30');
+/// assert(stringToInt.from(stringToInt.to('30')) == '30'); // Round-trip
 /// ```
 @experimental
 final class Iso<A extends Object?, B extends Object?> {
@@ -87,8 +87,8 @@ final class Iso<A extends Object?, B extends Object?> {
   /// ```dart
   /// final iso = Iso(to: int.parse, from: (i) => i.toString());
   /// final inv = iso.inverse;
-  /// assert(inv.to(42) == '42');
-  /// assert(inv.from('42') == 42);
+  /// assert(inv.to(30) == '30');
+  /// assert(inv.from('30') == 30);
   /// ```
   Iso<B, A> get inverse => Iso(to: from, from: to);
 
