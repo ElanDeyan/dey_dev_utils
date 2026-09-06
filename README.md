@@ -3,10 +3,7 @@
 Small, focused utilities for Dart development, with explicit APIs for common
 functional programming and control-flow patterns.
 
-This package is also a place to explore ideas with AI assistance. AI can help
-with development concepts, suggest classes and utilities, explain trade-offs,
-and help implement or test those ideas. The package itself has no AI runtime
-dependency: the AI guidance lives in the repository's skills and documentation.
+This package is also a place to explore ideas with AI assistance (many of things here came up from there). AI can help with development concepts, suggest classes and utilities, explain trade-offs, and help implement or test those ideas. The package itself has no AI runtime dependency: the AI guidance lives in the repository's skills and documentation.
 
 ## Features
 
