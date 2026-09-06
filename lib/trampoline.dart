@@ -50,6 +50,9 @@ T trampoline<T>(Bounce<T> bounce) {
 /// ensuring type safety in the trampoline execution.
 sealed class Bounce<T extends Object?> {
   const Bounce();
+
+  const factory Bounce.done(T value) = Done<T>;
+  const factory Bounce.more(Bounce<T> Function() action) = More<T>;
 }
 
 /// Represents the final result of a bouncing computation.
@@ -62,7 +65,7 @@ sealed class Bounce<T extends Object?> {
 /// final result = Done(42);
 /// // Trampoline will extract and return 42
 /// ```
-class Done<T extends Object?> extends Bounce<T> {
+final class Done<T extends Object?> extends Bounce<T> {
   /// Creates a completed result with the given [value].
   const Done(this.value);
 
@@ -82,7 +85,7 @@ class Done<T extends Object?> extends Bounce<T> {
 /// return More(() => nextBounce(n - 1));
 /// // Instead of: return nextBounce(n - 1);
 /// ```
-class More<T extends Object?> extends Bounce<T> {
+final class More<T extends Object?> extends Bounce<T> {
   /// Creates a pending computation with the given [next] thunk.
   ///
   /// The [next] function will be called by the trampoline to get the
