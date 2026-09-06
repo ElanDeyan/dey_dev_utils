@@ -1,6 +1,6 @@
 ## 0.1.0-dev.1
 
-First public prerelease of `dev_utils`.
+First public prerelease of `dey_dev_utils`.
 
 - Added typed `Result` handling with `Ok`, `Err`, guards, transformations, and
 	extraction helpers.

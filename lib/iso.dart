@@ -1,7 +1,7 @@
 @experimental
 library;
 
-import 'package:dev_utils/lens.dart';
+import 'package:dey_dev_utils/lens.dart';
 import 'package:meta/meta.dart';
 
 /// An isomorphism: a reversible transformation between two types.

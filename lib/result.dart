@@ -1,4 +1,4 @@
-import 'package:dev_utils/option.dart';
+import 'package:dey_dev_utils/option.dart';
 import 'package:meta/meta.dart';
 
 /// A result type that captures either a successful value or any error.

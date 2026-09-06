@@ -1,4 +1,4 @@
-# dev_utils
+# dey_dev_utils
 
 Small, focused utilities for Dart development, with explicit APIs for common
 functional programming and control-flow patterns.
