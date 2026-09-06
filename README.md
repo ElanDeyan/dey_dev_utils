@@ -42,7 +42,7 @@ dart pub get
 There is currently no umbrella library. Import the utility you need directly:
 
 ```dart
-import 'package:dev_utils/result.dart';
+import 'package:dey_dev_utils/result.dart';
 ```
 
 ## Usage
@@ -53,7 +53,7 @@ Use `Result<T, E>` when an operation can fail and the failure should remain
 visible in its return type:
 
 ```dart
-import 'package:dev_utils/result.dart';
+import 'package:dey_dev_utils/result.dart';
 
 Result<int, FormatException> parseNumber(String input) {
 	final value = int.tryParse(input);
@@ -75,7 +75,7 @@ errors to propagate.
 Scope utilities support readable transformations and resource cleanup:
 
 ```dart
-import 'package:dev_utils/scope.dart';
+import 'package:dey_dev_utils/scope.dart';
 
 final label = 21
 		.let((value) => value * 2)
@@ -95,7 +95,7 @@ Use `applyIf` for type-preserving conditional changes and `takeIf` or
 ### Readable comparisons
 
 ```dart
-import 'package:dev_utils/comparison.dart';
+import 'package:dey_dev_utils/comparison.dart';
 
 final ordering = 3.compareWith(5);
 if (ordering == Comparison.less) {
@@ -111,7 +111,7 @@ Build each next step lazily with `Bounce.more`, then evaluate the chain with
 `trampoline`:
 
 ```dart
-import 'package:dev_utils/trampoline.dart';
+import 'package:dey_dev_utils/trampoline.dart';
 
 Bounce<int> sumDown(int value, int total) {
 	if (value == 0) return Bounce.done(total);

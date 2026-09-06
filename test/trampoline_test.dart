@@ -1,5 +1,5 @@
 import 'package:checks/checks.dart';
-import 'package:dev_utils/trampoline.dart';
+import 'package:dey_dev_utils/trampoline.dart';
 import 'package:test/test.dart';
 
 void main() {

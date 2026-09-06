@@ -1,3 +1,11 @@
+## 0.1.0-dev.2
+
+- Renamed the package from `dev_utils` to `dey_dev_utils` because the original
+	name was already registered on pub.dev.
+- Updated README installation examples and imports to use `dey_dev_utils`.
+- Added pub.dev topics for Dart development tools, functional programming,
+	error handling, and validation.
+
 ## 0.1.0-dev.1
 
 First public prerelease of `dey_dev_utils`.

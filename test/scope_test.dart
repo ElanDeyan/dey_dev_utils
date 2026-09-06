@@ -1,5 +1,5 @@
 import 'package:checks/checks.dart';
-import 'package:dev_utils/scope.dart';
+import 'package:dey_dev_utils/scope.dart';
 import 'package:test/test.dart';
 
 String? nullableString(bool returnNull) => returnNull ? null : 'value';
