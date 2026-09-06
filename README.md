@@ -28,9 +28,8 @@ Requires Dart SDK `3.11.5` or newer.
 
 Add the package to your project:
 
-```yaml
-dependencies:
-	dev_utils: ^0.1.0-dev.1
+```sh
+dart pub add dey_dev_utils
 ```
 
 Then run:
@@ -186,5 +185,5 @@ intentionally not covered by the same stability promise as the tested core.
 
 ## License
 
-`dev_utils` is available under the [MIT License](LICENSE). Copyright (c) 2026
+`dey_dev_utils` is available under the [MIT License](LICENSE). Copyright (c) 2026
 ElanDeyan.

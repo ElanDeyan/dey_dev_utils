@@ -1,3 +1,7 @@
+## 0.1.0-dev.2+1
+
+- Fixes missing renaming of package from `dev_utils` to `dey_dev_utils` in README.
+
 ## 0.1.0-dev.2
 
 - Renamed the package from `dev_utils` to `dey_dev_utils` because the original
