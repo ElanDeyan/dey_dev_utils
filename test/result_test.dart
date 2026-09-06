@@ -6,18 +6,18 @@ import 'package:test/scaffolding.dart';
 void main() {
   group('Ok and Err', () {
     test('constructors expose values and errors', () {
-      const ok = Ok<int, String>(42);
+      const ok = Ok<int, String>(30);
       final err = Err<int, String>('failed', StackTrace.empty);
 
-      check(ok.value).equals(42);
+      check(ok.value).equals(30);
       check(err.error).equals('failed');
       check(err.stackTrace).equals(StackTrace.empty);
-      check(ok.toString()).equals('Ok<int, String>(value: 42)');
+      check(ok.toString()).equals('Ok<int, String>(value: 30)');
       check(err.toString()).equals('Err<int, String>(error: failed)');
     });
 
     test('factory constructors create the expected variants', () {
-      check(const Result<int, String>.ok(42)).equals(const Ok<int, String>(42));
+      check(const Result<int, String>.ok(30)).equals(const Ok<int, String>(30));
       check(Result<int, String>.err('failed')).isA<Err<int, String>>();
     });
 
@@ -43,10 +43,10 @@ void main() {
 
   group('Result state accessors', () {
     test('ok exposes success and err exposes failure', () {
-      const success = Ok<int, String>(42);
+      const success = Ok<int, String>(30);
       final failure = Err<int, String>('failed');
 
-      check(success.ok).equals(42);
+      check(success.ok).equals(30);
       check(success.err).isNull();
       check(failure.ok).isNull();
       check(failure.err).equals('failed');
@@ -209,13 +209,13 @@ void main() {
       final recovered = Err<int, String>('failed', trace).orElse((error, st) {
         observedError = error;
         observedTrace = st;
-        return const Ok(42);
+        return const Ok(30);
       });
       final success = const Ok<int, String>(7).orElse((error, st) {
         throw StateError('callback should not run');
       });
 
-      check(recovered).equals(const Ok<int, int>(42));
+      check(recovered).equals(const Ok<int, int>(30));
       check(observedError).equals('failed');
       check(observedTrace).equals(trace);
       check(success).equals(const Ok<int, String>(7));
@@ -223,8 +223,8 @@ void main() {
 
     test('flatten removes one nested result layer', () {
       check(
-        const Ok<Result<int, String>, String>(Ok(42)).flatten(),
-      ).equals(const Ok<int, String>(42));
+        const Ok<Result<int, String>, String>(Ok(30)).flatten(),
+      ).equals(const Ok<int, String>(30));
       check(
         Ok<Result<int, String>, String>(Err('inner')).flatten(),
       ).equals(Err<int, String>('inner'));
@@ -240,7 +240,7 @@ void main() {
 
   group('Result extraction', () {
     test('unwrap returns success and throws original error', () {
-      check(const Ok<int, String>(42).unwrap()).equals(42);
+      check(const Ok<int, String>(30).unwrap()).equals(30);
       final error = StateError('failed');
       final result = Err<int, StateError>(error, StackTrace.empty);
 
@@ -275,7 +275,7 @@ void main() {
     });
 
     test('expect returns success and throws an exception for errors', () {
-      check(const Ok<int, String>(42).expect('unused')).equals(42);
+      check(const Ok<int, String>(30).expect('unused')).equals(30);
       check(() => Err<int, String>('failed').expect('must succeed'))
           .throws<Exception>()
           .has((error) => error.toString(), 'message')
@@ -284,7 +284,7 @@ void main() {
 
     test('expectErr returns errors and throws for successes', () {
       check(Err<int, String>('failed').expectErr('unused')).equals('failed');
-      check(() => const Ok<int, String>(42).expectErr('must fail'))
+      check(() => const Ok<int, String>(30).expectErr('must fail'))
           .throws<Exception>()
           .has((error) => error.toString(), 'message')
           .contains('must fail');
@@ -292,25 +292,25 @@ void main() {
 
     test('fallback extraction methods use the correct branch', () {
       final failure = Err<int, String>('failed');
-      const success = Ok<int, String>(42);
+      const success = Ok<int, String>(30);
 
-      check(success.unwrapOr(0)).equals(42);
+      check(success.unwrapOr(0)).equals(30);
       check(failure.unwrapOr(0)).equals(0);
-      check(success.unwrapOrElse((_) => 0)).equals(42);
+      check(success.unwrapOrElse((_) => 0)).equals(30);
       check(failure.unwrapOrElse((error) => error.length)).equals(6);
-      check(success.unwrapOrNull()).equals(42);
+      check(success.unwrapOrNull()).equals(30);
       check(failure.unwrapOrNull()).isNull();
     });
   });
 
   group('Result predicates and inspection', () {
     test('isOkAnd and isErrAnd evaluate only matching values', () {
-      const success = Ok<int, String>(42);
+      const success = Ok<int, String>(30);
       final failure = Err<int, String>('failed');
 
-      check(success.isOkAnd((value) => value == 42)).isTrue();
+      check(success.isOkAnd((value) => value == 30)).isTrue();
       check(success.isOkAnd((value) => value == 0)).isFalse();
-      check(failure.isOkAnd((value) => value == 42)).isFalse();
+      check(failure.isOkAnd((value) => value == 30)).isFalse();
       check(failure.isErrAnd((error) => error == 'failed')).isTrue();
       check(failure.isErrAnd((error) => error == 'other')).isFalse();
       check(success.isErrAnd((error) => error == 'failed')).isFalse();
@@ -320,7 +320,7 @@ void main() {
       Object? observedError;
       int? observedValue;
       final failure = Err<int, String>('failed');
-      const success = Ok<int, String>(42);
+      const success = Ok<int, String>(30);
 
       check(
         identical(
@@ -341,18 +341,18 @@ void main() {
         identical(failure.inspectOk((value) => observedValue = value), failure),
       ).isTrue();
       check(observedError).equals('failed');
-      check(observedValue).equals(42);
+      check(observedValue).equals(30);
     });
   });
 
   group('Result conversion and copying', () {
     test('toOption converts successes to Some and errors to None', () {
-      check(const Ok<int, String>(42).toOption()).equals(const Some<int>(42));
+      check(const Ok<int, String>(30).toOption()).equals(const Some<int>(30));
       check(Err<int, String>('failed').toOption()).isA<None<int>>();
     });
 
     test('clone creates an equivalent wrapper and preserves trace', () {
-      const success = Ok<int, String>(42);
+      const success = Ok<int, String>(30);
       final trace = StackTrace.current;
       final failure = Err<int, String>('failed', trace);
       final clonedSuccess = success.clone();
@@ -372,8 +372,8 @@ void main() {
   group('Result guards', () {
     test('guardSync returns Ok for values and catches configured errors', () {
       check(
-        Result<int, FormatException>.guardSync(() => 42),
-      ).equals(const Ok<int, FormatException>(42));
+        Result<int, FormatException>.guardSync(() => 30),
+      ).equals(const Ok<int, FormatException>(30));
       final result = Result<int, FormatException>.guardSync(() {
         throw const FormatException('bad input');
       });
@@ -411,8 +411,8 @@ void main() {
 
     test('guardExceptionSync catches exceptions but not errors', () {
       check(
-        Result.guardExceptionSync<int, FormatException>(() => 42),
-      ).equals(const Ok<int, FormatException>(42));
+        Result.guardExceptionSync<int, FormatException>(() => 30),
+      ).equals(const Ok<int, FormatException>(30));
       check(
         Result.guardExceptionSync<int, FormatException>(() {
           throw const FormatException('bad input');
@@ -432,13 +432,13 @@ void main() {
 
     test('guardAsync returns Ok and catches configured errors', () async {
       final success = await Result.guardAsync<int, FormatException>(() async {
-        return 42;
+        return 30;
       });
       final failure = await Result.guardAsync<int, FormatException>(() async {
         throw const FormatException('bad input');
       });
 
-      check(success).equals(const Ok<int, FormatException>(42));
+      check(success).equals(const Ok<int, FormatException>(30));
       check(failure).isA<Err<int, FormatException>>();
     });
 
@@ -452,13 +452,13 @@ void main() {
 
     test('guardExceptionAsync catches exceptions but not errors', () async {
       final success = await Result.guardExceptionAsync<int, FormatException>(
-        () async => 42,
+        () async => 30,
       );
       final result = await Result.guardExceptionAsync<int, FormatException>(
         () async => throw const FormatException('bad input'),
       );
 
-      check(success).equals(const Ok<int, FormatException>(42));
+      check(success).equals(const Ok<int, FormatException>(30));
       check(result).isA<Err<int, FormatException>>();
       await check(
         Result.guardExceptionAsync<int, FormatException>(

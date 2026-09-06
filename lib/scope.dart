@@ -82,10 +82,10 @@ extension AlsoExtension<T extends Object> on T {
   ///
   /// Example:
   /// ```dart
-  /// final number = 42
+  /// final number = 30
   ///   .also((n) => print('Value is: $n'));
-  /// // Prints: Value is: 42
-  /// // number is still 42
+  /// // Prints: Value is: 30
+  /// // number is still 30
   /// ```
   T also(void Function(T value) block) {
     block(this);

@@ -7,7 +7,7 @@ String? nullableString(bool returnNull) => returnNull ? null : 'value';
 void main() {
   group('run', () {
     test('returns the block result', () {
-      check(run(() => 42)).equals(42);
+      check(run(() => 30)).equals(30);
     });
 
     test('propagates block exceptions', () {
@@ -25,10 +25,10 @@ void main() {
 
       final result = use(resource, (_) {
         events.add('block');
-        return 42;
+        return 30;
       }, dispose: (_) => events.add('dispose'));
 
-      check(result).equals(42);
+      check(result).equals(30);
       check(events).deepEquals(['block', 'dispose']);
     });
 
@@ -72,7 +72,7 @@ void main() {
 
     test('propagates callback exceptions', () {
       expect(
-        () => 42.also((_) => throw StateError('failed')),
+        () => 30.also((_) => throw StateError('failed')),
         throwsStateError,
       );
     });
@@ -142,25 +142,25 @@ void main() {
 
   group('takeIf and takeUnless', () {
     test('return the value according to boolean conditions', () {
-      check(42.takeIf(true)).equals(42);
-      check(42.takeIf(false)).isNull();
-      check(42.takeUnless(false)).equals(42);
-      check(42.takeUnless(true)).isNull();
+      check(30.takeIf(true)).equals(30);
+      check(30.takeIf(false)).isNull();
+      check(30.takeUnless(false)).equals(30);
+      check(30.takeUnless(true)).isNull();
     });
 
     test('return the value according to lazy predicates', () {
       var calls = 0;
 
       check(
-        42.takeIfLazy((value) {
+        30.takeIfLazy((value) {
           calls++;
-          return value == 42;
+          return value == 30;
         }),
-      ).equals(42);
+      ).equals(30);
       check(
-        42.takeUnlessLazy((value) {
+        30.takeUnlessLazy((value) {
           calls++;
-          return value == 42;
+          return value == 30;
         }),
       ).isNull();
       check(calls).equals(2);

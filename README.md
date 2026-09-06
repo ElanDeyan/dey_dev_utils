@@ -61,7 +61,7 @@ Result<int, FormatException> parseNumber(String input) {
 			: Ok(value);
 }
 
-final result = parseNumber('42');
+final result = parseNumber('30');
 final number = result.unwrapOr(0);
 ```
 

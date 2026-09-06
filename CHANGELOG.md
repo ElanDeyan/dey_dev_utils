@@ -1,3 +1,7 @@
+## 0.1.0-dev.2+2
+
+- Replaces 42 with 30.
+
 ## 0.1.0-dev.2+1
 
 - Fixes missing renaming of package from `dev_utils` to `dey_dev_utils` in README.

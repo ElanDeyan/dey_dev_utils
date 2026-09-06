@@ -146,7 +146,7 @@ sealed class Result<T extends Object?, E extends Object> {
   /// Example:
   /// ```dart
   /// final result = Result<int, FormatException>.guardSync(
-  ///   () => int.parse('42'),
+  ///   () => int.parse('30'),
   /// );
   /// ```
   factory Result.guardSync(T Function() block) {
@@ -644,8 +644,8 @@ extension FlattenResultExtension<T extends Object?, E extends Object>
   ///
   /// Example:
   /// ```dart
-  /// final nested = Ok(Ok(42));
-  /// final flat = nested.flatten(); // Ok(42)
+  /// final nested = Ok(Ok(30));
+  /// final flat = nested.flatten(); // Ok(30)
   ///
   /// final nested2 = Ok(Err('error'));
   /// final flat2 = nested2.flatten(); // Err('error')
