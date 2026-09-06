@@ -21,14 +21,14 @@ enum Comparison {
   equal,
 
   /// Indicates the first value is greater than the second.
-  higher;
+  greater;
 
   /// Converts this comparison result to its integer representation.
   ///
   /// Returns:
   /// - `-1` for [less]
   /// - `0` for [equal]
-  /// - `1` for [higher]
+  /// - `1` for [greater]
   ///
   /// This representation is compatible with standard comparison functions
   /// like those in sorting algorithms or [Comparable.compareTo].
@@ -37,12 +37,12 @@ enum Comparison {
   /// ```dart
   /// Comparison.less.asInt();   // -1
   /// Comparison.equal.asInt();  // 0
-  /// Comparison.higher.asInt(); // 1
+  /// Comparison.greater.asInt(); // 1
   /// ```
   int asInt() => switch (this) {
     .less => -1,
     .equal => 0,
-    .higher => 1,
+    .greater => 1,
   };
 }
 
@@ -64,7 +64,7 @@ enum Comparison {
 ///   print('apple is less than banana');
 /// }
 /// ```
-extension ComparableResult<T extends Object> on Comparable<T> {
+extension ComparableExtensions<T extends Object> on Comparable<T> {
   /// Compares this value with another value of the same type.
   ///
   /// Returns a [Comparison] enum indicating the relationship between
@@ -79,12 +79,12 @@ extension ComparableResult<T extends Object> on Comparable<T> {
   /// Returns:
   /// - [Comparison.less] if this value is less than [other]
   /// - [Comparison.equal] if this value equals [other]
-  /// - [Comparison.higher] if this value is greater than [other]
+  /// - [Comparison.greater] if this value is greater than [other]
   ///
   /// Example:
   /// ```dart
   /// final comparison = 5.compareWith(3);
-  /// assert(comparison == Comparison.higher);
+  /// assert(comparison == Comparison.greater);
   ///
   /// if (name.compareWith('Alice') == Comparison.less) {
   ///   print('Name comes before Alice');
@@ -96,7 +96,7 @@ extension ComparableResult<T extends Object> on Comparable<T> {
     return switch (result) {
       < 0 => .less,
       == 0 => .equal,
-      > 0 => .higher,
+      > 0 => .greater,
       _ => throw Exception('Impossible case'),
     };
   }
@@ -120,10 +120,10 @@ extension ComparableResult<T extends Object> on Comparable<T> {
   ///
   /// Example:
   /// ```dart
-  /// assert(10.isHigherThan(5) == true);
-  /// assert(5.isHigherThan(10) == false);
+  /// assert(10.isGreaterThan(5) == true);
+  /// assert(5.isGreaterThan(10) == false);
   /// ```
-  bool isHigherThan(T other) => compareWith(other) == .higher;
+  bool isGreaterThan(T other) => compareWith(other) == .greater;
 
   /// Checks if this value is greater than or equal to [other].
   ///
@@ -131,14 +131,14 @@ extension ComparableResult<T extends Object> on Comparable<T> {
   ///
   /// Example:
   /// ```dart
-  /// assert(10.isHigherThanOrEqualTo(10) == true);
-  /// assert(10.isHigherThanOrEqualTo(5) == true);
-  /// assert(5.isHigherThanOrEqualTo(10) == false);
+  /// assert(10.isGreaterThanOrEqualTo(10) == true);
+  /// assert(10.isGreaterThanOrEqualTo(5) == true);
+  /// assert(5.isGreaterThanOrEqualTo(10) == false);
   /// ```
-  bool isHigherThanOrEqualTo(T other) {
+  bool isGreaterThanOrEqualTo(T other) {
     final result = compareWith(other);
 
-    return result == .higher || result == .equal;
+    return result == .greater || result == .equal;
   }
 
   /// Checks if this value is less than [other].
