@@ -19,7 +19,8 @@ R run<R extends Object?>(R Function() block) => block();
 ///
 /// This implements the resource management pattern (similar to try-with-resources
 /// in Java). The [block] function is called with [value], and [dispose] is
-/// guaranteed to be called in a finally block, regardless of success or exception.
+/// is called in a `finally` block, regardless of whether the block succeeds or
+/// throws.
 ///
 /// Use this for:
 /// - File/stream handling
@@ -31,6 +32,9 @@ R run<R extends Object?>(R Function() block) => block();
 /// - [value]: The resource to use
 /// - [block]: Function that uses the resource and returns a result
 /// - [dispose]: Optional cleanup function called in finally
+///
+/// If both [block] and [dispose] throw, the exception from [dispose] replaces
+/// the exception from [block], as with a Dart `finally` clause.
 ///
 /// Example:
 /// ```dart
@@ -73,9 +77,8 @@ R use<R extends Object?, T extends Object?>(
 extension AlsoExtension<T extends Object> on T {
   /// Executes a side effect block and returns this value unchanged.
   ///
-  /// The [block] is guaranteed to execute even if subsequent code throws,
-  /// as it runs in a finally block. Returns this value regardless of what
-  /// [block] does.
+  /// If [block] throws, the exception propagates and this value is not
+  /// returned.
   ///
   /// Example:
   /// ```dart
@@ -114,9 +117,8 @@ extension ApplyExtension<T extends Object> on T {
   /// Conditionally transforms this value and returns the result.
   ///
   /// If [condition] is true, applies the [block] transformation to this value
-  /// and returns the result. Otherwise, returns this value unchanged.
-  /// The [block] function always receives this value and can return any
-  /// transformation of it.
+  /// and returns the result. Otherwise, returns this value unchanged. The
+  /// [block] must return another value of the same type [T].
   ///
   /// Use this for simple boolean conditions where you have a transform to apply
   /// if the condition is true.
@@ -167,30 +169,6 @@ extension ApplyExtension<T extends Object> on T {
     if (predicate(this)) {
       return block(this);
     }
-
-    return this;
-  }
-}
-
-/// Extension for inspecting values for debugging purposes.
-///
-/// **Note:** This extension is functionally identical to [AlsoExtension.also].
-/// Use this when semantically you want to "inspect" or "examine" a value
-/// for debugging, while use [also] for general side effects.
-extension InspectExtension<T extends Object> on T {
-  /// Executes an inspection function and returns this value unchanged.
-  ///
-  /// Intended for debugging and logging without transforming the value.
-  /// The [block] is guaranteed to execute in a finally block.
-  ///
-  /// Example:
-  /// ```dart
-  /// final result = getData()
-  ///   .inspect((data) => debugPrint('Data: $data'))
-  ///   .processData();
-  /// ```
-  T inspect(void Function(T value) block) {
-    block(this);
 
     return this;
   }
