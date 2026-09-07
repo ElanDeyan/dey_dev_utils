@@ -1,0 +1,5 @@
+# Repository and CI metadata
+.github/
+
+# Generated mutation-testing reports
+mutation-test-report/

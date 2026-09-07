@@ -1,3 +1,13 @@
+## 0.1.0-dev.2+3
+
+- Adds Dart CI for formatting, analysis, and tests on pushes, pull requests,
+  and releases.
+- Adds mutation testing with downloadable CI reports.
+- Adds automated pub.dev publication after a verified GitHub release.
+- Excludes generated mutation reports from the published package.
+- Finishes to replace 42 with 30.
+- Removes dart topic in pubspec.
+
 ## 0.1.0-dev.2+2
 
 - Replaces 42 with 30.

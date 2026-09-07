@@ -84,7 +84,7 @@ distinction matters.
 ## Examples
 
 ```dart
-final doubled = 21.let((value) => value * 2);
+final doubled = 30.let((value) => value * 2);
 
 final logged = response.also((value) {
 	print('Received: $value');
