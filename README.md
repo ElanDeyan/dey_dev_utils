@@ -76,7 +76,7 @@ Scope utilities support readable transformations and resource cleanup:
 ```dart
 import 'package:dey_dev_utils/scope.dart';
 
-final label = 21
+final label = 30
 		.let((value) => value * 2)
 		.also((value) => print('Computed: $value'))
 		.toString();
