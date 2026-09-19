@@ -1,6 +1,3 @@
-@experimental
-library;
-
 import 'package:meta/meta.dart';
 
 /// The Specification Pattern: compose business rules as reusable, testable predicates.
@@ -20,7 +17,13 @@ import 'package:meta/meta.dart';
 /// - `&` / [and] — Both must be satisfied (AND logic)
 /// - `|` / [or] — At least one must be satisfied (OR logic)
 /// - `^` / [xor] — Exactly one must be satisfied, not both (XOR logic)
-/// - [toNegated] — Inverts the rule (NOT logic)
+/// - [nand] — At least one must not be satisfied (NAND logic)
+/// - [nor] — Neither must be satisfied (NOR logic)
+/// - [xnor] — Both must have the same satisfaction state (XNOR logic)
+/// - [toNegated] or `~` — Inverts the rule (NOT logic)
+///
+/// AND, OR, NAND, and NOR use left-to-right short-circuit evaluation. XOR and
+/// XNOR evaluate both operands because both results are needed.
 ///
 /// **Creating a Spec:**
 /// ```dart
@@ -52,9 +55,25 @@ import 'package:meta/meta.dart';
 /// // Complex compositions
 /// final canReceiveNewsletter = HasValidEmail() & (IsEligibleVoter() | HasOptedIn());
 /// ```
-@experimental
-sealed class Spec<T> {
+
+@immutable
+abstract base class Spec<T> {
+  /// Creates a specification.
   const Spec();
+
+  /// Creates a spec from [predicate].
+  ///
+  /// The predicate is called with each candidate passed to [isSatisfiedBy] or
+  /// [call]. The predicate is evaluated each time the spec is evaluated; its
+  /// result is not cached.
+  const factory Spec.predicate(bool Function(T candidate) predicate) =
+      _Predicate<T>;
+
+  /// Creates a spec that is satisfied by every candidate.
+  const factory Spec.always() = _TrueSpec<T>;
+
+  /// Creates a spec that is not satisfied by any candidate.
+  const factory Spec.never() = _FalseSpec<T>;
 
   /// Combines this spec with another using AND logic (&).
   ///
@@ -118,6 +137,12 @@ sealed class Spec<T> {
   /// ```
   bool isSatisfiedBy(T candidate);
 
+  /// Evaluates this spec for [candidate].
+  ///
+  /// This is equivalent to calling [isSatisfiedBy], and allows a spec to be
+  /// used as a function.
+  bool call(T candidate) => isSatisfiedBy(candidate);
+
   /// Combines this spec with another using NAND logic (NOT AND).
   ///
   /// Returns a new spec that is satisfied when it is NOT the case that both
@@ -166,10 +191,11 @@ sealed class Spec<T> {
   /// ```
   Spec<T> or(Spec<T> other) => _Or(this, other);
 
-  /// Creates a new spec that is the logical negation of this spec.
+  /// Returns the logical negation of this spec.
   ///
   /// Returns a new spec that is satisfied when this spec is NOT satisfied.
   /// Use this to invert rules without creating separate negation specs.
+  /// Applying negation twice restores the original satisfaction behavior.
   ///
   /// Example:
   /// ```dart
@@ -177,7 +203,25 @@ sealed class Spec<T> {
   /// final inactive = IsActive().toNegated();
   /// final notPremium = IsPremium().toNegated();
   /// ```
-  Spec<T> toNegated() => _Not(this);
+  Spec<T> toNegated() => ~this;
+
+  /// Returns the logical negation of this spec.
+  ///
+  /// Returns a new spec that is satisfied when this spec is NOT satisfied.
+  /// Use this to invert rules without creating separate negation specs.
+  /// Applying negation twice restores the original satisfaction behavior.
+  ///
+  /// Example:
+  /// ```dart
+  /// final notAdult = ~IsAdult();
+  /// final inactive = ~IsActive();
+  /// final notPremium = ~IsPremium();
+  /// ```
+  Spec<T> operator ~() {
+    if (this case _Not<T>(:final spec)) return spec;
+
+    return _Not(this);
+  }
 
   /// Combines this spec with another using XNOR logic (NOT XOR / equivalence).
   ///
@@ -222,6 +266,28 @@ sealed class Spec<T> {
   /// final canEdit = IsAdmin() | IsAuthor() | IsModerator();
   /// ```
   Spec<T> operator |(Spec<T> other) => _Or(this, other);
+}
+
+final class _TrueSpec<T> extends Spec<T> {
+  const _TrueSpec();
+
+  @override
+  bool isSatisfiedBy(T candidate) => true;
+}
+
+final class _FalseSpec<T> extends Spec<T> {
+  const _FalseSpec();
+
+  @override
+  bool isSatisfiedBy(T candidate) => false;
+}
+
+final class _Predicate<T> extends Spec<T> {
+  const _Predicate(this.predicate);
+  final bool Function(T) predicate;
+
+  @override
+  bool isSatisfiedBy(T candidate) => predicate(candidate);
 }
 
 /// Represents the AND composition of two specs.
