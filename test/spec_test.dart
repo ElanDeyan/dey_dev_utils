@@ -22,6 +22,62 @@ void main() {
     });
   });
 
+  group('Spec aggregate factories', () {
+    test('allOf, anyOf, and noneOf follow their truth tables', () {
+      final values = <(bool, bool)>[
+        (false, false),
+        (false, true),
+        (true, false),
+        (true, true),
+      ];
+
+      for (final (leftValue, rightValue) in values) {
+        final specs = [
+          Spec<int>.predicate((_) => leftValue),
+          Spec<int>.predicate((_) => rightValue),
+        ];
+
+        check(Spec<int>.allOf(specs)(0)).equals(leftValue && rightValue);
+        check(Spec<int>.anyOf(specs)(0)).equals(leftValue || rightValue);
+        check(Spec<int>.noneOf(specs)(0)).equals(!leftValue && !rightValue);
+      }
+    });
+
+    test('empty aggregates use their logical identities', () {
+      check(Spec<int>.allOf(const <Spec<int>>[])(0)).isTrue();
+      check(Spec<int>.anyOf(const <Spec<int>>[])(0)).isFalse();
+      check(Spec<int>.noneOf(const <Spec<int>>[])(0)).isTrue();
+    });
+
+    test('aggregate factories snapshot their input iterable', () {
+      final source = <Spec<int>>[const Spec<int>.never()];
+      final all = Spec<int>.allOf(source);
+      final any = Spec<int>.anyOf(source);
+      final none = Spec<int>.noneOf(source);
+
+      source
+        ..clear()
+        ..add(const Spec<int>.always());
+
+      check(all(0)).isFalse();
+      check(any(0)).isFalse();
+      check(none(0)).isTrue();
+    });
+
+    test('aggregate factories short-circuit in iteration order', () {
+      var calls = 0;
+      final counted = Spec<int>.predicate((_) {
+        calls++;
+        return true;
+      });
+
+      check(Spec<int>.allOf([const Spec<int>.never(), counted])(0)).isFalse();
+      check(Spec<int>.anyOf([const Spec<int>.always(), counted])(0)).isTrue();
+      check(Spec<int>.noneOf([const Spec<int>.always(), counted])(0)).isFalse();
+      check(calls).equals(0);
+    });
+  });
+
   group('Spec Boolean composition', () {
     final values = <(bool, bool)>[
       (false, false),
@@ -49,6 +105,8 @@ void main() {
         check(left.and(right)(0)).equals(leftValue && rightValue);
         check(left.or(right)(0)).equals(leftValue || rightValue);
         check(left.xor(right)(0)).equals(leftValue ^ rightValue);
+        check(left.implies(right)(0)).equals(!leftValue || rightValue);
+        check(left.iff(right)(0)).equals(leftValue == rightValue);
         check(left.nand(right)(0)).equals(!(leftValue && rightValue));
         check(left.nor(right)(0)).equals(!(leftValue || rightValue));
         check(left.xnor(right)(0)).equals(leftValue == rightValue);
@@ -66,6 +124,53 @@ void main() {
       check(spec(11)).isFalse();
       check(spec(-2)).isFalse();
     });
+
+    test('implies skips the consequent when the antecedent is false', () {
+      var consequentCalls = 0;
+      const antecedent = Spec<int>.never();
+      final consequent = Spec<int>.predicate((_) {
+        consequentCalls++;
+        return false;
+      });
+
+      check(antecedent.implies(consequent)(0)).isTrue();
+      check(consequentCalls).equals(0);
+    });
+
+    test('iff evaluates both operands', () {
+      var leftCalls = 0;
+      var rightCalls = 0;
+      final left = Spec<int>.predicate((_) {
+        leftCalls++;
+        return true;
+      });
+      final right = Spec<int>.predicate((_) {
+        rightCalls++;
+        return true;
+      });
+
+      check(left.iff(right)(0)).isTrue();
+      check(leftCalls).equals(1);
+      check(rightCalls).equals(1);
+    });
+
+    test('contramap projects candidates before evaluation', () {
+      final longText = Spec<int>.predicate(
+        (length) => length >= 4,
+      ).contramap<String>((text) => text.length);
+
+      check(longText('Dart')).isTrue();
+      check(longText('API')).isFalse();
+    });
+
+    test('predicate specs evaluate their callback on every call', () {
+      var calls = 0;
+      final changesOnEachEvaluation = Spec<int>.predicate((_) => ++calls == 1);
+
+      check(changesOnEachEvaluation(0)).isTrue();
+      check(changesOnEachEvaluation(0)).isFalse();
+      check(calls).equals(2);
+    });
   });
 
   group('Spec negation', () {
@@ -74,14 +179,14 @@ void main() {
 
       check((~positive)(1)).isFalse();
       check((~positive)(-1)).isTrue();
-      check(positive.toNegated()(1)).isFalse();
+      check(positive.negated()(1)).isFalse();
     });
 
     test('double negation restores the original behavior', () {
       final positive = Spec<int>.predicate((value) => value > 0);
 
       final doubleOperatorNegation = ~~positive;
-      final doubleMethodNegation = positive.toNegated().toNegated();
+      final doubleMethodNegation = positive.negated().negated();
 
       check(doubleOperatorNegation(1)).isTrue();
       check(doubleOperatorNegation(-1)).isFalse();

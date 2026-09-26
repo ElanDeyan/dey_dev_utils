@@ -123,6 +123,26 @@ final result = trampoline(sumDown(3, 0)); // 6
 The trampoline is synchronous. It does not schedule asynchronous work or
 automatically make arbitrary recursive code stack-safe.
 
+### Composable specifications
+
+Represent business rules as predicates, then combine them with Boolean
+operators or the aggregate factories:
+
+```dart
+import 'package:dey_dev_utils/spec.dart';
+
+final isPositive = Spec<int>.predicate((value) => value > 0);
+final isUnderOneHundred = Spec<int>.predicate((value) => value < 100);
+final accepted = Spec<int>.allOf([isPositive, isUnderOneHundred]);
+
+// .call for tear-offs, instead of using .isSatisfiedBy
+final acceptedValues = [12, -3, 100].where(accepted.call).toList(); // [12]
+```
+
+You can use both `Spec<T>.predicate` or create a class that extends `Spec<T>`.
+
+Aggregate factories snapshot their input when created.
+
 ## Experimental APIs
 
 The following libraries are marked `@experimental` and may change or be
@@ -137,7 +157,6 @@ removed before a stable release:
 - `option.dart` for `Some` and `None` values
 - `rate_limit.dart` for debouncing and throttling
 - `saga.dart` for compensating asynchronous workflows
-- `spec.dart` for composable business predicates
 - `trace.dart` for timing and logging wrappers
 - `validate.dart` for accumulating validation results
 
@@ -154,6 +173,7 @@ guidance, and review checklists for:
 - [Scope helpers](skills/dev-utils-scope-methods-and-function/SKILL.md)
 - [Trampolines](skills/dev-utils-trampoline/SKILL.md)
 - [Type-safe comparison](skills/dev-utils-type-safe-comparison/SKILL.md)
+- [Specification pattern](skills/dey-dev-utils-spec-pattern/SKILL.md)
 
 To use them, open the relevant `SKILL.md` file in your AI coding assistant or
 copy its path into the assistant's context. Then ask for the task while naming
