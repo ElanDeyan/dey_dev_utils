@@ -1,5 +1,5 @@
 ---
-name: dev-utils-type-safe-comparison
+name: dey-dev-utils-type-safe-comparison
 description: "Use a type-safe comparison enum and Comparable helpers instead of raw -1, 0, and 1 values."
 ---
 

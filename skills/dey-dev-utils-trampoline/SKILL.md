@@ -1,5 +1,5 @@
 ---
-name: dev-utils-trampoline
+name: dey-dev-utils-trampoline
 description: "Use the dev_utils trampoline API for stack-safe synchronous recursive computations."
 ---
 

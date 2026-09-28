@@ -3,3 +3,7 @@
 
 # Generated mutation-testing reports
 mutation-test-report/
+
+# AI
+AGENTS.md
+.agents

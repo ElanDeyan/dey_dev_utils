@@ -1,5 +1,5 @@
 ---
-name: dev-utils-result-type
+name: dey-dev-utils-result-type
 description: "Use when implementing, reviewing, testing, or refactoring Dart code with dev_utils Result, Ok, Err, typed failures, stack traces, or Result-based error handling."
 ---
 
