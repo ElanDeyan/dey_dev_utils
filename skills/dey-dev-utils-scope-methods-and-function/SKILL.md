@@ -1,5 +1,5 @@
 ---
-name: dev-utils-scope-methods-and-function
+name: dey-dev-utils-scope-methods-and-function
 description: "Use when implementing, reviewing, testing, or documenting the Kotlin-style scope helpers in dev_utils."
 ---
 

@@ -1,6 +1,3 @@
-@experimental
-library;
-
 import 'package:meta/meta.dart';
 
 /// The Specification Pattern: compose business rules as reusable, testable predicates.
@@ -20,7 +17,13 @@ import 'package:meta/meta.dart';
 /// - `&` / [and] — Both must be satisfied (AND logic)
 /// - `|` / [or] — At least one must be satisfied (OR logic)
 /// - `^` / [xor] — Exactly one must be satisfied, not both (XOR logic)
-/// - [toNegated] — Inverts the rule (NOT logic)
+/// - [nand] — At least one must not be satisfied (NAND logic)
+/// - [nor] — Neither must be satisfied (NOR logic)
+/// - [xnor] — Both must have the same satisfaction state (XNOR logic)
+/// - [negated] or `~` — Inverts the rule (NOT logic)
+///
+/// AND, OR, NAND, and NOR use left-to-right short-circuit evaluation. XOR and
+/// XNOR evaluate both operands because both results are needed.
 ///
 /// **Creating a Spec:**
 /// ```dart
@@ -52,9 +55,55 @@ import 'package:meta/meta.dart';
 /// // Complex compositions
 /// final canReceiveNewsletter = HasValidEmail() & (IsEligibleVoter() | HasOptedIn());
 /// ```
-@experimental
-sealed class Spec<T> {
+
+@immutable
+abstract base class Spec<T> {
+  /// Creates a specification.
   const Spec();
+
+  /// Creates a spec from [predicate].
+  ///
+  /// The predicate is called with each candidate passed to [isSatisfiedBy] or
+  /// [call]. The predicate is evaluated each time the spec is evaluated; its
+  /// result is not cached.
+  const factory Spec.predicate(bool Function(T candidate) predicate) =
+      _Predicate<T>;
+
+  /// Creates a spec that is satisfied by every candidate.
+  const factory Spec.always() = _TrueSpec<T>;
+
+  /// Creates a spec that is not satisfied by any candidate.
+  const factory Spec.never() = _FalseSpec<T>;
+
+  /// Creates a spec satisfied when every spec in [specs] is satisfied.
+  ///
+  /// The iterable is consumed and copied when this factory is called, so later
+  /// changes to the source do not affect this spec. Infinite iterables cannot
+  /// be used, and iteration errors occur during construction. Evaluation
+  /// short-circuits at the first unsatisfied spec. An empty iterable is
+  /// satisfied.
+  factory Spec.allOf(Iterable<Spec<T>> specs) =>
+      _AllOfSpec(List.unmodifiable(specs));
+
+  /// Creates a spec satisfied when at least one spec in [specs] is satisfied.
+  ///
+  /// The iterable is consumed and copied when this factory is called, so later
+  /// changes to the source do not affect this spec. Infinite iterables cannot
+  /// be used, and iteration errors occur during construction. Evaluation
+  /// short-circuits at the first satisfied spec. An empty iterable is not
+  /// satisfied.
+  factory Spec.anyOf(Iterable<Spec<T>> specs) =>
+      _AnyOfSpec(List.unmodifiable(specs));
+
+  /// Creates a spec satisfied when none of the specs in [specs] is satisfied.
+  ///
+  /// The iterable is consumed and copied when this factory is called, so later
+  /// changes to the source do not affect this spec. Infinite iterables cannot
+  /// be used, and iteration errors occur during construction. Evaluation
+  /// short-circuits at the first satisfied spec. An empty iterable is
+  /// satisfied.
+  factory Spec.noneOf(Iterable<Spec<T>> specs) =>
+      _NoneOfSpec(List.unmodifiable(specs));
 
   /// Combines this spec with another using AND logic (&).
   ///
@@ -68,6 +117,7 @@ sealed class Spec<T> {
   /// final youngAdult = IsAdult() & IsYoung();
   /// final premium = IsPaid() & HasNoDebts() & IsActive();
   /// ```
+  @nonVirtual
   Spec<T> operator &(Spec<T> other) => _And(this, other);
 
   /// Combines this spec with another using XOR logic (^).
@@ -82,6 +132,7 @@ sealed class Spec<T> {
   /// final exclusive = IsStudent() ^ IsWorking();
   /// final status = IsActive() ^ IsArchived(); // Not both, one required
   /// ```
+  @nonVirtual
   Spec<T> operator ^(Spec<T> other) => _Xor(this, other);
 
   /// Combines this spec with another using AND logic.
@@ -95,7 +146,30 @@ sealed class Spec<T> {
   /// // Named method reads clearer for complex logic
   /// final qualifiedApplicant = HasDegree().and(HasExperience()).and(PassedBackground());
   /// ```
+  @nonVirtual
   Spec<T> and(Spec<T> other) => _And(this, other);
+
+  /// Combines this spec with [other] using implication logic.
+  ///
+  /// The result is false only when this spec is satisfied and [other] is not.
+  /// Evaluation short-circuits when this spec is not satisfied.
+  @nonVirtual
+  Spec<T> implies(Spec<T> other) => ~this | other;
+
+  /// Combines this spec with [other] using logical equivalence.
+  ///
+  /// The result is true when both specs have the same satisfaction state.
+  /// Both specs are evaluated.
+  @nonVirtual
+  Spec<T> iff(Spec<T> other) => xnor(other);
+
+  /// Adapts this spec to candidates of type [R] using [projection].
+  ///
+  /// The projection runs for each evaluation, and the resulting value is
+  /// checked by this spec.
+  @nonVirtual
+  Spec<R> contramap<R>(T Function(R candidate) projection) =>
+      .predicate((candidate) => isSatisfiedBy(projection(candidate)));
 
   /// Checks if [candidate] satisfies this specification.
   ///
@@ -118,13 +192,20 @@ sealed class Spec<T> {
   /// ```
   bool isSatisfiedBy(T candidate);
 
+  /// Evaluates this spec for [candidate].
+  ///
+  /// This is equivalent to calling [isSatisfiedBy], and allows a spec to be
+  /// used as a function.
+  @nonVirtual
+  bool call(T candidate) => isSatisfiedBy(candidate);
+
   /// Combines this spec with another using NAND logic (NOT AND).
   ///
   /// Returns a new spec that is satisfied when it is NOT the case that both
   /// this spec and [other] are satisfied — i.e., at least one must fail.
-  /// Equivalent to calling [and] followed by [toNegated].
+  /// Equivalent to calling [and] followed by [negated].
   ///
-  /// Prefer `someSpec.and(other).toNegated()` when readability matters.
+  /// Prefer `someSpec.and(other).negated()` when readability matters.
   /// Use [nand] as a convenience when the negated-AND intent is central
   /// to the business rule.
   ///
@@ -133,15 +214,16 @@ sealed class Spec<T> {
   /// // True unless both conditions hold simultaneously
   /// final notBothAdmin = IsAdmin().nand(IsSuperuser());
   /// ```
+  @nonVirtual
   Spec<T> nand(Spec<T> other) => _Nand(this, other);
 
   /// Combines this spec with another using NOR logic (NOT OR).
   ///
   /// Returns a new spec that is satisfied only when neither this spec
   /// nor [other] is satisfied — both must fail. Equivalent to calling
-  /// [or] followed by [toNegated].
+  /// [or] followed by [negated].
   ///
-  /// Prefer `someSpec.or(other).toNegated()` when readability matters.
+  /// Prefer `someSpec.or(other).negated()` when readability matters.
   /// Use [nor] as a convenience when the neither-nor intent is central
   /// to the business rule.
   ///
@@ -150,6 +232,7 @@ sealed class Spec<T> {
   /// // True only when the user is neither banned nor suspended
   /// final fullyActive = IsBanned().nor(IsSuspended());
   /// ```
+  @nonVirtual
   Spec<T> nor(Spec<T> other) => _Nor(this, other);
 
   /// Combines this spec with another using OR logic.
@@ -164,28 +247,50 @@ sealed class Spec<T> {
   /// final canAccess = IsAdmin().or(IsModerator()).or(IsOwner());
   /// final specialUser = IsBeta() | IsStaff() | IsVip();
   /// ```
+  @nonVirtual
   Spec<T> or(Spec<T> other) => _Or(this, other);
 
-  /// Creates a new spec that is the logical negation of this spec.
+  /// Returns the logical negation of this spec.
   ///
   /// Returns a new spec that is satisfied when this spec is NOT satisfied.
   /// Use this to invert rules without creating separate negation specs.
+  /// Applying negation twice restores the original satisfaction behavior.
   ///
   /// Example:
   /// ```dart
-  /// final notAdult = IsAdult().toNegated();
-  /// final inactive = IsActive().toNegated();
-  /// final notPremium = IsPremium().toNegated();
+  /// final notAdult = IsAdult().negated();
+  /// final inactive = IsActive().negated();
+  /// final notPremium = IsPremium().negated();
   /// ```
-  Spec<T> toNegated() => _Not(this);
+  @nonVirtual
+  Spec<T> negated() => ~this;
+
+  /// Returns the logical negation of this spec.
+  ///
+  /// Returns a new spec that is satisfied when this spec is NOT satisfied.
+  /// Use this to invert rules without creating separate negation specs.
+  /// Applying negation twice restores the original satisfaction behavior.
+  ///
+  /// Example:
+  /// ```dart
+  /// final notAdult = ~IsAdult();
+  /// final inactive = ~IsActive();
+  /// final notPremium = ~IsPremium();
+  /// ```
+  @nonVirtual
+  Spec<T> operator ~() {
+    if (this case _Not<T>(:final spec)) return spec;
+
+    return _Not(this);
+  }
 
   /// Combines this spec with another using XNOR logic (NOT XOR / equivalence).
   ///
   /// Returns a new spec that is satisfied when both specs have the same
   /// satisfaction state: either both satisfied or both unsatisfied.
-  /// Equivalent to calling [xor] followed by [toNegated].
+  /// Equivalent to calling [xor] followed by [negated].
   ///
-  /// Prefer `someSpec.xor(other).toNegated()` when readability matters.
+  /// Prefer `someSpec.xor(other).negated()` when readability matters.
   /// Use [xnor] as a convenience when the equivalence intent is central
   /// to the business rule.
   ///
@@ -194,6 +299,7 @@ sealed class Spec<T> {
   /// // True when both conditions agree (both true or both false)
   /// final syncedState = IsVerified().xnor(IsApproved());
   /// ```
+  @nonVirtual
   Spec<T> xnor(Spec<T> other) => _Xnor(this, other);
 
   /// Combines this spec with another using XOR logic (exclusive OR).
@@ -208,6 +314,7 @@ sealed class Spec<T> {
   /// final exclusive = IsStudent().xor(IsWorking());
   /// final status = IsPublished().xor(IsDraft()); // One or the other, not both
   /// ```
+  @nonVirtual
   Spec<T> xor(Spec<T> other) => _Xor(this, other);
 
   /// Combines this spec with another using OR logic (|).
@@ -221,7 +328,75 @@ sealed class Spec<T> {
   /// // Any one condition satisfies
   /// final canEdit = IsAdmin() | IsAuthor() | IsModerator();
   /// ```
+  @nonVirtual
   Spec<T> operator |(Spec<T> other) => _Or(this, other);
+}
+
+final class _AllOfSpec<T> extends Spec<T> {
+  const _AllOfSpec(this.specs);
+
+  final Iterable<Spec<T>> specs;
+
+  @override
+  bool isSatisfiedBy(T candidate) {
+    for (final spec in specs) {
+      if (!spec.isSatisfiedBy(candidate)) return false;
+    }
+
+    return true;
+  }
+}
+
+final class _AnyOfSpec<T> extends Spec<T> {
+  const _AnyOfSpec(this.specs);
+
+  final Iterable<Spec<T>> specs;
+
+  @override
+  bool isSatisfiedBy(T candidate) {
+    for (final spec in specs) {
+      if (spec.isSatisfiedBy(candidate)) return true;
+    }
+
+    return false;
+  }
+}
+
+final class _NoneOfSpec<T> extends Spec<T> {
+  const _NoneOfSpec(this.specs);
+
+  final Iterable<Spec<T>> specs;
+
+  @override
+  bool isSatisfiedBy(T candidate) {
+    for (final spec in specs) {
+      if (spec.isSatisfiedBy(candidate)) return false;
+    }
+
+    return true;
+  }
+}
+
+final class _TrueSpec<T> extends Spec<T> {
+  const _TrueSpec();
+
+  @override
+  bool isSatisfiedBy(T candidate) => true;
+}
+
+final class _FalseSpec<T> extends Spec<T> {
+  const _FalseSpec();
+
+  @override
+  bool isSatisfiedBy(T candidate) => false;
+}
+
+final class _Predicate<T> extends Spec<T> {
+  const _Predicate(this.predicate);
+  final bool Function(T) predicate;
+
+  @override
+  bool isSatisfiedBy(T candidate) => predicate(candidate);
 }
 
 /// Represents the AND composition of two specs.
@@ -315,7 +490,7 @@ final class _Nor<T> extends Spec<T> {
 /// Represents the NOT (negation) of a spec.
 ///
 /// A composite spec that is satisfied when the component spec is NOT satisfied.
-/// This is the result of calling [Spec.toNegated].
+/// This is the result of calling [Spec.negated].
 /// Use negation to invert rules without creating separate spec classes.
 final class _Not<T> extends Spec<T> {
   /// Creates a NOT spec from a component spec.
