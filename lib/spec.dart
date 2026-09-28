@@ -7,7 +7,7 @@ import 'package:meta/meta.dart';
 /// first-class objects that can be created, combined, tested, and reused independently.
 ///
 /// This pattern is ideal for:
-/// - **Domain rules**: Entity validation, filtering, and search criteria
+/// - **Domain rules**: Business rules, filtering, and search criteria
 /// - **Reusability**: The same rule applies in multiple contexts without duplication
 /// - **Testability**: Each rule is isolated and easy to unit test
 /// - **Composability**: Combine simple rules into complex business logic
@@ -28,13 +28,13 @@ import 'package:meta/meta.dart';
 /// **Creating a Spec:**
 /// ```dart
 /// /// Business rule: person is old enough to vote
-/// class IsEligibleVoter extends Spec<Person> {
+/// final class IsEligibleVoter extends Spec<Person> {
 ///   @override
 ///   bool isSatisfiedBy(Person person) => person.age >= 18;
 /// }
 ///
 /// /// Business rule: person has valid contact info
-/// class HasValidEmail extends Spec<Person> {
+/// final class HasValidEmail extends Spec<Person> {
 ///   @override
 ///   bool isSatisfiedBy(Person person) => person.email.contains('@');
 /// }
@@ -182,7 +182,7 @@ abstract base class Spec<T> {
   ///
   /// Example:
   /// ```dart
-  /// class MinimumAge extends Spec<Person> {
+  /// final class MinimumAge extends Spec<Person> {
   ///   final int minAge;
   ///   MinimumAge(this.minAge);
   ///

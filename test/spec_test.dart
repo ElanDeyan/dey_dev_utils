@@ -2,6 +2,13 @@ import 'package:checks/checks.dart';
 import 'package:dey_dev_utils/spec.dart';
 import 'package:test/test.dart';
 
+final class AdultSpec extends Spec<int> {
+  const AdultSpec();
+
+  @override
+  bool isSatisfiedBy(int age) => age >= 18;
+}
+
 void main() {
   group('Spec constructors and evaluation', () {
     test('predicate specs support isSatisfiedBy and call', () {
@@ -63,6 +70,32 @@ void main() {
       check(any(0)).isFalse();
       check(none(0)).isTrue();
     });
+
+    test('aggregate factories consume their source eagerly once', () {
+      var iterations = 0;
+      final source = (() sync* {
+        iterations++;
+        yield const Spec<int>.always();
+      })();
+
+      final spec = Spec<int>.allOf(source);
+
+      check(iterations).equals(1);
+      check(spec(0)).isTrue();
+      check(iterations).equals(1);
+    });
+
+    test(
+      'aggregate factories surface source iteration errors at construction',
+      () {
+        final source = (() sync* {
+          yield const Spec<int>.always();
+          throw StateError('source failed');
+        })();
+
+        expect(() => Spec<int>.allOf(source), throwsStateError);
+      },
+    );
 
     test('aggregate factories short-circuit in iteration order', () {
       var calls = 0;
@@ -137,21 +170,47 @@ void main() {
       check(consequentCalls).equals(0);
     });
 
-    test('iff evaluates both operands', () {
-      var leftCalls = 0;
-      var rightCalls = 0;
-      final left = Spec<int>.predicate((_) {
-        leftCalls++;
-        return true;
-      });
-      final right = Spec<int>.predicate((_) {
-        rightCalls++;
-        return true;
+    test('implies evaluates the consequent when the antecedent is true', () {
+      var consequentCalls = 0;
+      const antecedent = Spec<int>.always();
+      final consequent = Spec<int>.predicate((_) {
+        consequentCalls++;
+        return false;
       });
 
-      check(left.iff(right)(0)).isTrue();
-      check(leftCalls).equals(1);
-      check(rightCalls).equals(1);
+      check(antecedent.implies(consequent)(0)).isFalse();
+      check(consequentCalls).equals(1);
+    });
+
+    test('iff evaluates both operands for every truth combination', () {
+      for (final (leftValue, rightValue) in [
+        (false, false),
+        (false, true),
+        (true, false),
+        (true, true),
+      ]) {
+        var leftCalls = 0;
+        var rightCalls = 0;
+        final left = Spec<int>.predicate((_) {
+          leftCalls++;
+          return leftValue;
+        });
+        final right = Spec<int>.predicate((_) {
+          rightCalls++;
+          return rightValue;
+        });
+
+        check(left.iff(right)(0)).equals(leftValue == rightValue);
+        check(leftCalls).equals(1);
+        check(rightCalls).equals(1);
+      }
+    });
+
+    test('external-style final subclasses define named rules', () {
+      const adult = AdultSpec();
+
+      check(adult(18)).isTrue();
+      check(adult(17)).isFalse();
     });
 
     test('contramap projects candidates before evaluation', () {

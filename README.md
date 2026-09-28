@@ -7,7 +7,7 @@ This package is also a place to explore ideas with AI assistance (many of things
 
 ## Features
 
-The package currently includes four stable-looking, tested libraries:
+The package currently includes five stable-looking, tested libraries:
 
 - **Result**: represent success and typed failure explicitly with `Ok` and
 	`Err`.
@@ -17,7 +17,7 @@ The package currently includes four stable-looking, tested libraries:
 	`Comparison.greater` instead of unexplained comparison integers.
 - **Trampoline**: evaluate synchronous bounce chains iteratively to avoid call
 	stack growth in deep computations.
-- **Specification pattern**: for validating business logic and compose them.
+- **Specification pattern**: express and compose Boolean business rules.
 
 It also includes experimental libraries for options, validation, lenses,
 isomorphisms, middleware, sagas, tracing, rate limiting,
@@ -126,8 +126,9 @@ automatically make arbitrary recursive code stack-safe.
 
 ### Composable specifications
 
-Represent business rules as predicates, then combine them with Boolean
-operators or the aggregate factories:
+Represent each business rule as a reusable Boolean specification. Create rules
+with `predicate`, `always`, or `never`, then combine them with `&`, `|`, `^`,
+`nand`, `nor`, `xnor`, `implies`, `iff`, or `~`/`negated()`:
 
 ```dart
 import 'package:dey_dev_utils/spec.dart';
@@ -140,9 +141,25 @@ final accepted = Spec<int>.allOf([isPositive, isUnderOneHundred]);
 final acceptedValues = [12, -3, 100].where(accepted.call).toList(); // [12]
 ```
 
-You can use both `Spec<T>.predicate` or create a class that extends `Spec<T>`.
+For a named rule, use a `final`, `base`, or `sealed` subclass because `Spec<T>`
+is an `abstract base class`:
 
-Aggregate factories snapshot their input when created.
+```dart
+final class IsAdult extends Spec<int> {
+	const IsAdult();
+
+	@override
+	bool isSatisfiedBy(int age) => age >= 18;
+}
+
+final canVote = IsAdult() & Spec<int>.predicate((age) => age.isEven);
+```
+
+`contramap` adapts a specification to another candidate type through a
+projection. Aggregate factories snapshot their input when created; `allOf` and
+`noneOf` of an empty iterable are satisfied, while `anyOf` is not. AND, OR,
+NAND, and NOR short-circuit in evaluation order. XOR, XNOR, and `iff` evaluate
+both operands. Predicate callbacks run on every evaluation and are not cached.
 
 ## Experimental APIs
 
@@ -170,10 +187,10 @@ The repository includes reusable AI skills for the stable libraries. They give
 an AI coding assistant the API model, important semantics, examples, testing
 guidance, and review checklists for:
 
-- [`Result`](skills/dev-utils-result-type/SKILL.md)
-- [Scope helpers](skills/dev-utils-scope-methods-and-function/SKILL.md)
-- [Trampolines](skills/dev-utils-trampoline/SKILL.md)
-- [Type-safe comparison](skills/dev-utils-type-safe-comparison/SKILL.md)
+- [`Result`](skills/dey-dev-utils-result-type/SKILL.md)
+- [Scope helpers](skills/dey-dev-utils-scope-methods-and-function/SKILL.md)
+- [Trampolines](skills/dey-dev-utils-trampoline/SKILL.md)
+- [Type-safe comparison](skills/dey-dev-utils-type-safe-comparison/SKILL.md)
 - [Specification pattern](skills/dey-dev-utils-spec-pattern/SKILL.md)
 
 To use them, open the relevant `SKILL.md` file in your AI coding assistant or

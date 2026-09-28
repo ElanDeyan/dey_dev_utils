@@ -1,3 +1,12 @@
+## 0.1.0-dev.3
+
+- Adds the `Spec<T>` specification pattern as a reusable Boolean business-rule
+	API.
+- Adds predicate, aggregate, composition, negation, implication,
+	equivalence, and `contramap` operations for composing specifications.
+- Documents and tests evaluation's short-circuiting, eager operand evaluation, aggregate
+	snapshotting, and non-caching predicate behavior.
+
 ## 0.1.0-dev.2+3
 
 - Adds Dart CI for formatting, analysis, and tests on pushes, pull requests,

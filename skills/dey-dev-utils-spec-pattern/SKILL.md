@@ -64,7 +64,9 @@ mutations do not affect the spec. They are not const factories; `predicate`,
 	than weakening the API with `dynamic` or unchecked casts.
 8. When changing the implementation, update focused tests and Dartdoc in the
 	same change. Keep examples compilable with the actual generic constructor
-	syntax, such as `Spec<int>.predicate((value) => value > 0)`.
+	syntax, such as `Spec<int>.predicate((value) => value > 0)`. External
+	subclasses must be declared `final`, `base`, or `sealed` because `Spec<T>`
+	is an `abstract base class`.
 
 ## Critical semantics
 
@@ -206,6 +208,8 @@ report for surviving mutations.
 - Use Dartdoc links such as `[candidate]` and `[isSatisfiedBy]` only where those
 	declarations are visible.
 - Keep examples aligned with the actual generic factory syntax and public API.
+- Compile-check public examples, including subclass modifiers, when changing
+	public documentation.
 - Do not promise equality, serialization, caching, flattening, or cross-type
 	composition unless the implementation explicitly provides it.
 
