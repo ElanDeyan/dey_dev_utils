@@ -17,9 +17,10 @@ The package currently includes four stable-looking, tested libraries:
 	`Comparison.greater` instead of unexplained comparison integers.
 - **Trampoline**: evaluate synchronous bounce chains iteratively to avoid call
 	stack growth in deep computations.
+- **Specification pattern**: for validating business logic and compose them.
 
 It also includes experimental libraries for options, validation, lenses,
-isomorphisms, middleware, sagas, specifications, tracing, rate limiting,
+isomorphisms, middleware, sagas, tracing, rate limiting,
 contracts, monoids, and lazy initialization.
 
 ## Getting started
