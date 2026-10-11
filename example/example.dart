@@ -2,6 +2,7 @@
 // ignore_for_file: avoid_print
 
 import 'package:dey_dev_utils/comparison.dart';
+import 'package:dey_dev_utils/contract.dart';
 import 'package:dey_dev_utils/result.dart';
 import 'package:dey_dev_utils/scope.dart';
 import 'package:dey_dev_utils/spec.dart';
@@ -28,6 +29,13 @@ void main() {
     Ok(:final value) => value,
     Err(:final error) => throw error,
   };
+
+  final checkedQuantity = runWithChecking(
+    preCondition: () => quantity > 0,
+    operation: () => quantity,
+    postCondition: (value) => value <= 100,
+  );
+  print('Contract-checked quantity: $checkedQuantity');
 
   quantity.let((value) => 'Order quantity: $value').also(print);
 

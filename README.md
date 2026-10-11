@@ -181,6 +181,26 @@ removed before a stable release:
 Use these APIs when experimentation is appropriate, and pin the package
 version if your project depends on their current behavior.
 
+### Contract checks
+
+`runWithChecking` evaluates a precondition, runs an operation, and then checks
+its result. The `Invariant` mixin provides `pre`, `post`, and
+`runWithInvariant` for object operations. The mixin uses assertions in debug
+mode and throws `ContractViolationError` in production mode;
+`runWithChecking` throws `ContractViolationError` whenever either condition
+fails.
+
+```dart
+import 'package:dey_dev_utils/contract.dart';
+
+final input = '  value  ';
+final result = runWithChecking(
+  preCondition: () => input.isNotEmpty,
+  operation: () => input.trim(),
+  postCondition: (value) => value.isNotEmpty,
+);
+```
+
 ## AI skills for stable libraries
 
 The repository includes reusable AI skills for the stable libraries. They give

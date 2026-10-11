@@ -12,8 +12,8 @@
           },
           {
             "name": "dart-build-cli-app",
-            "installedAt": "2026-09-06T21:16:32.418748Z",
-            "contentHash": "V+mcu5FkZPIidSf7qP02dQ==",
+            "installedAt": "2026-10-11T21:21:15.317692Z",
+            "contentHash": "LIS02EaKQenkn8rC4UkUng==",
             "path": "skills/dart-build-cli-app"
           },
           {
@@ -72,8 +72,8 @@
           },
           {
             "name": "dart-use-pattern-matching",
-            "installedAt": "2026-09-06T21:16:32.452942Z",
-            "contentHash": "dt0YV4d0VH2QK8z8puzumQ==",
+            "installedAt": "2026-10-11T21:21:15.323990Z",
+            "contentHash": "ZJtoILijhGMCyjoli+gvkw==",
             "path": "skills/dart-use-pattern-matching"
           },
           {
@@ -87,6 +87,34 @@
             "installedAt": "2026-09-06T21:16:32.458852Z",
             "contentHash": "64nJUzpJ+sDVo2FHkcBHHg==",
             "path": "skills/dart-write-documentation"
+          },
+          {
+            "name": "dart-use-path-package",
+            "installedAt": "2026-10-11T21:21:15.330822Z",
+            "contentHash": "LERN+D9gzQyjzmA4lVVA8g==",
+            "path": "skills/dart-use-path-package"
+          }
+        ]
+      },
+      "https://github.com/kevmoo/analytica.dart.git": {
+        "skills": [
+          {
+            "name": "dart-cognitive-complexity",
+            "installedAt": "2026-10-11T21:26:25.297844Z",
+            "contentHash": "kmfl+1G+bHPFFVvCPmPeHg==",
+            "path": "skills/dart-cognitive-complexity"
+          },
+          {
+            "name": "dart-dedupe",
+            "installedAt": "2026-10-11T21:25:54.849587Z",
+            "contentHash": "oLI3Bi8U/h3piWSvevOCjA==",
+            "path": "skills/dart-dedupe"
+          },
+          {
+            "name": "dart-undead",
+            "installedAt": "2026-10-11T21:26:50.839368Z",
+            "contentHash": "17PvLvNxOb5ACDUqOMXMmg==",
+            "path": "skills/dart-undead"
           }
         ]
       }
