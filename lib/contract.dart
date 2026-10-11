@@ -1,6 +1,3 @@
-@experimental
-library;
-
 import 'package:meta/meta.dart';
 
 /// Selects how contract violations are handled.
