@@ -34,6 +34,7 @@ void main() {
     preCondition: () => quantity > 0,
     operation: () => quantity,
     postCondition: (value) => value <= 100,
+    env: .production,
   );
   print('Contract-checked quantity: $checkedQuantity');
 

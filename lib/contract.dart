@@ -26,30 +26,48 @@ enum ViolationKind {
 
 /// Runs [operation] after checking [preCondition] and checks its result.
 ///
-/// Throws [ContractViolationError] when either condition fails. Exceptions
-/// thrown by a condition or by [operation] propagate unchanged.
+/// In [ContractCheckingEnv.debug], failed conditions trigger Dart assertions
+/// and therefore depend on assertions being enabled. In
+/// [ContractCheckingEnv.production], failed conditions throw
+/// [ContractViolationError]. Defaults to [ContractCheckingEnv.debug].
+/// Set [env] to select the checking behavior.
+///
+/// Exceptions thrown by a condition or by [operation] propagate unchanged.
 R runWithChecking<R>({
   required bool Function() preCondition,
   required R Function() operation,
   required bool Function(R result) postCondition,
+  ContractCheckingEnv env = .debug,
 }) {
-  if (!preCondition()) {
-    throw ContractViolationError(
-      kind: .preCondition,
-      message: 'Precondition violated',
-    );
+  switch (env) {
+    case .debug:
+      assert(preCondition(), 'Precondition violated');
+
+      final result = operation();
+
+      assert(postCondition(result), 'Postcondition violated');
+
+      return result;
+
+    case .production:
+      if (!preCondition()) {
+        throw ContractViolationError(
+          kind: .preCondition,
+          message: 'Precondition violated',
+        );
+      }
+
+      final result = operation();
+
+      if (!postCondition(result)) {
+        throw ContractViolationError(
+          kind: .postCondition,
+          message: 'Postcondition violated',
+        );
+      }
+
+      return result;
   }
-
-  final result = operation();
-
-  if (!postCondition(result)) {
-    throw ContractViolationError(
-      kind: .postCondition,
-      message: 'Postcondition violated',
-    );
-  }
-
-  return result;
 }
 
 /// Provides checks for object invariants, preconditions, and postconditions.

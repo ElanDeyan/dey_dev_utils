@@ -59,6 +59,7 @@ void main() {
             postConditionCalls++;
             return true;
           },
+          env: .production,
         ),
         throwsA(
           isA<ContractViolationError>()
@@ -90,6 +91,7 @@ void main() {
             postConditionCalls++;
             return false;
           },
+          env: .production,
         ),
         throwsA(
           isA<ContractViolationError>().having(
@@ -104,6 +106,43 @@ void main() {
       check(postConditionCalls).equals(1);
     });
 
+    test('debug mode reports failed conditions with assertions', () {
+      var operationCalls = 0;
+
+      expect(
+        () => runWithChecking(
+          preCondition: () => false,
+          operation: () {
+            operationCalls++;
+            return 30;
+          },
+          postCondition: (_) => true,
+        ),
+        throwsA(isA<AssertionError>()),
+      );
+      check(operationCalls).equals(0);
+
+      expect(
+        () => runWithChecking(
+          preCondition: () => true,
+          operation: () => 30,
+          postCondition: (_) => false,
+        ),
+        throwsA(isA<AssertionError>()),
+      );
+    });
+
+    test('production mode returns the operation result when checks pass', () {
+      final result = runWithChecking(
+        preCondition: () => true,
+        operation: () => 30,
+        postCondition: (value) => value == 30,
+        env: .production,
+      );
+
+      check(result).equals(30);
+    });
+
     test('propagates callback exceptions without running later callbacks', () {
       var postConditionCalls = 0;
 
@@ -115,6 +154,7 @@ void main() {
             postConditionCalls++;
             return true;
           },
+          env: .production,
         ),
         throwsStateError,
       );

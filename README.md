@@ -184,11 +184,11 @@ version if your project depends on their current behavior.
 ### Contract checks
 
 `runWithChecking` evaluates a precondition, runs an operation, and then checks
-its result. The `Invariant` mixin provides `pre`, `post`, and
-`runWithInvariant` for object operations. The mixin uses assertions in debug
-mode and throws `ContractViolationError` in production mode;
-`runWithChecking` throws `ContractViolationError` whenever either condition
-fails.
+its result. It defaults to `ContractCheckingEnv.debug`, where failed checks use
+Dart assertions and are disabled when assertions are disabled. Pass
+`env: ContractCheckingEnv.production` to always enforce the checks with
+`ContractViolationError`. The `Invariant` mixin provides `pre`, `post`, and
+`runWithInvariant` with the same debug-versus-production behavior.
 
 ```dart
 import 'package:dey_dev_utils/contract.dart';
@@ -198,6 +198,7 @@ final result = runWithChecking(
   preCondition: () => input.isNotEmpty,
   operation: () => input.trim(),
   postCondition: (value) => value.isNotEmpty,
+  env: ContractCheckingEnv.production,
 );
 ```
 
