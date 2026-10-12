@@ -183,12 +183,16 @@ version if your project depends on their current behavior.
 
 ### Contract checks
 
-`runWithChecking` evaluates a precondition, runs an operation, and then checks
-its result. It defaults to `ContractCheckingEnv.debug`, where failed checks use
-Dart assertions and are disabled when assertions are disabled. Pass
-`env: ContractCheckingEnv.production` to always enforce the checks with
-`ContractViolationError`. The `Invariant` mixin provides `pre`, `post`, and
-`runWithInvariant` with the same debug-versus-production behavior.
+`runWithChecking` and `runWithCheckingAsync` evaluate a precondition, run an
+operation, and check its result. They default to
+`ContractCheckingMode.assertionsOnly`, where failed checks use Dart assertions
+and callbacks are not evaluated when assertions are disabled. Pass
+`checkingMode: ContractCheckingMode.alwaysThrow` to enforce checks with
+`ContractViolationError` regardless of assertion settings. The `Invariant`
+mixin provides callback-based `pre` and `post` checks, explicit
+`verifyInvariant`, and sync/async `runWithInvariant` helpers. Those helpers
+evaluate the invariant even when the body throws; if both the body and
+invariant check fail, the invariant failure takes precedence.
 
 ```dart
 import 'package:dey_dev_utils/contract.dart';
@@ -198,7 +202,18 @@ final result = runWithChecking(
   preCondition: () => input.isNotEmpty,
   operation: () => input.trim(),
   postCondition: (value) => value.isNotEmpty,
-  env: ContractCheckingEnv.production,
+  checkingMode: ContractCheckingMode.alwaysThrow,
+);
+```
+
+Use `runWithCheckingAsync` for an asynchronous operation:
+
+```dart
+final result = await runWithCheckingAsync(
+  preCondition: () => input.isNotEmpty,
+  operation: () async => input.trim(),
+  postCondition: (value) => value.isNotEmpty,
+  checkingMode: ContractCheckingMode.alwaysThrow,
 );
 ```
 

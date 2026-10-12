@@ -3,15 +3,15 @@ import 'package:dey_dev_utils/contract.dart';
 import 'package:test/test.dart';
 
 final class _TestInvariant with Invariant {
-  _TestInvariant({this.environment = ContractCheckingEnv.debug});
+  _TestInvariant({this.checkingMode = ContractCheckingMode.assertionsOnly});
 
-  final ContractCheckingEnv environment;
+  final ContractCheckingMode checkingMode;
 
   bool isValid = true;
   int invariantCalls = 0;
 
   @override
-  ContractCheckingEnv get contractCheckingEnv => environment;
+  ContractCheckingMode get contractCheckingMode => checkingMode;
 
   @override
   bool invariant() {
@@ -59,7 +59,7 @@ void main() {
             postConditionCalls++;
             return true;
           },
-          env: .production,
+          checkingMode: .alwaysThrow,
         ),
         throwsA(
           isA<ContractViolationError>()
@@ -91,7 +91,7 @@ void main() {
             postConditionCalls++;
             return false;
           },
-          env: .production,
+          checkingMode: .alwaysThrow,
         ),
         throwsA(
           isA<ContractViolationError>().having(
@@ -137,7 +137,7 @@ void main() {
         preCondition: () => true,
         operation: () => 30,
         postCondition: (value) => value == 30,
-        env: .production,
+        checkingMode: .alwaysThrow,
       );
 
       check(result).equals(30);
@@ -154,20 +154,196 @@ void main() {
             postConditionCalls++;
             return true;
           },
-          env: .production,
+          checkingMode: .alwaysThrow,
         ),
         throwsStateError,
       );
 
       check(postConditionCalls).equals(0);
     });
+
+    test(
+      'runWithCheckingAsync checks callbacks around the awaited operation',
+      () async {
+        final events = <String>[];
+
+        final result = await runWithCheckingAsync(
+          preCondition: () {
+            events.add('precondition');
+            return true;
+          },
+          operation: () async {
+            events.add('operation');
+            return 30;
+          },
+          postCondition: (value) {
+            events.add('postcondition');
+            return value == 30;
+          },
+        );
+
+        check(result).equals(30);
+        check(
+          events,
+        ).deepEquals(['precondition', 'operation', 'postcondition']);
+      },
+    );
+
+    test('runWithCheckingAsync stops when the precondition fails', () async {
+      var operationCalls = 0;
+      var postConditionCalls = 0;
+
+      await expectLater(
+        runWithCheckingAsync(
+          preCondition: () => false,
+          operation: () async {
+            operationCalls++;
+            return 30;
+          },
+          postCondition: (_) {
+            postConditionCalls++;
+            return true;
+          },
+          checkingMode: .alwaysThrow,
+        ),
+        throwsA(
+          isA<ContractViolationError>().having(
+            (error) => error.kind,
+            'kind',
+            ViolationKind.preCondition,
+          ),
+        ),
+      );
+
+      check(operationCalls).equals(0);
+      check(postConditionCalls).equals(0);
+    });
+
+    test('runWithCheckingAsync reports postcondition violations', () async {
+      var operationCalls = 0;
+      var postConditionCalls = 0;
+
+      await expectLater(
+        runWithCheckingAsync(
+          preCondition: () => true,
+          operation: () async {
+            operationCalls++;
+            return 30;
+          },
+          postCondition: (_) {
+            postConditionCalls++;
+            return false;
+          },
+          checkingMode: .alwaysThrow,
+        ),
+        throwsA(
+          isA<ContractViolationError>().having(
+            (error) => error.kind,
+            'kind',
+            ViolationKind.postCondition,
+          ),
+        ),
+      );
+
+      check(operationCalls).equals(1);
+      check(postConditionCalls).equals(1);
+    });
+
+    test(
+      'runWithCheckingAsync checks callbacks around the awaited operation',
+      () async {
+        final events = <String>[];
+
+        final result = await runWithCheckingAsync(
+          preCondition: () {
+            events.add('precondition');
+            return true;
+          },
+          operation: () async {
+            events.add('operation');
+            return 30;
+          },
+          postCondition: (value) {
+            events.add('postcondition');
+            return value == 30;
+          },
+        );
+
+        check(result).equals(30);
+        check(
+          events,
+        ).deepEquals(['precondition', 'operation', 'postcondition']);
+      },
+    );
+
+    test('runWithCheckingAsync stops when the precondition fails', () async {
+      var operationCalls = 0;
+      var postConditionCalls = 0;
+
+      await expectLater(
+        runWithCheckingAsync(
+          preCondition: () => false,
+          operation: () async {
+            operationCalls++;
+            return 30;
+          },
+          postCondition: (_) {
+            postConditionCalls++;
+            return true;
+          },
+        ),
+        throwsA(
+          isA<AssertionError>().having(
+            (error) => error.message,
+            'kind',
+            matches(
+              RegExp(ViolationKind.preCondition.name, caseSensitive: false),
+            ),
+          ),
+        ),
+      );
+
+      check(operationCalls).equals(0);
+      check(postConditionCalls).equals(0);
+    });
+
+    test('runWithCheckingAsync reports postcondition violations', () async {
+      var operationCalls = 0;
+      var postConditionCalls = 0;
+
+      await expectLater(
+        runWithCheckingAsync(
+          preCondition: () => true,
+          operation: () async {
+            operationCalls++;
+            return 30;
+          },
+          postCondition: (_) {
+            postConditionCalls++;
+            return false;
+          },
+        ),
+        throwsA(
+          isA<AssertionError>().having(
+            (error) => error.message,
+            'kind',
+            matches(
+              RegExp(ViolationKind.postCondition.name, caseSensitive: false),
+            ),
+          ),
+        ),
+      );
+
+      check(operationCalls).equals(1);
+      check(postConditionCalls).equals(1);
+    });
   });
 
   group('Invariant', () {
-    test('defaults to debug checking', () {
+    test('defaults to assertion-only checking', () {
       check(
-        _TestInvariant().contractCheckingEnv,
-      ).equals(ContractCheckingEnv.debug);
+        _TestInvariant().contractCheckingMode,
+      ).equals(ContractCheckingMode.assertionsOnly);
     });
 
     test('pre and post accept satisfied conditions', () {
@@ -176,14 +352,14 @@ void main() {
 
       invariant
         ..pre(
-          condition: true,
+          condition: () => true,
           message: () {
             messageCalls++;
             return 'precondition failed';
           },
         )
         ..post(
-          condition: true,
+          condition: () => true,
           message: () {
             messageCalls++;
             return 'postcondition failed';
@@ -193,26 +369,35 @@ void main() {
       check(messageCalls).equals(0);
     });
 
-    test('debug pre and post throw assertion errors when conditions fail', () {
+    test('assertionsOnly pre and post throw when conditions fail', () {
       final invariant = _TestInvariant();
 
       expect(
-        () => invariant.pre(condition: false, message: () => 'precondition'),
+        () => invariant.pre(
+          condition: () => false,
+          message: () => 'precondition',
+        ),
         throwsA(isA<AssertionError>()),
       );
       expect(
-        () => invariant.post(condition: false, message: () => 'postcondition'),
+        () => invariant.post(
+          condition: () => false,
+          message: () => 'postcondition',
+        ),
         throwsA(isA<AssertionError>()),
       );
     });
 
-    test('production pre and post throw typed contract violations', () {
+    test('alwaysThrow pre and post throw typed contract violations', () {
       final invariant = _TestInvariant(
-        environment: ContractCheckingEnv.production,
+        checkingMode: ContractCheckingMode.alwaysThrow,
       );
 
       expect(
-        () => invariant.pre(condition: false, message: () => 'invalid input'),
+        () => invariant.pre(
+          condition: () => false,
+          message: () => 'invalid input',
+        ),
         throwsA(
           isA<ContractViolationError>().having(
             (error) => error.kind,
@@ -222,7 +407,10 @@ void main() {
         ),
       );
       expect(
-        () => invariant.post(condition: false, message: () => 'invalid result'),
+        () => invariant.post(
+          condition: () => false,
+          message: () => 'invalid result',
+        ),
         throwsA(
           isA<ContractViolationError>().having(
             (error) => error.kind,
@@ -252,7 +440,7 @@ void main() {
 
     test('runWithInvariant reports invalid post-operation state', () {
       final invariant = _TestInvariant(
-        environment: ContractCheckingEnv.production,
+        checkingMode: ContractCheckingMode.alwaysThrow,
       );
 
       expect(
@@ -272,19 +460,22 @@ void main() {
       );
     });
 
-    test('debug runWithInvariant asserts when the invariant is broken', () {
-      final invariant = _TestInvariant();
+    test(
+      'assertionsOnly runWithInvariant asserts when the invariant is broken',
+      () {
+        final invariant = _TestInvariant();
 
-      expect(
-        () => invariant.runWithInvariant('update', () {
-          invariant.isValid = false;
-        }),
-        throwsA(isA<AssertionError>()),
-      );
-      check(invariant.invariantCalls).equals(1);
-    });
+        expect(
+          () => invariant.runWithInvariant('update', () {
+            invariant.isValid = false;
+          }),
+          throwsA(isA<AssertionError>()),
+        );
+        check(invariant.invariantCalls).equals(1);
+      },
+    );
 
-    test('does not check the invariant when the body throws', () {
+    test('checks the invariant when the body throws', () {
       final invariant = _TestInvariant();
 
       expect(
@@ -294,7 +485,96 @@ void main() {
         throwsStateError,
       );
 
-      check(invariant.invariantCalls).equals(0);
+      check(invariant.invariantCalls).equals(1);
+    });
+
+    test('invariant failure takes precedence over a body exception', () {
+      final invariant = _TestInvariant(
+        checkingMode: ContractCheckingMode.alwaysThrow,
+      );
+
+      expect(
+        () => invariant.runWithInvariant('update', () {
+          invariant.isValid = false;
+          throw StateError('operation failed');
+        }),
+        throwsA(
+          isA<ContractViolationError>().having(
+            (error) => error.kind,
+            'kind',
+            ViolationKind.invariant,
+          ),
+        ),
+      );
+      check(invariant.invariantCalls).equals(1);
+    });
+
+    test(
+      'runWithInvariantAsync checks invariants after success and failure',
+      () async {
+        final invariant = _TestInvariant();
+
+        final result = await invariant.runWithInvariantAsync(
+          'async update',
+          () async => 30,
+        );
+
+        check(result).equals(30);
+        check(invariant.invariantCalls).equals(1);
+
+        await expectLater(
+          invariant.runWithInvariantAsync(
+            'async update',
+            () async => throw StateError('operation failed'),
+          ),
+          throwsStateError,
+        );
+        check(invariant.invariantCalls).equals(2);
+      },
+    );
+
+    test(
+      'async invariant failure takes precedence over a body exception',
+      () async {
+        final invariant = _TestInvariant(
+          checkingMode: ContractCheckingMode.alwaysThrow,
+        );
+
+        await expectLater(
+          invariant.runWithInvariantAsync('async update', () async {
+            invariant.isValid = false;
+            throw StateError('operation failed');
+          }),
+          throwsA(
+            isA<ContractViolationError>().having(
+              (error) => error.kind,
+              'kind',
+              ViolationKind.invariant,
+            ),
+          ),
+        );
+        check(invariant.invariantCalls).equals(1);
+      },
+    );
+
+    test('verifyInvariant checks the current state', () {
+      _TestInvariant(
+        checkingMode: ContractCheckingMode.alwaysThrow,
+      ).verifyInvariant('manual check');
+
+      final invalidInvariant = _TestInvariant(
+        checkingMode: ContractCheckingMode.alwaysThrow,
+      )..isValid = false;
+      expect(
+        () => invalidInvariant.verifyInvariant('manual check'),
+        throwsA(
+          isA<ContractViolationError>().having(
+            (error) => error.kind,
+            'kind',
+            ViolationKind.invariant,
+          ),
+        ),
+      );
     });
   });
 
@@ -309,7 +589,7 @@ void main() {
       check(error.message).equals('invalid state');
       check(
         error.toString(),
-      ).equals('ViolationKind.invariant violated: invalid state');
+      ).equals('${ViolationKind.invariant.name} violated: invalid state');
     });
   });
 }
