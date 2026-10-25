@@ -58,17 +58,18 @@ import 'package:dey_dev_utils/result.dart';
 Result<int, FormatException> parseNumber(String input) {
 	final value = int.tryParse(input);
 	return value == null
-			? Err(FormatException('Not a number: $input'))
-			: Ok(value);
+			? Result.err(FormatException('Not a number: $input'), StackTrace.current)
+			: Result.ok(value);
 }
 
 final result = parseNumber('30');
 final number = result.unwrapOr(0);
 ```
 
-`Result.guardSync` and `Result.guardAsync` are available when you need to
-convert a specific exception type into a result while allowing unrelated
-errors to propagate.
+`Result.guardSync` / `Result.guardAsync` convert a matching exception type into
+`Ok`/`Err` while allowing unrelated errors to propagate, and the
+`guardExceptionSync` / `guardExceptionAsync` variants keep `Error` values
+uncaught.
 
 ### Scope helpers
 
@@ -224,6 +225,7 @@ an AI coding assistant the API model, important semantics, examples, testing
 guidance, and review checklists for:
 
 - [`Result`](skills/dey-dev-utils-result-type/SKILL.md)
+- [Contract checks](skills/dey-dev-utils-contract/SKILL.md)
 - [Scope helpers](skills/dey-dev-utils-scope-methods-and-function/SKILL.md)
 - [Trampolines](skills/dey-dev-utils-trampoline/SKILL.md)
 - [Type-safe comparison](skills/dey-dev-utils-type-safe-comparison/SKILL.md)
