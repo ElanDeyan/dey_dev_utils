@@ -1,3 +1,14 @@
+## 1.0.0
+
+First stable release of `dey_dev_utils`.
+
+- uses dart 3.13.7
+- Adds contract checks for preconditions, postconditions, and invariants.
+- **Breaking:** `Err` and `Result.err` now require an explicit
+  `StackTrace`.
+- Moves several experimental libraries under `lib/src/` and are not exported; their previous
+  package import paths have changed, and these APIs remain experimental.
+
 ## 0.1.0-dev.3
 
 - Adds the `Spec<T>` specification pattern as a reusable Boolean business-rule

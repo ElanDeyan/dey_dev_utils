@@ -7,7 +7,7 @@ This package is also a place to explore ideas with AI assistance (many of things
 
 ## Features
 
-The package currently includes five stable-looking, tested libraries:
+The package's tested core includes five libraries:
 
 - **Result**: represent success and typed failure explicitly with `Ok` and
 	`Err`.
@@ -164,23 +164,21 @@ both operands. Predicate callbacks run on every evaluation and are not cached.
 
 ## Experimental APIs
 
-The following libraries are marked `@experimental` and may change or be
-removed before a stable release:
+The following libraries are not exported and may change or be
+removed in future releases without the same compatibility guarantees as the
+tested core:
 
-- `contract.dart` for invariants and preconditions/postconditions
 - `iso.dart` for reversible transformations between types
 - `lens.dart` for composable access to nested immutable data
 - `middleware.dart` for asynchronous handlers and pipelines
 - `monoid.dart` for identity and associative combination
 - `once.dart` for lazy one-time initialization
-- `option.dart` for `Some` and `None` values
 - `rate_limit.dart` for debouncing and throttling
 - `saga.dart` for compensating asynchronous workflows
 - `trace.dart` for timing and logging wrappers
 - `validate.dart` for accumulating validation results
 
-Use these APIs when experimentation is appropriate, and pin the package
-version if your project depends on their current behavior.
+The experimental `option.dart` for `Some` and `None` values.
 
 ### Contract checks
 
@@ -263,8 +261,7 @@ the smallest reproducible example when reporting a problem. See the
 [repository](https://github.com/ElanDeyan/dey_dev_utils) for source code and
 project discussions.
 
-This package is currently in prerelease development. Experimental APIs are
-intentionally not covered by the same stability promise as the tested core.
+The tested core is released as version `1.0.0`.
 
 ## License
 
