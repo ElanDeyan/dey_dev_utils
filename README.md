@@ -25,7 +25,7 @@ contracts, monoids, and lazy initialization.
 
 ## Getting started
 
-Requires Dart SDK `3.11.5` or newer.
+Requires Dart SDK `3.13.7` or newer.
 
 Add the package to your project:
 
@@ -248,6 +248,13 @@ Run the test suite and static analysis locally:
 dart analyze
 dart test
 ```
+
+GitHub Actions runs formatting, analysis, and tests on every push and pull
+request. Dedupe, cognitive complexity, and undead reports are published as
+workflow artifacts and summaries for review; they are advisory while the APIs
+are evolving. Mutation testing runs weekly and on manual workflow dispatch,
+and its report is advisory as well. Package contents are validated before
+release publishing.
 
 Contributions are welcome. Please open an issue for bugs or ideas, and include
 the smallest reproducible example when reporting a problem. See the

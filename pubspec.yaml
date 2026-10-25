@@ -1,6 +1,6 @@
 name: dey_dev_utils
 description: A collection of utilities for development in Dart.
-version: 0.1.0-dev.3
+version: 1.0.0
 repository: https://github.com/ElanDeyan/dey_dev_utils
 topics:
   - developer-tools
@@ -9,7 +9,7 @@ topics:
   - validation
 
 environment:
-  sdk: ^3.11.5
+  sdk: ^3.13.7
 
 dependencies:
   collection: ^1.19.1

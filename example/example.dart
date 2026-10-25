@@ -9,12 +9,11 @@ import 'package:dey_dev_utils/spec.dart';
 import 'package:dey_dev_utils/trampoline.dart';
 
 Result<int, FormatException> parseQuantity(String input) {
-  return Result<int, FormatException>.guardSync(() => int.parse(input)).andThen(
-    (quantity) {
-      if (quantity > 0) return Ok(quantity);
-      return Err(FormatException('Quantity must be positive: $input'));
-    },
-  );
+  return Result<int, FormatException>.guardSync(() => int.parse(input))
+      .andThen((quantity) {
+        if (quantity > 0) return Ok(quantity);
+        return Err(FormatException('Quantity must be positive: $input'));
+      });
 }
 
 Bounce<int> sumDown(int value, int total) {

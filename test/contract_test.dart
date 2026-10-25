@@ -183,9 +183,8 @@ void main() {
         );
 
         check(result).equals(30);
-        check(
-          events,
-        ).deepEquals(['precondition', 'operation', 'postcondition']);
+        check(events)
+            .deepEquals(['precondition', 'operation', 'postcondition']);
       },
     );
 
@@ -270,9 +269,8 @@ void main() {
         );
 
         check(result).equals(30);
-        check(
-          events,
-        ).deepEquals(['precondition', 'operation', 'postcondition']);
+        check(events)
+            .deepEquals(['precondition', 'operation', 'postcondition']);
       },
     );
 
@@ -341,9 +339,8 @@ void main() {
 
   group('Invariant', () {
     test('defaults to assertion-only checking', () {
-      check(
-        _TestInvariant().contractCheckingMode,
-      ).equals(ContractCheckingMode.assertionsOnly);
+      check(_TestInvariant().contractCheckingMode)
+          .equals(ContractCheckingMode.assertionsOnly);
     });
 
     test('pre and post accept satisfied conditions', () {
@@ -558,9 +555,8 @@ void main() {
     );
 
     test('verifyInvariant checks the current state', () {
-      _TestInvariant(
-        checkingMode: ContractCheckingMode.alwaysThrow,
-      ).verifyInvariant('manual check');
+      _TestInvariant(checkingMode: ContractCheckingMode.alwaysThrow)
+          .verifyInvariant('manual check');
 
       final invalidInvariant = _TestInvariant(
         checkingMode: ContractCheckingMode.alwaysThrow,
@@ -587,9 +583,8 @@ void main() {
 
       check(error.kind).equals(ViolationKind.invariant);
       check(error.message).equals('invalid state');
-      check(
-        error.toString(),
-      ).equals('${ViolationKind.invariant.name} violated: invalid state');
+      check(error.toString())
+          .equals('${ViolationKind.invariant.name} violated: invalid state');
     });
   });
 }
