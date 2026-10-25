@@ -26,9 +26,8 @@ void main() {
       check(const Ok<int, String>(1) == const Ok<int, String>(2)).isFalse();
       check(Err<int, String>('a')).equals(Err<int, String>('a'));
       check(Err<int, String>('a') == Err<int, String>('b')).isFalse();
-      check(
-        (const Ok<int, String>(1) as Object) == Err<int, String>('1'),
-      ).isFalse();
+      check((const Ok<int, String>(1) as Object) == Err<int, String>('1'))
+          .isFalse();
       check(const Ok<int, String>(1).hashCode).equals(1.hashCode);
       check(Err<int, String>('a').hashCode).equals('a'.hashCode);
     });
@@ -164,12 +163,10 @@ void main() {
     });
 
     test('map transforms only success values', () {
-      check(
-        const Ok<int, String>(2).map((value) => value * 2),
-      ).equals(const Ok<int, String>(4));
-      check(
-        Err<int, String>('failed').map((value) => value * 2),
-      ).equals(Err<int, String>('failed'));
+      check(const Ok<int, String>(2).map((value) => value * 2))
+          .equals(const Ok<int, String>(4));
+      check(Err<int, String>('failed').map((value) => value * 2))
+          .equals(Err<int, String>('failed'));
     });
 
     test('nullable map and extraction preserve the success state', () {
@@ -190,16 +187,16 @@ void main() {
         trace,
       ).mapErr((error) => error.length);
 
-      check(
-        mapped,
-      ).isA<Err<int, int>>().has((value) => value.error, 'error').equals(6);
+      check(mapped)
+          .isA<Err<int, int>>()
+          .has((value) => value.error, 'error')
+          .equals(6);
       check(mapped)
           .isA<Err<int, int>>()
           .has((value) => value.stackTrace, 'stack trace')
           .equals(trace);
-      check(
-        const Ok<int, String>(2).mapErr((error) => error.length),
-      ).equals(const Ok<int, int>(2));
+      check(const Ok<int, String>(2).mapErr((error) => error.length))
+          .equals(const Ok<int, int>(2));
     });
 
     test('orElse recovers errors and preserves successes', () {
@@ -222,12 +219,10 @@ void main() {
     });
 
     test('flatten removes one nested result layer', () {
-      check(
-        const Ok<Result<int, String>, String>(Ok(30)).flatten(),
-      ).equals(const Ok<int, String>(30));
-      check(
-        Ok<Result<int, String>, String>(Err('inner')).flatten(),
-      ).equals(Err<int, String>('inner'));
+      check(const Ok<Result<int, String>, String>(Ok(30)).flatten())
+          .equals(const Ok<int, String>(30));
+      check(Ok<Result<int, String>, String>(Err('inner')).flatten())
+          .equals(Err<int, String>('inner'));
       final trace = StackTrace.current;
       final outer = Err<Result<int, String>, String>('outer', trace);
 
@@ -371,9 +366,8 @@ void main() {
 
   group('Result guards', () {
     test('guardSync returns Ok for values and catches configured errors', () {
-      check(
-        Result<int, FormatException>.guardSync(() => 30),
-      ).equals(const Ok<int, FormatException>(30));
+      check(Result<int, FormatException>.guardSync(() => 30))
+          .equals(const Ok<int, FormatException>(30));
       final result = Result<int, FormatException>.guardSync(() {
         throw const FormatException('bad input');
       });
@@ -410,9 +404,8 @@ void main() {
     });
 
     test('guardExceptionSync catches exceptions but not errors', () {
-      check(
-        Result.guardExceptionSync<int, FormatException>(() => 30),
-      ).equals(const Ok<int, FormatException>(30));
+      check(Result.guardExceptionSync<int, FormatException>(() => 30))
+          .equals(const Ok<int, FormatException>(30));
       check(
         Result.guardExceptionSync<int, FormatException>(() {
           throw const FormatException('bad input');

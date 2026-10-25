@@ -214,9 +214,8 @@ void main() {
     });
 
     test('contramap projects candidates before evaluation', () {
-      final longText = Spec<int>.predicate(
-        (length) => length >= 4,
-      ).contramap<String>((text) => text.length);
+      final longText = Spec<int>.predicate((length) => length >= 4)
+          .contramap<String>((text) => text.length);
 
       check(longText('Dart')).isTrue();
       check(longText('API')).isFalse();

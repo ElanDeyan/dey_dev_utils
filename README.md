@@ -25,7 +25,7 @@ contracts, monoids, and lazy initialization.
 
 ## Getting started
 
-Requires Dart SDK `3.11.5` or newer.
+Requires Dart SDK `3.13.7` or newer.
 
 Add the package to your project:
 
@@ -181,6 +181,42 @@ removed before a stable release:
 Use these APIs when experimentation is appropriate, and pin the package
 version if your project depends on their current behavior.
 
+### Contract checks
+
+`runWithChecking` and `runWithCheckingAsync` evaluate a precondition, run an
+operation, and check its result. They default to
+`ContractCheckingMode.assertionsOnly`, where failed checks use Dart assertions
+and callbacks are not evaluated when assertions are disabled. Pass
+`checkingMode: ContractCheckingMode.alwaysThrow` to enforce checks with
+`ContractViolationError` regardless of assertion settings. The `Invariant`
+mixin provides callback-based `pre` and `post` checks, explicit
+`verifyInvariant`, and sync/async `runWithInvariant` helpers. Those helpers
+evaluate the invariant even when the body throws; if both the body and
+invariant check fail, the invariant failure takes precedence.
+
+```dart
+import 'package:dey_dev_utils/contract.dart';
+
+final input = '  value  ';
+final result = runWithChecking(
+  preCondition: () => input.isNotEmpty,
+  operation: () => input.trim(),
+  postCondition: (value) => value.isNotEmpty,
+  checkingMode: ContractCheckingMode.alwaysThrow,
+);
+```
+
+Use `runWithCheckingAsync` for an asynchronous operation:
+
+```dart
+final result = await runWithCheckingAsync(
+  preCondition: () => input.isNotEmpty,
+  operation: () async => input.trim(),
+  postCondition: (value) => value.isNotEmpty,
+  checkingMode: ContractCheckingMode.alwaysThrow,
+);
+```
+
 ## AI skills for stable libraries
 
 The repository includes reusable AI skills for the stable libraries. They give
@@ -212,6 +248,13 @@ Run the test suite and static analysis locally:
 dart analyze
 dart test
 ```
+
+GitHub Actions runs formatting, analysis, and tests on every push and pull
+request. Dedupe, cognitive complexity, and undead reports are published as
+workflow artifacts and summaries for review; they are advisory while the APIs
+are evolving. Mutation testing runs weekly and on manual workflow dispatch,
+and its report is advisory as well. Package contents are validated before
+release publishing.
 
 Contributions are welcome. Please open an issue for bugs or ideas, and include
 the smallest reproducible example when reporting a problem. See the

@@ -1,147 +1,253 @@
-@experimental
-library;
-
 import 'package:meta/meta.dart';
 
-/// Design by Contract: Mixin for enforcing object invariants.
+/// Selects how contract violations are handled.
+enum ContractCheckingMode {
+  /// Uses Dart assertions to report violations.
+  assertionsOnly,
+
+  /// Throws [ContractViolationError] when a check fails.
+  alwaysThrow,
+}
+
+/// Identifies which part of a contract was violated.
+enum ViolationKind {
+  /// A condition required before an operation was false.
+  preCondition,
+
+  /// A condition required after an operation was false.
+  postCondition,
+
+  /// An object's invariant did not hold after an operation.
+  invariant,
+}
+
+/// Runs [operation] after checking [preCondition] and checks its result.
 ///
-/// An invariant is a condition that must always be true for an object
-/// throughout its lifetime. By implementing [Invariant], you declare what
-/// invariants your class maintains.
+/// In [ContractCheckingMode.assertionsOnly], failed conditions trigger
+/// Dart assertions and therefore depend on assertions being enabled. In
+/// [ContractCheckingMode.alwaysThrow], failed conditions throw
+/// [ContractViolationError]. Defaults to [ContractCheckingMode.assertionsOnly].
+/// Set [checkingMode] to select the checking behavior. When assertions are disabled,
+/// the condition callbacks are not invoked in
+/// [ContractCheckingMode.assertionsOnly].
 ///
-/// Use this mixin to:
-/// - Document and enforce class invariants
-/// - Catch state corruption early during development
-/// - Ensure consistency after state-modifying operations
+/// Exceptions thrown by a condition or by [operation] propagate unchanged.
+R runWithChecking<R>({
+  required bool Function() preCondition,
+  required R Function() operation,
+  required bool Function(R result) postCondition,
+  ContractCheckingMode checkingMode = .assertionsOnly,
+}) {
+  switch (checkingMode) {
+    case .assertionsOnly:
+      assert(preCondition(), 'Precondition violated');
+
+      final result = operation();
+
+      assert(postCondition(result), 'Postcondition violated');
+
+      return result;
+
+    case .alwaysThrow:
+      if (!preCondition()) {
+        throw ContractViolationError(
+          kind: .preCondition,
+          message: 'Precondition violated',
+        );
+      }
+
+      final result = operation();
+
+      if (!postCondition(result)) {
+        throw ContractViolationError(
+          kind: .postCondition,
+          message: 'Postcondition violated',
+        );
+      }
+
+      return result;
+  }
+}
+
+/// Runs [operation] after checking [preCondition] and checks its result.
 ///
-/// Example:
-/// ```dart
-/// class BankAccount with Invariant {
-///   double _balance;
+/// In [ContractCheckingMode.assertionsOnly], failed conditions trigger
+/// Dart assertions and therefore depend on assertions being enabled. In
+/// [ContractCheckingMode.alwaysThrow], failed conditions throw
+/// [ContractViolationError]. Defaults to [ContractCheckingMode.assertionsOnly].
+/// Set [checkingMode] to select the checking behavior. When assertions are disabled,
+/// the condition callbacks are not invoked in
+/// [ContractCheckingMode.assertionsOnly].
 ///
-///   BankAccount(this._balance);
+/// Exceptions thrown by a condition or by [operation] propagate unchanged.
+Future<R> runWithCheckingAsync<R>({
+  required bool Function() preCondition,
+  required Future<R> Function() operation,
+  required bool Function(R result) postCondition,
+  ContractCheckingMode checkingMode = .assertionsOnly,
+}) async {
+  switch (checkingMode) {
+    case .assertionsOnly:
+      assert(preCondition(), 'Precondition violated');
+
+      final result = await operation();
+
+      assert(postCondition(result), 'Postcondition violated');
+
+      return result;
+
+    case .alwaysThrow:
+      if (!preCondition()) {
+        throw ContractViolationError(
+          kind: .preCondition,
+          message: 'Precondition violated',
+        );
+      }
+
+      final result = await operation();
+
+      if (!postCondition(result)) {
+        throw ContractViolationError(
+          kind: .postCondition,
+          message: 'Postcondition violated',
+        );
+      }
+
+      return result;
+  }
+}
+
+/// Provides checks for object invariants, preconditions, and postconditions.
 ///
-///   void withdraw(double amount) {
-///     _balance -= amount;
-///     checkInvariant('withdraw');
-///   }
-///
-///   @override
-///   bool invariant() => _balance >= 0; // Balance must never be negative
-/// }
-/// ```
-@experimental
-mixin Invariant {
-  /// Asserts that the invariant is satisfied for [operation].
+/// In [ContractCheckingMode.assertionsOnly], failed checks use Dart assertions.
+/// In [ContractCheckingMode.alwaysThrow], failed checks throw a
+/// [ContractViolationError].
+abstract mixin class Invariant {
+  /// The mode used when evaluating this object's contracts.
   ///
-  /// Call this after any state-modifying operation to verify the object
-  /// remains in a valid state. Fails in debug mode with an assertion error
-  /// if the invariant is violated.
-  ///
-  /// Parameters:
-  /// - [operation]: Description of the operation that was performed
-  ///
-  /// Example:
-  /// ```dart
-  /// void updateBalance(double amount) {
-  ///   balance += amount;
-  ///   checkInvariant('updateBalance');
-  /// }
-  /// ```
-  void checkInvariant(String operation) {
-    assert(invariant(), '🔴 Invariant broken after: $operation');
+  /// Defaults to [ContractCheckingMode.assertionsOnly].
+  ContractCheckingMode get contractCheckingMode => .assertionsOnly;
+
+  void _evaluate({
+    required ViolationKind kind,
+    required bool Function() condition,
+    required String Function() message,
+  }) {
+    switch (contractCheckingMode) {
+      case .assertionsOnly:
+        assert(condition(), message());
+      case .alwaysThrow:
+        if (!condition()) {
+          throw ContractViolationError(kind: kind, message: message());
+        }
+    }
   }
 
-  /// The invariant condition that must always be true for this object.
+  /// Runs [body] and evaluates [invariant] afterward, even if [body] throws.
   ///
-  /// Subclasses must override this to define their invariants.
-  /// Should return true if the object is in a valid state, false otherwise.
+  /// Returns the result of [body] when both the operation and invariant check
+  /// succeed. If [body] throws and the invariant check succeeds, the body's
+  /// exception propagates. If the invariant check also fails, the invariant
+  /// failure takes precedence.
+  @nonVirtual
+  R runWithInvariant<R>(String description, R Function() body) {
+    try {
+      final result = body();
+      return result;
+    } finally {
+      _evaluateInvariant(description);
+    }
+  }
+
+  /// Runs [body] and evaluates [invariant] afterward, even if [body] throws.
   ///
-  /// Example:
-  /// ```dart
-  /// @override
-  /// bool invariant() {
-  ///   return _size >= 0 && _size <= capacity;
-  /// }
-  /// ```
+  /// Returns the result of [body] when both the operation and invariant check
+  /// succeed. If [body] throws and the invariant check succeeds, the body's
+  /// exception propagates. If the invariant check also fails, the invariant
+  /// failure takes precedence.
+  @nonVirtual
+  Future<R> runWithInvariantAsync<R>(
+    String description,
+    Future<R> Function() body,
+  ) async {
+    try {
+      final result = await body();
+      return result;
+    } finally {
+      _evaluateInvariant(description);
+    }
+  }
+
+  /// Checks a precondition.
+  ///
+  /// Evaluates [condition] once when checks are enabled and evaluates
+  /// [message] only when it fails. In [ContractCheckingMode.assertionsOnly],
+  /// a failed condition triggers an assertion; in
+  /// [ContractCheckingMode.alwaysThrow], it throws a [ContractViolationError]
+  /// with kind [ViolationKind.preCondition].
+  @nonVirtual
+  void pre({
+    required bool Function() condition,
+    required String Function() message,
+  }) => _evaluate(kind: .preCondition, condition: condition, message: message);
+
+  /// Checks a postcondition.
+  ///
+  /// Evaluates [condition] once when checks are enabled and evaluates
+  /// [message] only when it fails. In [ContractCheckingMode.assertionsOnly],
+  /// a failed condition triggers an assertion; in
+  /// [ContractCheckingMode.alwaysThrow], it throws a [ContractViolationError]
+  /// with kind [ViolationKind.postCondition].
+  @nonVirtual
+  void post({
+    required bool Function() condition,
+    required String Function() message,
+  }) => _evaluate(kind: .postCondition, condition: condition, message: message);
+
+  void _evaluateInvariant(String description) {
+    switch (contractCheckingMode) {
+      case .assertionsOnly:
+        assert(invariant(), 'Invariant broken after $description');
+      case .alwaysThrow:
+        if (!invariant()) {
+          throw ContractViolationError(
+            kind: .invariant,
+            message: 'Invariant broken after $description',
+          );
+        }
+    }
+  }
+
+  /// Checks whether this object's invariant currently holds.
+  ///
+  /// In [ContractCheckingMode.assertionsOnly], a failed invariant triggers an
+  /// assertion when assertions are enabled. In
+  /// [ContractCheckingMode.alwaysThrow], a failed invariant throws a
+  /// [ContractViolationError] with kind [ViolationKind.invariant].
+  @nonVirtual
+  void verifyInvariant(String description) => _evaluateInvariant(description);
+
+  /// Returns whether this object is in a valid state.
+  ///
+  /// Implementations should return `true` when the object's invariant holds.
+  @protected
+  @visibleForOverriding
   bool invariant();
 }
 
-/// Extension methods for Design by Contract preconditions and postconditions.
-///
-/// Design by Contract is a way to ensure functions and operations receive
-/// valid inputs and produce valid outputs. These methods provide fluent syntax
-/// for checking preconditions (conditions that must be true before using a
-/// value) and postconditions (conditions that must be true after an operation).
-///
-/// **Important:** Due to the try-finally implementation, both methods check
-/// their conditions in the finally block. While this ensures the check always
-/// runs, it means assertions occur AFTER the value is returned from the method.
-/// For traditional precondition checking (fail fast before use), consider
-/// checking conditions directly before the method call instead.
-///
-/// Example:
-/// ```dart
-/// final user = getUser()
-///   .pre(user.age >= 18, 'User must be adult')
-///   .post((u) => u.email.contains('@'), 'Valid email required');
-/// ```
-@experimental
-extension ContractOps<T> on T {
-  /// Checks a postcondition on this value and returns it.
-  ///
-  /// Postconditions verify that a result satisfies expected conditions.
-  /// The condition function receives this value and should return true
-  /// if the postcondition is satisfied.
-  ///
-  /// The assertion runs in a finally block, ensuring it executes before
-  /// the value is returned to the caller.
-  ///
-  /// Parameters:
-  /// - [condition]: Predicate function that verifies the postcondition
-  /// - [message]: Error message if the postcondition fails
-  ///
-  /// Returns: This value (allowing for method chaining)
-  ///
-  /// Example:
-  /// ```dart
-  /// final result = compute()
-  ///   .post((r) => r >= 0, 'Result must be non-negative');
-  /// ```
-  T post(bool Function(T) condition, String message) {
-    assert(condition(this), '🔴 Postcondition: $message');
-    return this;
-  }
+/// An error raised when a contract check fails in
+/// [ContractCheckingMode.alwaysThrow].
+final class ContractViolationError extends Error {
+  /// Creates an error for a failed [kind] with the specified [message].
+  ContractViolationError({required this.kind, required this.message});
 
-  /// Checks a precondition on this value and returns it.
-  ///
-  /// **Note:** Despite the name "precondition", this checks the condition
-  /// AFTER returning from the method (in the finally block). This is due to
-  /// the try-finally implementation pattern used here.
-  ///
-  /// For traditional precondition checking (fail fast before using a value),
-  /// consider checking conditions directly:
-  /// ```dart
-  /// assert(condition, 'message');
-  /// final value = someOperation();
-  /// ```
-  ///
-  /// The finally block ensures the assertion runs and the method still
-  /// returns the value (or throws if assertion fails).
-  ///
-  /// Parameters:
-  /// - [condition]: Boolean that must be true for the precondition
-  /// - [message]: Error message if the precondition fails
-  ///
-  /// Returns: This value (allowing for method chaining)
-  ///
-  /// Example:
-  /// ```dart
-  /// final adult = person
-  ///   .pre(person.age >= 18, 'Person must be adult');
-  /// ```
-  T pre(bool condition, String message) {
-    assert(condition, '🔴 Precondition: $message');
-    return this;
-  }
+  /// The contract check that failed.
+  final ViolationKind kind;
+
+  /// A description of the violation.
+  final String message;
+
+  /// Returns a description containing the failed contract kind and message.
+  @override
+  String toString() => '${kind.name} violated: $message';
 }
