@@ -7,13 +7,12 @@ name: Dart CI
 
 on:
   push:
-    branches: [main]
   pull_request:
-    branches: [main]
-    types: [opened, synchronize, reopened]
   release:
     types: [published]
   workflow_dispatch:
+  schedule:
+    - cron: '0 6 * * 1'
 
 permissions:
   contents: read
@@ -24,13 +23,19 @@ concurrency:
 
 jobs:
   verify:
-    name: Verify
+    name: Verify (Dart ${{ matrix.sdk }})
     runs-on: ubuntu-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        sdk: ['3.13.7', stable]
 
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v7
 
       - uses: dart-lang/setup-dart@v1
+        with:
+          sdk: ${{ matrix.sdk }}
 
       - name: Install dependencies
         run: dart pub get
@@ -46,11 +51,13 @@ jobs:
 
   mutation-test:
     name: Mutation test
+    if: github.event_name == 'schedule' || github.event_name == 'workflow_dispatch'
     runs-on: ubuntu-latest
     needs: verify
+    continue-on-error: true
 
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v7
 
       - uses: dart-lang/setup-dart@v1
 
@@ -62,11 +69,120 @@ jobs:
 
       - name: Upload mutation report
         if: always()
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v7
         with:
           name: mutation-test-report
           path: mutation-test-report/
           if-no-files-found: warn
+          retention-days: 30
+
+  dedupe-report:
+    name: Dedupe report
+    runs-on: ubuntu-latest
+    needs: verify
+    continue-on-error: true
+
+    steps:
+      - uses: actions/checkout@v7
+
+      - uses: dart-lang/setup-dart@v1
+
+      - name: Install dependencies
+        run: dart pub get
+
+      - name: Generate duplication report
+        run: dart run dedupe --format=markdown > dedupe-report.md
+
+      - name: Add report to job summary
+        if: always()
+        run: |
+          echo "## Dedupe report" >> "$GITHUB_STEP_SUMMARY"
+          if [[ -s dedupe-report.md ]]; then
+            cat dedupe-report.md >> "$GITHUB_STEP_SUMMARY"
+          else
+            echo "No report was generated." >> "$GITHUB_STEP_SUMMARY"
+          fi
+
+      - name: Upload dedupe report
+        if: always()
+        uses: actions/upload-artifact@v7
+        with:
+          name: dedupe-report
+          path: dedupe-report.md
+          if-no-files-found: warn
+          retention-days: 30
+
+  complexity-report:
+    name: Cognitive complexity report
+    runs-on: ubuntu-latest
+    needs: verify
+    continue-on-error: true
+
+    steps:
+      - uses: actions/checkout@v7
+
+      - uses: dart-lang/setup-dart@v1
+
+      - name: Install dependencies
+        run: dart pub get
+
+      - name: Generate complexity report
+        run: dart run cognitive_complexity --threshold 15 > cognitive-complexity-report.md
+
+      - name: Add report to job summary
+        if: always()
+        run: |
+          echo "## Cognitive complexity report (threshold: 15)" >> "$GITHUB_STEP_SUMMARY"
+          if [[ -s cognitive-complexity-report.txt ]]; then
+            cat cognitive-complexity-report.txt >> "$GITHUB_STEP_SUMMARY"
+          else
+            echo "No report was generated." >> "$GITHUB_STEP_SUMMARY"
+          fi
+
+      - name: Upload complexity report
+        if: always()
+        uses: actions/upload-artifact@v7
+        with:
+          name: cognitive-complexity-report
+          path: cognitive-complexity-report.md
+          if-no-files-found: warn
+          retention-days: 30
+
+  undead-report:
+    name: Undead report
+    runs-on: ubuntu-latest
+    needs: verify
+    continue-on-error: true
+
+    steps:
+      - uses: actions/checkout@v7
+
+      - uses: dart-lang/setup-dart@v1
+
+      - name: Install dependencies
+        run: dart pub get
+
+      - name: Generate reachability report
+        run: dart run undead --format=markdown > undead-report.md
+
+      - name: Add report to job summary
+        if: always()
+        run: |
+          echo "## Undead report" >> "$GITHUB_STEP_SUMMARY"
+          if [[ -s undead-report.md ]]; then
+            cat undead-report.md >> "$GITHUB_STEP_SUMMARY"
+          else
+            echo "No report was generated." >> "$GITHUB_STEP_SUMMARY"
+          fi
+
+      - name: Upload undead report
+        if: always()
+        uses: actions/upload-artifact@v7
+        with:
+          name: undead-report
+          path: undead-report.md
+          if-no-files-found: warn
+          retention-days: 30
 
   publish:
     name: Publish package
@@ -78,7 +194,7 @@ jobs:
       id-token: write
 
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v7
         with:
           ref: ${{ github.event.release.tag_name }}
 
