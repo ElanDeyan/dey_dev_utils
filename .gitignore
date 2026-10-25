@@ -11,3 +11,5 @@ doc/api/
 
 # AI
 .agents
+.claude
+.github/skills
