@@ -360,7 +360,7 @@ td.barBg
 
      <tr>
      <td class="ItemLabel" width="10%">Date:</td>
-     <td class="ItemText" width="35%">2026-10-11 18:57:58.029217</td>
+     <td class="ItemText" width="35%">2026-10-25 19:06:30.814430</td>
      <td class="ItemLabel" width="10%">Mutations:</td>
      <td class="ItemReport" width="15%">0</td>
      <td class="ItemReport" width="15%">7</td>
@@ -423,7 +423,7 @@ td.barBg
 <a name="34"><span class="lineNumber">      34 </span>  /// Typically created indirectly through validation functions or extensions,</a>
 <a name="35"><span class="lineNumber">      35 </span>  /// rather than directly. Use [Validated.invalid] factory or the [check]</a>
 <a name="36"><span class="lineNumber">      36 </span>  /// function and extension to construct Invalid results.</a>
-<a name="37"><span class="lineNumber">      37 </span>  const Invalid._(this.errors);</a>
+<a name="37"><span class="lineNumber">      37 </span>  const new _(this.errors);</a>
 <a name="38"><span class="lineNumber">      38 </span></a>
 <a name="39"><span class="lineNumber">      39 </span>  /// The set of validation error messages.</a>
 <a name="40"><span class="lineNumber">      40 </span>  ///</a>
@@ -504,7 +504,7 @@ td.barBg
 <a name="91"><span class="lineNumber">      91 </span>  /// Typically created indirectly through validation functions or extensions,</a>
 <a name="92"><span class="lineNumber">      92 </span>  /// rather than directly. Use [Validated.valid] factory or the [check]</a>
 <a name="93"><span class="lineNumber">      93 </span>  /// function and extension to construct Valid results.</a>
-<a name="94"><span class="lineNumber">      94 </span>  const Valid._(this.value);</a>
+<a name="94"><span class="lineNumber">      94 </span>  const new _(this.value);</a>
 <a name="95"><span class="lineNumber">      95 </span></a>
 <a name="96"><span class="lineNumber">      96 </span>  /// The value that passed all validation checks.</a>
 <a name="97"><span class="lineNumber">      97 </span>  ///</a>
@@ -584,7 +584,7 @@ td.barBg
 <a name="153"><span class="lineNumber">     153 </span>@experimental</a>
 <a name="154"><span class="lineNumber">     154 </span>@immutable</a>
 <a name="155"><span class="lineNumber">     155 </span>sealed class Validated&lt;T extends Object?&gt; {</a>
-<a name="156"><span class="lineNumber">     156 </span>  const Validated();</a>
+<a name="156"><span class="lineNumber">     156 </span>  const new();</a>
 <a name="157"><span class="lineNumber">     157 </span></a>
 <a name="158"><span class="lineNumber">     158 </span>  /// Validates a value against a predicate and returns the result.</a>
 <a name="159"><span class="lineNumber">     159 </span>  ///</a>
@@ -616,17 +616,17 @@ td.barBg
 <a name="185"><span class="lineNumber">     185 </span>  ///   .check((e) =&gt; e.contains('@'), error: 'Must contain @')</a>
 <a name="186"><span class="lineNumber">     186 </span>  ///   .check((e) =&gt; !e.endsWith('.'), error: 'Cannot end with period');</a>
 <a name="187"><span class="lineNumber">     187 </span>  /// ```</a>
-<a name="188"><span class="lineNumber">     188 </span>  factory Validated.check(</a>
+<a name="188"><span class="lineNumber">     188 </span>  factory check(</a>
 <a name="189"><span class="lineNumber">     189 </span>    T value,</a>
 <a name="190"><span class="lineNumber">     190 </span>    bool Function(T value) predicate, {</a>
 <a name="191"><span class="lineNumber">     191 </span>    required String error,</a>
 <a name="192"><span class="lineNumber">     192 </span>  }) =&gt; predicate(value) ? Valid._(value) : Invalid._({error});</a>
 <a name="193"><span class="lineNumber">     193 </span></a>
 <a name="194"><span class="lineNumber">     194 </span>  /// Creates an Invalid result with error messages.</a>
-<a name="195"><span class="lineNumber">     195 </span>  const factory Validated.invalid(Set&lt;String&gt; errors) = Invalid._;</a>
+<a name="195"><span class="lineNumber">     195 </span>  const factory invalid(Set&lt;String&gt; errors) = Invalid._;</a>
 <a name="196"><span class="lineNumber">     196 </span></a>
 <a name="197"><span class="lineNumber">     197 </span>  /// Creates a Valid result with the given value.</a>
-<a name="198"><span class="lineNumber">     198 </span>  const factory Validated.valid(T value) = Valid._;</a>
+<a name="198"><span class="lineNumber">     198 </span>  const factory valid(T value) = Valid._;</a>
 <a name="199"><span class="lineNumber">     199 </span></a>
 <a name="200"><span class="lineNumber">     200 </span>  /// Returns true if this is a [Valid] result, false if [Invalid].</a>
 <a name="201"><span class="lineNumber">     201 </span>  ///</a>
@@ -675,7 +675,7 @@ td.barBg
 <a name="244"><span class="lineNumber">     244 </span>  /// final mapped = result.mapErr((errors) =&gt; errors.join(', '));</a>
 <a name="245"><span class="lineNumber">     245 </span>  /// ```</a>
 <a name="246"><span class="lineNumber">     246 </span>  Result&lt;T, Set&lt;String&gt;&gt; asResult() =&gt; switch (this) {</a>
-<a name="247"><span class="lineNumber">     247 </span>    Invalid&lt;T&gt;(:final errors) =&gt; .err(errors),</a>
+<a name="247"><span class="lineNumber">     247 </span>    Invalid&lt;T&gt;(:final errors) =&gt; .err(errors, .current),</a>
 <a name="248"><span class="lineNumber">     248 </span>    Valid&lt;T&gt;(:final value) =&gt; .ok(value),</a>
 <a name="249"><span class="lineNumber">     249 </span>  };</a>
 <a name="250"><span class="lineNumber">     250 </span></a>
