@@ -7,7 +7,7 @@ This package is also a place to explore ideas with AI assistance (many of things
 
 ## Features
 
-The package currently includes five stable-looking, tested libraries:
+The package's tested core includes five libraries:
 
 - **Result**: represent success and typed failure explicitly with `Ok` and
 	`Err`.
@@ -58,17 +58,18 @@ import 'package:dey_dev_utils/result.dart';
 Result<int, FormatException> parseNumber(String input) {
 	final value = int.tryParse(input);
 	return value == null
-			? Err(FormatException('Not a number: $input'))
-			: Ok(value);
+			? Result.err(FormatException('Not a number: $input'), StackTrace.current)
+			: Result.ok(value);
 }
 
 final result = parseNumber('30');
 final number = result.unwrapOr(0);
 ```
 
-`Result.guardSync` and `Result.guardAsync` are available when you need to
-convert a specific exception type into a result while allowing unrelated
-errors to propagate.
+`Result.guardSync` / `Result.guardAsync` convert a matching exception type into
+`Ok`/`Err` while allowing unrelated errors to propagate, and the
+`guardExceptionSync` / `guardExceptionAsync` variants keep `Error` values
+uncaught.
 
 ### Scope helpers
 
@@ -163,23 +164,21 @@ both operands. Predicate callbacks run on every evaluation and are not cached.
 
 ## Experimental APIs
 
-The following libraries are marked `@experimental` and may change or be
-removed before a stable release:
+The following libraries are not exported and may change or be
+removed in future releases without the same compatibility guarantees as the
+tested core:
 
-- `contract.dart` for invariants and preconditions/postconditions
 - `iso.dart` for reversible transformations between types
 - `lens.dart` for composable access to nested immutable data
 - `middleware.dart` for asynchronous handlers and pipelines
 - `monoid.dart` for identity and associative combination
 - `once.dart` for lazy one-time initialization
-- `option.dart` for `Some` and `None` values
 - `rate_limit.dart` for debouncing and throttling
 - `saga.dart` for compensating asynchronous workflows
 - `trace.dart` for timing and logging wrappers
 - `validate.dart` for accumulating validation results
 
-Use these APIs when experimentation is appropriate, and pin the package
-version if your project depends on their current behavior.
+The experimental `option.dart` for `Some` and `None` values.
 
 ### Contract checks
 
@@ -224,6 +223,7 @@ an AI coding assistant the API model, important semantics, examples, testing
 guidance, and review checklists for:
 
 - [`Result`](skills/dey-dev-utils-result-type/SKILL.md)
+- [Contract checks](skills/dey-dev-utils-contract/SKILL.md)
 - [Scope helpers](skills/dey-dev-utils-scope-methods-and-function/SKILL.md)
 - [Trampolines](skills/dey-dev-utils-trampoline/SKILL.md)
 - [Type-safe comparison](skills/dey-dev-utils-type-safe-comparison/SKILL.md)
@@ -261,8 +261,7 @@ the smallest reproducible example when reporting a problem. See the
 [repository](https://github.com/ElanDeyan/dey_dev_utils) for source code and
 project discussions.
 
-This package is currently in prerelease development. Experimental APIs are
-intentionally not covered by the same stability promise as the tested core.
+The tested core is released as version `1.0.0`.
 
 ## License
 

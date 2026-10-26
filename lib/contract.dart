@@ -1,26 +1,5 @@
 import 'package:meta/meta.dart';
 
-/// Selects how contract violations are handled.
-enum ContractCheckingMode {
-  /// Uses Dart assertions to report violations.
-  assertionsOnly,
-
-  /// Throws [ContractViolationError] when a check fails.
-  alwaysThrow,
-}
-
-/// Identifies which part of a contract was violated.
-enum ViolationKind {
-  /// A condition required before an operation was false.
-  preCondition,
-
-  /// A condition required after an operation was false.
-  postCondition,
-
-  /// An object's invariant did not hold after an operation.
-  invariant,
-}
-
 /// Runs [operation] after checking [preCondition] and checks its result.
 ///
 /// In [ContractCheckingMode.assertionsOnly], failed conditions trigger
@@ -117,6 +96,32 @@ Future<R> runWithCheckingAsync<R>({
   }
 }
 
+/// Selects how contract violations are handled.
+enum ContractCheckingMode {
+  /// Uses Dart assertions to report violations.
+  assertionsOnly,
+
+  /// Throws [ContractViolationError] when a check fails.
+  alwaysThrow,
+}
+
+/// An error raised when a contract check fails in
+/// [ContractCheckingMode.alwaysThrow].
+final class ContractViolationError({
+  /// The contract check that failed.
+  required final ViolationKind kind,
+
+  /// A description of the violation.
+  required final String message,
+}) extends Error {
+  /// Creates an error for a failed [kind] with the specified [message].
+  this;
+
+  /// Returns a description containing the failed contract kind and message.
+  @override
+  String toString() => '${kind.name} violated: $message';
+}
+
 /// Provides checks for object invariants, preconditions, and postconditions.
 ///
 /// In [ContractCheckingMode.assertionsOnly], failed checks use Dart assertions.
@@ -128,20 +133,38 @@ abstract mixin class Invariant {
   /// Defaults to [ContractCheckingMode.assertionsOnly].
   ContractCheckingMode get contractCheckingMode => .assertionsOnly;
 
-  void _evaluate({
-    required ViolationKind kind,
+  /// Returns whether this object is in a valid state.
+  ///
+  /// Implementations should return `true` when the object's invariant holds.
+  @protected
+  @visibleForOverriding
+  bool invariant();
+
+  /// Checks a postcondition.
+  ///
+  /// Evaluates [condition] once when checks are enabled and evaluates
+  /// [message] only when it fails. In [ContractCheckingMode.assertionsOnly],
+  /// a failed condition triggers an assertion; in
+  /// [ContractCheckingMode.alwaysThrow], it throws a [ContractViolationError]
+  /// with kind [ViolationKind.postCondition].
+  @nonVirtual
+  void post({
     required bool Function() condition,
     required String Function() message,
-  }) {
-    switch (contractCheckingMode) {
-      case .assertionsOnly:
-        assert(condition(), message());
-      case .alwaysThrow:
-        if (!condition()) {
-          throw ContractViolationError(kind: kind, message: message());
-        }
-    }
-  }
+  }) => _evaluate(kind: .postCondition, condition: condition, message: message);
+
+  /// Checks a precondition.
+  ///
+  /// Evaluates [condition] once when checks are enabled and evaluates
+  /// [message] only when it fails. In [ContractCheckingMode.assertionsOnly],
+  /// a failed condition triggers an assertion; in
+  /// [ContractCheckingMode.alwaysThrow], it throws a [ContractViolationError]
+  /// with kind [ViolationKind.preCondition].
+  @nonVirtual
+  void pre({
+    required bool Function() condition,
+    required String Function() message,
+  }) => _evaluate(kind: .preCondition, condition: condition, message: message);
 
   /// Runs [body] and evaluates [invariant] afterward, even if [body] throws.
   ///
@@ -178,31 +201,29 @@ abstract mixin class Invariant {
     }
   }
 
-  /// Checks a precondition.
+  /// Checks whether this object's invariant currently holds.
   ///
-  /// Evaluates [condition] once when checks are enabled and evaluates
-  /// [message] only when it fails. In [ContractCheckingMode.assertionsOnly],
-  /// a failed condition triggers an assertion; in
-  /// [ContractCheckingMode.alwaysThrow], it throws a [ContractViolationError]
-  /// with kind [ViolationKind.preCondition].
+  /// In [ContractCheckingMode.assertionsOnly], a failed invariant triggers an
+  /// assertion when assertions are enabled. In
+  /// [ContractCheckingMode.alwaysThrow], a failed invariant throws a
+  /// [ContractViolationError] with kind [ViolationKind.invariant].
   @nonVirtual
-  void pre({
-    required bool Function() condition,
-    required String Function() message,
-  }) => _evaluate(kind: .preCondition, condition: condition, message: message);
+  void verifyInvariant(String description) => _evaluateInvariant(description);
 
-  /// Checks a postcondition.
-  ///
-  /// Evaluates [condition] once when checks are enabled and evaluates
-  /// [message] only when it fails. In [ContractCheckingMode.assertionsOnly],
-  /// a failed condition triggers an assertion; in
-  /// [ContractCheckingMode.alwaysThrow], it throws a [ContractViolationError]
-  /// with kind [ViolationKind.postCondition].
-  @nonVirtual
-  void post({
+  void _evaluate({
+    required ViolationKind kind,
     required bool Function() condition,
     required String Function() message,
-  }) => _evaluate(kind: .postCondition, condition: condition, message: message);
+  }) {
+    switch (contractCheckingMode) {
+      case .assertionsOnly:
+        assert(condition(), message());
+      case .alwaysThrow:
+        if (!condition()) {
+          throw ContractViolationError(kind: kind, message: message());
+        }
+    }
+  }
 
   void _evaluateInvariant(String description) {
     switch (contractCheckingMode) {
@@ -217,37 +238,16 @@ abstract mixin class Invariant {
         }
     }
   }
-
-  /// Checks whether this object's invariant currently holds.
-  ///
-  /// In [ContractCheckingMode.assertionsOnly], a failed invariant triggers an
-  /// assertion when assertions are enabled. In
-  /// [ContractCheckingMode.alwaysThrow], a failed invariant throws a
-  /// [ContractViolationError] with kind [ViolationKind.invariant].
-  @nonVirtual
-  void verifyInvariant(String description) => _evaluateInvariant(description);
-
-  /// Returns whether this object is in a valid state.
-  ///
-  /// Implementations should return `true` when the object's invariant holds.
-  @protected
-  @visibleForOverriding
-  bool invariant();
 }
 
-/// An error raised when a contract check fails in
-/// [ContractCheckingMode.alwaysThrow].
-final class ContractViolationError extends Error {
-  /// Creates an error for a failed [kind] with the specified [message].
-  ContractViolationError({required this.kind, required this.message});
+/// Identifies which part of a contract was violated.
+enum ViolationKind {
+  /// A condition required before an operation was false.
+  preCondition,
 
-  /// The contract check that failed.
-  final ViolationKind kind;
+  /// A condition required after an operation was false.
+  postCondition,
 
-  /// A description of the violation.
-  final String message;
-
-  /// Returns a description containing the failed contract kind and message.
-  @override
-  String toString() => '${kind.name} violated: $message';
+  /// An object's invariant did not hold after an operation.
+  invariant,
 }

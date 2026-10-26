@@ -34,7 +34,7 @@ final class Invalid<T extends Object?> extends Validated<T> {
   /// Typically created indirectly through validation functions or extensions,
   /// rather than directly. Use [Validated.invalid] factory or the [check]
   /// function and extension to construct Invalid results.
-  const Invalid._(this.errors);
+  const new _(this.errors);
 
   /// The set of validation error messages.
   ///
@@ -91,7 +91,7 @@ final class Valid<T extends Object?> extends Validated<T> {
   /// Typically created indirectly through validation functions or extensions,
   /// rather than directly. Use [Validated.valid] factory or the [check]
   /// function and extension to construct Valid results.
-  const Valid._(this.value);
+  const new _(this.value);
 
   /// The value that passed all validation checks.
   ///
@@ -153,7 +153,7 @@ final class Valid<T extends Object?> extends Validated<T> {
 @experimental
 @immutable
 sealed class Validated<T extends Object?> {
-  const Validated();
+  const new();
 
   /// Validates a value against a predicate and returns the result.
   ///
@@ -185,17 +185,17 @@ sealed class Validated<T extends Object?> {
   ///   .check((e) => e.contains('@'), error: 'Must contain @')
   ///   .check((e) => !e.endsWith('.'), error: 'Cannot end with period');
   /// ```
-  factory Validated.check(
+  factory check(
     T value,
     bool Function(T value) predicate, {
     required String error,
   }) => predicate(value) ? Valid._(value) : Invalid._({error});
 
   /// Creates an Invalid result with error messages.
-  const factory Validated.invalid(Set<String> errors) = Invalid._;
+  const factory invalid(Set<String> errors) = Invalid._;
 
   /// Creates a Valid result with the given value.
-  const factory Validated.valid(T value) = Valid._;
+  const factory valid(T value) = Valid._;
 
   /// Returns true if this is a [Valid] result, false if [Invalid].
   ///
@@ -244,7 +244,7 @@ sealed class Validated<T extends Object?> {
   /// final mapped = result.mapErr((errors) => errors.join(', '));
   /// ```
   Result<T, Set<String>> asResult() => switch (this) {
-    Invalid<T>(:final errors) => .err(errors),
+    Invalid<T>(:final errors) => .err(errors, .current),
     Valid<T>(:final value) => .ok(value),
   };
 

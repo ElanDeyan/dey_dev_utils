@@ -1,4 +1,4 @@
-import 'package:dey_dev_utils/option.dart';
+import 'package:dey_dev_utils/option.dart' show None, Option, Some;
 import 'package:meta/meta.dart';
 
 /// A result type that captures either a successful value or any error.
@@ -13,7 +13,7 @@ import 'package:meta/meta.dart';
 ///   try {
 ///     return Ok(jsonDecode(json));
 ///   } catch (e) {
-///     return Err(e);
+///     return Err(e, StackTrace.current);
 ///   }
 /// }
 /// ```
@@ -36,24 +36,21 @@ typedef FutureResult<T extends Object?, E extends Object> =
 /// Example:
 /// ```dart
 /// Result<int, String> divide(int a, int b) {
-///   if (b == 0) return Err('Division by zero');
+///   if (b == 0) return Err('Division by zero', StackTrace.current);
 ///   return Ok(a ~/ b);
 /// }
 /// ```
 @immutable
-final class Err<T extends Object?, E extends Object> extends Result<T, E> {
-  /// Creates an error result with the given [error] and optional [stackTrace].
-  ///
-  /// If [stackTrace] is not provided, the current stack trace is automatically
-  /// captured using [StackTrace.current].
-  Err(this.error, [StackTrace? stackTrace])
-    : stackTrace = stackTrace ?? .current;
-
+final class const Err<T extends Object?, E extends Object>(
   /// The error value that describes why the operation failed.
-  final E error;
+  final E error,
 
   /// The stack trace at the point where this error was created.
-  final StackTrace stackTrace;
+  final StackTrace stackTrace,
+) extends Result<T, E> {
+  /// Creates an error result with the given [error] and the provided
+  /// [stackTrace].
+  this;
 
   @override
   int get hashCode => error.hashCode;
@@ -61,7 +58,9 @@ final class Err<T extends Object?, E extends Object> extends Result<T, E> {
   @override
   bool operator ==(Object other) {
     if (identical(this, other)) return true;
-    if (other case Err(error: final otherError)) return error == otherError;
+    if (other is Err) {
+      return error == other.error;
+    }
 
     return false;
   }
@@ -79,16 +78,16 @@ final class Err<T extends Object?, E extends Object> extends Result<T, E> {
 /// Result<int, String> parseNumber(String input) {
 ///   final value = int.tryParse(input);
 ///   if (value != null) return Ok(value);
-///   return Err('Invalid number');
+///   return Err('Invalid number', StackTrace.current);
 /// }
 /// ```
 @immutable
-final class Ok<T extends Object?, E extends Object> extends Result<T, E> {
-  /// Creates a successful result with the given [value].
-  const Ok(this.value);
-
+final class const Ok<T extends Object?, E extends Object>(
   /// The successful value produced by the operation.
-  final T value;
+  final T value,
+) extends Result<T, E> {
+  /// Creates a successful result with the given [value].
+  this;
 
   @override
   int get hashCode => value.hashCode;
@@ -96,7 +95,7 @@ final class Ok<T extends Object?, E extends Object> extends Result<T, E> {
   @override
   bool operator ==(Object other) {
     if (identical(this, other)) return true;
-    if (other case Ok(value: final otherValue)) return value == otherValue;
+    if (other is Ok) return value == other.value;
 
     return false;
   }
@@ -119,7 +118,9 @@ final class Ok<T extends Object?, E extends Object> extends Result<T, E> {
 /// Example:
 /// ```dart
 /// Result<int, String> safeDivide(int a, int b) {
-///   if (b == 0) return Result.err('Cannot divide by zero');
+///   if (b == 0) {
+///     return Result.err('Cannot divide by zero', StackTrace.current);
+///   }
 ///   return Result.ok(a ~/ b);
 /// }
 ///
@@ -128,17 +129,16 @@ final class Ok<T extends Object?, E extends Object> extends Result<T, E> {
 /// final value = result.unwrapOr(0); // Get value or default
 /// ```
 @immutable
-sealed class Result<T extends Object?, E extends Object> {
-  const Result();
-
+sealed class const Result<T extends Object?, E extends Object>() {
   /// Creates a failed result with the given [error].
-  factory Result.err(E error, [StackTrace? stackTrace]) = Err;
+  const factory err(E error, StackTrace stackTrace) = Err;
 
   /// Executes a synchronous function and wraps the result.
   ///
-  /// Attempts to execute [block] and wraps any matching thrown value in [Err]
-  /// with its stack trace. Returns [Ok] if successful. For catching only
-  /// [Exception] types, use [guardExceptionSync] instead.
+  /// Attempts to execute [block] and wraps any exception in [Err] with the
+  /// current stack trace. Returns [Ok] if successful, [Err] if an exception
+  /// matching type [E] is thrown. For catching [Exception] types specifically,
+  /// use [guardExceptionSync] instead.
   ///
   /// **Note:** Only catches [E] or subtypes of [E]. Other exceptions will
   /// propagate uncaught.
@@ -149,7 +149,7 @@ sealed class Result<T extends Object?, E extends Object> {
   ///   () => int.parse('30'),
   /// );
   /// ```
-  factory Result.guardSync(T Function() block) {
+  factory guardSync(T Function() block) {
     try {
       final value = block();
       return .ok(value);
@@ -159,7 +159,7 @@ sealed class Result<T extends Object?, E extends Object> {
   }
 
   /// Creates a successful result with the given [value].
-  const factory Result.ok(T value) = Ok;
+  const factory ok(T value) = Ok;
 
   /// Returns the error value if this is an [Err], otherwise null.
   ///
@@ -210,12 +210,11 @@ sealed class Result<T extends Object?, E extends Object> {
     Err() => null,
   };
 
-  /// Combines two already-evaluated results using the [and] operator (&).
+  /// Combines two results using the [and] operator (&).
   ///
   /// Shorthand for calling [and]. Returns this result if it's an error,
-  /// otherwise returns [other]. Because Dart evaluates operator operands
-  /// before calling the operator, this does not prevent [other] from being
-  /// created. Use [andLazy] when the fallback computation must be skipped.
+  /// otherwise returns [other]. Use this for sequential operations where all
+  /// must succeed. If this fails, subsequent operations are skipped.
   ///
   /// Example:
   /// ```dart
@@ -228,9 +227,7 @@ sealed class Result<T extends Object?, E extends Object> {
   /// This is useful for performing sequential operations where the second
   /// depends on the first succeeding. If this result is [Err], it's returned
   /// unchanged (short-circuit). If this is [Ok], the [other] result is returned.
-  /// The [other] result has already been evaluated before this method is
-  /// called; use [andLazy] to defer its computation.
-  /// Both [value] types and error types must match—for transformations, use
+  /// Both value types and error types must match—for transformations, use
   /// [andThen] instead.
   ///
   /// Example:
@@ -239,8 +236,8 @@ sealed class Result<T extends Object?, E extends Object> {
   /// Result<int, String> b = Ok(10);
   /// final result = a.and(b); // Returns b (Ok(10))
   ///
-  /// Result<int, String> c = Err('failed');
-  /// final result2 = c.and(b); // Returns c (Err('failed')); b is ignored
+  /// Result<int, String> c = Err('failed', StackTrace.current);
+  /// final result2 = c.and(b); // Returns c (Err('failed')), b is skipped
   /// ```
   Result<T, E> and(Result<T, E> other) {
     if (this is Err<T, E>) return this;
@@ -282,11 +279,11 @@ sealed class Result<T extends Object?, E extends Object> {
     Err(:final error, :final stackTrace) => .err(error, stackTrace),
   };
 
-  /// Returns a shallow copy of this result.
+  /// Returns a new independent copy of this result.
   ///
-  /// The result wrapper is copied, but mutable values and errors are shared.
-  /// Error stack traces are preserved. For creating new results, prefer [Ok]
-  /// or [Err] constructors directly.
+  /// Useful when you need to pass the result to multiple places without
+  /// sharing state. Clones preserve error stack traces. For creating new
+  /// results, prefer [Ok] or [Err] constructors directly.
   Result<T, E> clone() => switch (this) {
     Err<T, E>(:final error, :final stackTrace) => .err(error, stackTrace),
     Ok<T, E>(:final value) => .ok(value),
@@ -377,7 +374,7 @@ sealed class Result<T extends Object?, E extends Object> {
   /// Result<int, String> result = Ok(5);
   /// final doubled = result.map((value) => value * 2); // Ok(10)
   ///
-  /// Result<int, String> error = Err('failed');
+  /// Result<int, String> error = Err('failed', StackTrace.current);
   /// final doubled2 = error.map((value) => value * 2); // Err('failed')
   /// ```
   Result<Y, E> map<Y extends Object?>(Y Function(T value) block) =>
@@ -395,7 +392,7 @@ sealed class Result<T extends Object?, E extends Object> {
   ///
   /// Example:
   /// ```dart
-  /// Result<String, String> result = Err('failed');
+  /// Result<String, String> result = Err('failed', StackTrace.current);
   /// final mapped = result.mapErr((e) => CustomError(e)); // Err(CustomError)
   /// ```
   Result<T, F> mapErr<F extends Object>(F Function(E error) block) =>
@@ -407,36 +404,24 @@ sealed class Result<T extends Object?, E extends Object> {
         Ok<T, E>(:final value) => .ok(value),
       };
 
-  /// Returns this result if it's a success, otherwise the already-evaluated
-  /// [other].
+  /// Returns this result if it's a success, otherwise [other].
   ///
   /// Use this to provide a fallback result when the first result fails.
   /// The first successful result is returned; if both fail, the second error
-  /// is returned. Because Dart evaluates operator operands before calling the
-  /// operator, this does not prevent [other] from being created. Use [orLazy]
-  /// for lazy fallbacks, or [orElse] for fallbacks based on the error.
+  /// is returned. Useful for fallback operations like cache-then-network.
+  /// For computed fallbacks based on the error, use [orElse] instead.
   ///
   /// Example:
   /// ```dart
-  /// Result<int, String> a = Err('failed');
+  /// Result<int, String> a = Err('failed', StackTrace.current);
   /// Result<int, String> b = Ok(10);
   /// final result = a | b; // Returns b (Ok(10))
-  /// final result = cachedResult | freshResult;
+  /// final cached = getCachedResult() | fetchFresh(); // Try cache first
   /// ```
   Result<T, E> or(Result<T, E> other) {
     if (this is Ok<T, E>) return this;
 
     return other;
-  }
-
-  /// Evaluates [otherBlock] only when this result is an error.
-  ///
-  /// Use this method for lazy fallback composition. Unlike [or] and
-  /// [operator |], the callback is not invoked when this result is successful.
-  Result<T, E> orLazy(Result<T, E> Function() otherBlock) {
-    if (this is Ok<T, E>) return this;
-
-    return otherBlock();
   }
 
   /// Returns this success value, or computes a recovery result from the error.
@@ -463,6 +448,16 @@ sealed class Result<T extends Object?, E extends Object> {
     Err(:final error, :final stackTrace) => otherBlock(error, stackTrace),
     Ok(:final value) => .ok(value),
   };
+
+  /// Evaluates [otherBlock] only when this result is an error.
+  ///
+  /// Use this method for lazy fallback composition. Unlike [or] and
+  /// [operator |], the callback is not invoked when this result is successful.
+  Result<T, E> orLazy(Result<T, E> Function() otherBlock) {
+    if (this is Ok<T, E>) return this;
+
+    return otherBlock();
+  }
 
   /// Converts this result into an [Option].
   ///
@@ -553,11 +548,11 @@ sealed class Result<T extends Object?, E extends Object> {
     Err() => null,
   };
 
-  /// Combines two already-evaluated results using the [or] operator (|).
+  /// Combines two results using the [or] operator (|).
   ///
   /// Shorthand for calling [or]. Returns this result if it's a success,
-  /// otherwise returns [other]. Because Dart evaluates operator operands
-  /// before calling the operator, use [orLazy] to defer fallback computation.
+  /// otherwise returns [other]. Use this to provide fallback values when
+  /// the first operation fails. The first success is returned.
   ///
   /// Example:
   /// ```dart
@@ -567,9 +562,10 @@ sealed class Result<T extends Object?, E extends Object> {
 
   /// Executes an asynchronous function and wraps the result.
   ///
-  /// Attempts to execute [asyncBlock] and wraps any matching thrown value in
-  /// [Err] with its stack trace. Returns [Ok] if the async operation succeeds.
-  /// For catching only [Exception] types, use [guardExceptionAsync] instead.
+  /// Attempts to execute [asyncBlock] and wraps any exception in [Err] with
+  /// the captured stack trace. Returns [Ok] if the async operation succeeds,
+  /// [Err] if an exception matching type [E] is thrown. For catching [Exception]
+  /// types specifically, use [guardExceptionAsync] instead.
   ///
   /// **Note:** Only catches [E] or subtypes of [E]. Other exceptions will
   /// propagate uncaught.
@@ -597,8 +593,9 @@ sealed class Result<T extends Object?, E extends Object> {
   /// Executes an asynchronous function, catching only [Exception] types.
   ///
   /// A convenience method that constrains the error type to [Exception]
-  /// rather than accepting any [Object]. Use this when you want [Error]
-  /// values to propagate uncaught.
+  /// rather than accepting any [Object]. Use this when you know the async
+  /// function will throw [Exception] or its subtypes, but you want to let
+  /// other errors (like [Error]) propagate uncaught.
   ///
   /// Example:
   /// ```dart
@@ -614,8 +611,9 @@ sealed class Result<T extends Object?, E extends Object> {
   /// Executes a synchronous function, catching only [Exception] types.
   ///
   /// A convenience method that constrains the error type to [Exception]
-  /// rather than accepting any [Object]. Use this when you want [Error]
-  /// values to propagate uncaught.
+  /// rather than accepting any [Object]. Use this when you know the function
+  /// will throw [Exception] or its subtypes, but you want to let other errors
+  /// (like [Error]) propagate uncaught.
   ///
   /// Example:
   /// ```dart
@@ -638,16 +636,15 @@ extension FlattenResultExtension<T extends Object?, E extends Object>
   /// Flattens a nested [Result] into a single [Result].
   ///
   /// Converts [Result<Result<T, E>, E>] into [Result<T, E>]. Use this when
-  /// you have a result that contains another result, such as one created with
-  /// [map] or explicit nested construction. [andThen] already flat-maps the
-  /// result returned by its callback. This unwraps one level of nesting.
+  /// you have a result that contains another result (e.g., from [andThen] chains
+  /// that return nested results). This unwraps one level of nesting.
   ///
   /// Example:
   /// ```dart
   /// final nested = Ok(Ok(30));
   /// final flat = nested.flatten(); // Ok(30)
   ///
-  /// final nested2 = Ok(Err('error'));
+  /// final nested2 = Ok(Err('error', StackTrace.current));
   /// final flat2 = nested2.flatten(); // Err('error')
   /// ```
   Result<T, E> flatten() => switch (this) {

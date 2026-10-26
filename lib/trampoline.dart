@@ -48,11 +48,9 @@ T trampoline<T>(Bounce<T> bounce) {
 ///
 /// This sealed class restricts implementations to [More] and [Done],
 /// ensuring type safety in the trampoline execution.
-sealed class Bounce<T extends Object?> {
-  const Bounce();
-
-  const factory Bounce.done(T value) = Done<T>;
-  const factory Bounce.more(Bounce<T> Function() action) = More<T>;
+sealed class const Bounce<T extends Object?>() {
+  const factory done(T value) = Done<T>;
+  const factory more(Bounce<T> Function() action) = More<T>;
 }
 
 /// Represents the final result of a bouncing computation.
@@ -65,12 +63,12 @@ sealed class Bounce<T extends Object?> {
 /// final result = Done(30);
 /// // Trampoline will extract and return 30
 /// ```
-final class Done<T extends Object?> extends Bounce<T> {
-  /// Creates a completed result with the given [value].
-  const Done(this.value);
-
+final class const Done<T extends Object?>(
   /// The final computed value that will be returned by the trampoline.
-  final T value;
+  final T value,
+) extends Bounce<T> {
+  /// Creates a completed result with the given [value].
+  this;
 }
 
 /// Represents pending computation in the trampoline pattern.
@@ -85,14 +83,7 @@ final class Done<T extends Object?> extends Bounce<T> {
 /// return More(() => nextBounce(n - 1));
 /// // Instead of: return nextBounce(n - 1);
 /// ```
-final class More<T extends Object?> extends Bounce<T> {
-  /// Creates a pending computation with the given [next] thunk.
-  ///
-  /// The [next] function will be called by the trampoline to get the
-  /// next bounce in the chain. This deferral is key to preventing
-  /// stack overflow in deep recursion.
-  const More(this.next);
-
+final class const More<T extends Object?>(
   /// A lazy function that produces the next computation step.
   ///
   /// The trampoline calls this function to get the next [Bounce].
@@ -105,5 +96,12 @@ final class More<T extends Object?> extends Bounce<T> {
   /// // Bad: would still be recursive
   /// return More(recursiveStep(n - 1));
   /// ```
-  final Bounce<T> Function() next;
+  final Bounce<T> Function() next,
+) extends Bounce<T> {
+  /// Creates a pending computation with the given [next] thunk.
+  ///
+  /// The [next] function will be called by the trampoline to get the
+  /// next bounce in the chain. This deferral is key to preventing
+  /// stack overflow in deep recursion.
+  this;
 }

@@ -7,7 +7,7 @@ void main() {
   group('Ok and Err', () {
     test('constructors expose values and errors', () {
       const ok = Ok<int, String>(30);
-      final err = Err<int, String>('failed', StackTrace.empty);
+      const err = Err<int, String>('failed', StackTrace.empty);
 
       check(ok.value).equals(30);
       check(err.error).equals('failed');
@@ -18,24 +18,32 @@ void main() {
 
     test('factory constructors create the expected variants', () {
       check(const Result<int, String>.ok(30)).equals(const Ok<int, String>(30));
-      check(Result<int, String>.err('failed')).isA<Err<int, String>>();
+      check(const Result<int, String>.err('failed', .empty))
+          .isA<Err<int, String>>();
     });
 
     test('equality distinguishes variants and unequal values', () {
       check(const Ok<int, String>(1)).equals(const Ok<int, String>(1));
       check(const Ok<int, String>(1) == const Ok<int, String>(2)).isFalse();
-      check(Err<int, String>('a')).equals(Err<int, String>('a'));
-      check(Err<int, String>('a') == Err<int, String>('b')).isFalse();
-      check((const Ok<int, String>(1) as Object) == Err<int, String>('1'))
-          .isFalse();
+      check(const Err<int, String>('a', .empty))
+          .equals(const Err<int, String>('a', .empty));
+      check(
+        const Err<int, String>('a', .empty) ==
+            const Err<int, String>('b', .empty),
+      ).isFalse();
+      check(
+        (const Ok<int, String>(1) as Object) ==
+            const Err<int, String>('1', .empty),
+      ).isFalse();
       check(const Ok<int, String>(1).hashCode).equals(1.hashCode);
-      check(Err<int, String>('a').hashCode).equals('a'.hashCode);
+      check(const Err<int, String>('a', .empty).hashCode).equals('a'.hashCode);
     });
 
     test('equality ignores phantom generic parameters', () {
       check(const Ok<int, String>(1) == const Ok<int, Object>(1)).isTrue();
       check(
-        (Err<int, String>('failed') as Object) == Err<String, String>('failed'),
+        (const Err<int, String>('failed', .empty) as Object) ==
+            const Err<String, String>('failed', .empty),
       ).isTrue();
     });
   });
@@ -43,7 +51,7 @@ void main() {
   group('Result state accessors', () {
     test('ok exposes success and err exposes failure', () {
       const success = Ok<int, String>(30);
-      final failure = Err<int, String>('failed');
+      const failure = Err<int, String>('failed', .empty);
 
       check(success.ok).equals(30);
       check(success.err).isNull();
@@ -57,7 +65,7 @@ void main() {
 
     test('nullable success values remain distinguishable by state', () {
       const success = Ok<String?, String>(null);
-      final failure = Err<String?, String>('failed');
+      const failure = Err<String?, String>('failed', .empty);
 
       check(success.ok).isNull();
       check(success.isOk).isTrue();
@@ -76,7 +84,7 @@ void main() {
     });
 
     test('and preserves an error', () {
-      final failure = Err<int, String>('failed');
+      const failure = Err<int, String>('failed', .empty);
       const other = Ok<int, String>(2);
 
       check(identical(failure.and(other), failure)).isTrue();
@@ -89,18 +97,18 @@ void main() {
         calls++;
         return const Ok(2);
       });
-      final failure = Err<int, String>('failed').andLazy(() {
+      final failure = const Err<int, String>('failed', .empty).andLazy(() {
         calls++;
         return const Ok(3);
       });
 
       check(success).equals(const Ok<int, String>(2));
-      check(failure).equals(Err<int, String>('failed'));
+      check(failure).equals(const Err<int, String>('failed', .empty));
       check(calls).equals(1);
     });
 
     test('or returns the other result after failure', () {
-      final failure = Err<int, String>('failed');
+      const failure = Err<int, String>('failed', .empty);
       const other = Ok<int, String>(2);
 
       check(identical(failure.or(other), other)).isTrue();
@@ -109,7 +117,7 @@ void main() {
 
     test('or preserves a success', () {
       const success = Ok<int, String>(1);
-      final other = Err<int, String>('fallback');
+      const other = Err<int, String>('fallback', .empty);
 
       check(identical(success.or(other), success)).isTrue();
       check(identical(success | other, success)).isTrue();
@@ -121,7 +129,7 @@ void main() {
         calls++;
         return const Ok(2);
       });
-      final failure = Err<int, String>('failed').orLazy(() {
+      final failure = const Err<int, String>('failed', .empty).orLazy(() {
         calls++;
         return const Ok(3);
       });
@@ -139,13 +147,13 @@ void main() {
         calls++;
         return Ok(value * 2);
       });
-      final failure = Err<int, String>('failed').andThen((value) {
+      final failure = const Err<int, String>('failed', .empty).andThen((value) {
         calls++;
         return Ok(value * 2);
       });
 
       check(success).equals(const Ok<int, String>(4));
-      check(failure).equals(Err<int, String>('failed'));
+      check(failure).equals(const Err<int, String>('failed', .empty));
       check(calls).equals(1);
     });
 
@@ -165,13 +173,13 @@ void main() {
     test('map transforms only success values', () {
       check(const Ok<int, String>(2).map((value) => value * 2))
           .equals(const Ok<int, String>(4));
-      check(Err<int, String>('failed').map((value) => value * 2))
-          .equals(Err<int, String>('failed'));
+      check(const Err<int, String>('failed', .empty).map((value) => value * 2))
+          .equals(const Err<int, String>('failed', .empty));
     });
 
     test('nullable map and extraction preserve the success state', () {
       const success = Ok<String?, String>(null);
-      final failure = Err<String?, String>('failed');
+      const failure = Err<String?, String>('failed', .empty);
 
       check(success.map((value) => value)).isA<Ok<String?, String>>();
       check(success.unwrapOrNull()).isNull();
@@ -221,8 +229,9 @@ void main() {
     test('flatten removes one nested result layer', () {
       check(const Ok<Result<int, String>, String>(Ok(30)).flatten())
           .equals(const Ok<int, String>(30));
-      check(Ok<Result<int, String>, String>(Err('inner')).flatten())
-          .equals(Err<int, String>('inner'));
+      check(
+        const Ok<Result<int, String>, String>(Err('inner', .empty)).flatten(),
+      ).equals(const Err<int, String>('inner', .empty));
       final trace = StackTrace.current;
       final outer = Err<Result<int, String>, String>('outer', trace);
 
@@ -271,14 +280,18 @@ void main() {
 
     test('expect returns success and throws an exception for errors', () {
       check(const Ok<int, String>(30).expect('unused')).equals(30);
-      check(() => Err<int, String>('failed').expect('must succeed'))
+      check(
+            () =>
+                const Err<int, String>('failed', .empty).expect('must succeed'),
+          )
           .throws<Exception>()
           .has((error) => error.toString(), 'message')
           .contains('must succeed');
     });
 
     test('expectErr returns errors and throws for successes', () {
-      check(Err<int, String>('failed').expectErr('unused')).equals('failed');
+      check(const Err<int, String>('failed', .empty).expectErr('unused'))
+          .equals('failed');
       check(() => const Ok<int, String>(30).expectErr('must fail'))
           .throws<Exception>()
           .has((error) => error.toString(), 'message')
@@ -286,7 +299,7 @@ void main() {
     });
 
     test('fallback extraction methods use the correct branch', () {
-      final failure = Err<int, String>('failed');
+      const failure = Err<int, String>('failed', .empty);
       const success = Ok<int, String>(30);
 
       check(success.unwrapOr(0)).equals(30);
@@ -301,7 +314,7 @@ void main() {
   group('Result predicates and inspection', () {
     test('isOkAnd and isErrAnd evaluate only matching values', () {
       const success = Ok<int, String>(30);
-      final failure = Err<int, String>('failed');
+      const failure = Err<int, String>('failed', .empty);
 
       check(success.isOkAnd((value) => value == 30)).isTrue();
       check(success.isOkAnd((value) => value == 0)).isFalse();
@@ -314,7 +327,7 @@ void main() {
     test('inspect methods invoke matching callbacks and return identity', () {
       Object? observedError;
       int? observedValue;
-      final failure = Err<int, String>('failed');
+      const failure = Err<int, String>('failed', .empty);
       const success = Ok<int, String>(30);
 
       check(
@@ -343,7 +356,8 @@ void main() {
   group('Result conversion and copying', () {
     test('toOption converts successes to Some and errors to None', () {
       check(const Ok<int, String>(30).toOption()).equals(const Some<int>(30));
-      check(Err<int, String>('failed').toOption()).isA<None<int>>();
+      check(const Err<int, String>('failed', .empty).toOption())
+          .isA<None<int>>();
     });
 
     test('clone creates an equivalent wrapper and preserves trace', () {
