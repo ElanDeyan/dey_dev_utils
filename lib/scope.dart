@@ -1,5 +1,14 @@
 // ignore_for_file: avoid_positional_boolean_parameters
 
+/// Functional-style helpers for transforming values and managing scope.
+///
+/// Use `let` to transform a value, `also` to observe it without changing it,
+/// and [use] to pair synchronous work with cleanup. [use] runs its disposer
+/// in a `finally` block and does not manage asynchronous resource lifetimes.
+///
+/// {@example /example/doc_examples/scope.dart}
+library;
+
 /// Executes a code block and returns its result.
 ///
 /// This is a utility for wrapping computation in a function scope.

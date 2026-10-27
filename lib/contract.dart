@@ -1,3 +1,12 @@
+/// Runtime checks for preconditions, postconditions, and object invariants.
+///
+/// Use [runWithChecking] for a single operation, or [Invariant] when checks
+/// belong to an object's lifecycle. Choose [ContractCheckingMode.alwaysThrow]
+/// when checks must remain active with assertions disabled.
+///
+/// {@example /example/doc_examples/contract.dart}
+library;
+
 import 'package:meta/meta.dart';
 
 /// Runs [operation] after checking [preCondition] and checks its result.

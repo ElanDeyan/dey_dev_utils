@@ -1,3 +1,13 @@
+/// Iteratively evaluates deferred computation steps to avoid recursive
+/// call-stack growth.
+///
+/// Represent each pending step with [More] and the final value with [Done].
+/// A trampoline is synchronous, and the next step must be deferred inside
+/// [More] for the computation to remain stack-safe.
+///
+/// {@example /example/doc_examples/trampoline.dart}
+library;
+
 /// Executes a bouncing computation until completion without recursion.
 ///
 /// The trampoline pattern prevents stack overflow by replacing recursive
