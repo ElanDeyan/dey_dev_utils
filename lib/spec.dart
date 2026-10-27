@@ -1,3 +1,12 @@
+/// Composable specifications for reusable Boolean rules.
+///
+/// Create rules with [Spec.predicate] or named subclasses, then combine them
+/// with logical operators. AND, OR, NAND, and NOR short-circuit; XOR and XNOR
+/// evaluate both operands.
+///
+/// {@example /example/doc_examples/spec.dart}
+library;
+
 import 'package:meta/meta.dart';
 
 /// The Specification Pattern: compose business rules as reusable, testable predicates.

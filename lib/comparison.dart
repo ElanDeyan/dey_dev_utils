@@ -1,3 +1,11 @@
+/// Type-safe ordering utilities for values that implement [Comparable].
+///
+/// Use [Comparison] to express ordering without relying on raw integers, or
+/// use the extension methods for readable relational checks.
+///
+/// {@example /example/doc_examples/comparison.dart}
+library;
+
 /// Represents the result of a comparison operation between two values.
 ///
 /// This enum provides a type-safe way to work with comparison results,

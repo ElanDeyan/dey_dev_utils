@@ -1,151 +1,198 @@
 ---
 name: dey-dev-utils-scope-methods-and-function
-description: "Use when implementing, reviewing, testing, or documenting the Kotlin-style scope helpers in dev_utils."
+description: "Use when implementing, reviewing, testing, or documenting dey_dev_utils scope helpers such as run, use, also, let, applyIf, takeIf, and takeUnless, especially resource cleanup, lazy evaluation, nullable receivers, and callback exceptions."
 ---
 
-# dev-utils-scope-methods-and-function
+# dey-dev-utils-scope-methods-and-function
 
-Use this skill when working with the scope utilities in `lib/scope.dart`.
-They provide small, synchronous helpers for executing blocks, managing
-resource cleanup, chaining transformations, applying conditional changes, and
-filtering values.
+Use this skill for the scope utilities in `lib/scope.dart`.
+
+These synchronous helpers execute blocks, manage resource cleanup, observe
+values, transform values, apply conditional changes, and filter values.
 
 ## API model
 
 - `run` executes a zero-argument block and returns its result.
-- `use` executes a block with a resource and invokes an optional disposer in a
-	`finally` block.
-- `also` runs a side-effect callback and returns the original value unchanged.
-- `applyIf` and `applyIfLazy` conditionally transform a value while preserving
-	its static type.
+- `use` executes a block with a value and invokes an optional disposer in
+  `finally`.
+- `also` runs a side-effect callback and returns the original receiver.
 - `let` transforms a value and may return a different type.
-- `takeIf`, `takeIfLazy`, `takeUnless`, and `takeUnlessLazy` return the value or
-	`null` according to a condition.
+- `applyIf` applies a type-preserving transformation when a supplied Boolean
+  condition is true.
+- `applyIfLazy` evaluates a receiver-dependent predicate before transforming.
+- `takeIf` and `takeUnless` retain or discard a value based on a Boolean.
+- `takeIfLazy` and `takeUnlessLazy` evaluate a receiver-dependent predicate.
 
-Scope extensions are defined for non-null `T extends Object`. For a nullable
-receiver, use Dart's null-aware invocation (`?.`) so the callback runs only for
-a non-null value and receives a promoted non-null `T`.
+Scope extensions are defined for non-null `T extends Object`. For nullable
+receivers, use Dart's null-aware invocation (`?.`) when the callback should
+run only for a non-null value.
+
+## Choose the helper
+
+| Requirement | Preferred API |
+|---|---|
+| Execute a computation and return its result | `run` |
+| Use a value with synchronous cleanup | `use` |
+| Observe a value without replacing it | `also` |
+| Transform a value to another type | `let` |
+| Apply a type-preserving transformation using a known condition | `applyIf` |
+| Evaluate a receiver-dependent condition before transforming | `applyIfLazy` |
+| Keep or discard a value using a known Boolean | `takeIf`, `takeUnless` |
+| Evaluate a receiver-dependent filtering condition | `takeIfLazy`, `takeUnlessLazy` |
 
 ## Instructions
 
-1. Choose the smallest helper that expresses the intended behavior:
-	- Use `run` to name or isolate a synchronous computation.
-	- Use `use` when a resource must be disposed after the block finishes.
-	- Use `also` for observation or side effects without changing the value.
-	- Use `let` when the value needs to become another type or representation.
-	- Use `applyIf` for an already-known condition and `applyIfLazy` when the
-	  condition depends on the receiver.
-	- Use `takeIf` or `takeUnless` when a chain should keep or discard a value.
+1. Choose the smallest helper that communicates the intended behavior.
 2. Keep `applyIf` transformations type-preserving. Use `let` for cross-type
-	transformations; do not weaken `applyIf` with casts or `dynamic`.
-3. Use the lazy variants when evaluating the predicate or transformation has
-	observable cost or side effects. Ensure the predicate runs only when the
-	helper is called and the transformation runs only when the predicate passes.
-4. Keep callbacks synchronous. These APIs return plain values and do not catch,
-	wrap, or convert callback exceptions.
-5. Preserve the receiver identity when the helper returns the unchanged value.
-	Do not copy or clone objects merely to implement a scope operation.
-6. Keep boolean conditions positional to preserve the established fluent API.
-	Do not reintroduce an `inspect` alias; `also` is the canonical side-effect
-	helper.
+   transformations instead of casts or `dynamic`.
+3. Use lazy variants when the predicate depends on the receiver or must be
+   evaluated as part of the helper's control flow.
+4. Keep callbacks synchronous. These APIs do not catch, wrap, or convert
+   callback exceptions.
+5. Preserve receiver identity whenever a helper returns the original value.
+   Do not clone an object merely to implement a scope operation.
+6. Keep Boolean conditions positional to preserve the established fluent API.
+   Do not reintroduce an `inspect` alias; `also` is the canonical side-effect
+   helper.
 
 ## Critical semantics
 
-`use` always invokes `dispose` after `block`, whether `block` returns normally
-or throws. If both callbacks throw, Dart's `finally` semantics mean the
-exception from `dispose` replaces the exception from `block`.
+### `use` is synchronous
+
+`use` invokes `dispose` in a synchronous `finally` block. It guarantees that
+the disposer is called when the block returns or throws, provided execution
+reaches the `try`/`finally` normally.
+
+**Do not use `use` to manage a resource across asynchronous work.**
+
+If the block returns a `Future`, `use` returns that future and executes its
+`finally` block immediately, before the future completes. An asynchronous
+operation may therefore continue after its resource has been disposed.
+
+Likewise, if an asynchronous closure is supplied as the disposer, its returned
+future is not awaited by `use`.
+
+Use an explicitly asynchronous resource-management abstraction or an
+appropriate `try`/`finally` around `await` when cleanup must occur after
+asynchronous work completes.
+
+### Cleanup exception precedence
+
+If both the block and disposer throw, Dart's `finally` semantics mean that
+the exception from the disposer replaces the exception from the block.
 
 ```dart
 final result = use(
-	openConnection(),
-	(connection) => connection.query(),
-	dispose: (connection) => connection.close(),
+  openConnection(),
+  (connection) => connection.query(),
+  dispose: (connection) => connection.close(),
 );
 ```
 
-`also` does not guarantee a return value when its callback throws. The callback
-exception propagates to the caller and the receiver is not returned.
+This example is appropriate only when `query` and `close` are synchronous.
 
-The non-lazy condition arguments are evaluated by the caller before the helper
-receives them. Use a lazy helper when condition evaluation must be deferred:
+Do not describe `use` as preserving both exceptions or automatically
+aggregating them. That is not the behavior of this API.
+
+### `also` and callback exceptions
+
+`also` returns the same receiver when its callback completes normally. If the
+callback throws, the exception propagates and the call does not return the
+receiver.
+
+```dart
+final logged = response.also((value) {
+  print('Received: $value');
+});
+```
+
+Use it for observation or side effects, not as an exception-handling boundary.
+
+### Eager and lazy conditions
+
+The non-lazy variants accept already-evaluated Boolean arguments. Any work
+needed to calculate those arguments happens before the helper is called.
 
 ```dart
 final configured = settings.applyIfLazy(
-	(value) => value.environment == 'test',
-	(value) => value.copyWith(verbose: true),
+  (value) => value.copyWith(verbose: true),
 );
 ```
 
-`takeIf` and `takeUnless` deliberately use `null` as the discarded result. If
-the receiver itself is nullable, `null` cannot distinguish a kept null value
-from a discarded value; use a separate state representation when that
-distinction matters.
+In this example, the predicate receives the receiver and is evaluated by
+`applyIfLazy`. The transformation runs only when the predicate returns true.
 
-## Examples
+### Nullable receivers and discarded values
 
-```dart
-final doubled = 30.let((value) => value * 2);
-
-final logged = response.also((value) {
-	print('Received: $value');
-});
-
-final adult = age.takeIfLazy((value) => value >= 18);
-
-final label = user.let((value) => '${value.name} (${value.id})');
-```
-
-For nullable values, prefer null-aware invocation:
+Use null-aware invocation when a nullable receiver should skip the callback:
 
 ```dart
 String? name;
+
 final length = name?.let((value) => value.length);
 
 name?.also((value) {
-	print(value);
+  print(value);
 });
 ```
 
-## Testing
+Because the extension receiver is non-nullable, the callback receives a
+non-null value when it runs.
 
-Use `package:checks/checks.dart` for assertions and `package:test` for test
-groups and execution. Add focused tests for every public helper and meaningful
-branch:
+`takeIf` and `takeUnless` use `null` to represent a discarded value. When the
+receiver itself may be nullable, a `null` result cannot distinguish a retained
+null value from a discarded value. Use a separate state representation if
+that distinction is important.
 
-- `run` returns the block result and propagates exceptions.
-- `use` returns the block result, disposes on success, disposes on failure, and
-	verifies disposer exception precedence.
-- `also` invokes its callback, preserves identity, supports null-aware calls on
-	nullable receivers, and propagates callback exceptions.
-- `applyIf` and `applyIfLazy` apply only when appropriate and do not invoke a
-	skipped transformation.
-- `let` covers same-type, cross-type, and nullable transformations.
-- All `takeIf` and `takeUnless` variants cover both outcomes and lazy predicate
-	invocation counts.
+## Verification
 
-Prefer interaction counters for lazy behavior. Avoid tests that depend on
-implementation details such as local variable names or allocation strategies.
+Read `lib/scope.dart` and `test/scope_test.dart` before changing behavior.
+Treat the implementation in the current checkout as the source of truth for
+current semantics. If documentation or existing examples disagree with the
+implementation, report the mismatch.
 
-## Documentation checklist
+For targeted changes, test the affected helper and its relevant branches.
+Prioritize:
 
-- Describe callback exceptions as propagating; do not claim that `also` catches
-	errors or returns the receiver after a failed callback.
-- Document `use` cleanup and the precedence of a disposer exception.
-- State that `applyIf` returns `T`, while `let` can return `R`.
-- Recommend `?.` for nullable receivers; callbacks then receive non-null `T`.
-- Use Dartdoc links such as `[block]`, `[dispose]`, and `[T]` where they resolve.
-- Keep examples compilable and label code fences as `dart`.
+- `run` returning values and propagating block exceptions.
+- `use` cleaning up after success and failure, including disposer exception
+  precedence.
+- The synchronous limitation of `use` when a block returns a `Future`.
+- `also` preserving identity and propagating callback exceptions.
+- `applyIf` and `applyIfLazy` returning the correct value and skipping a
+  transformation when their condition is false.
+- `let` supporting same-type and cross-type transformations.
+- All `takeIf` and `takeUnless` variants returning the expected result.
+- Lazy callback invocation counts and nullable receiver behavior.
+
+Use interaction counters when verifying lazy execution. Avoid tests that rely
+on private implementation details or local variable names.
+
+Run the focused tests first:
+
+```sh
+dart test test/scope_test.dart
+```
+
+Then run the normal project checks when the change warrants them:
+
+```sh
+dart format --output=none --set-exit-if-changed .
+dart analyze
+dart test
+```
 
 ## Review checklist
 
 Before approving scope-helper code, verify that:
 
-- the selected helper matches the intended lifecycle or transformation;
-- `use` cleanup is registered in `finally` and is not skipped on exceptions;
-- lazy predicates and transformations are not evaluated eagerly;
-- callback exceptions are allowed to propagate at the correct boundary;
-- nullable receivers use `?.` so callbacks are skipped for `null`;
-- unchanged values preserve identity;
-- `applyIf` does not perform a cross-type transformation;
-- public docs match the actual generic signatures and exception behavior;
-- focused tests cover success, failure, skipped branches, and nullability.
+- The helper matches the intended lifecycle or transformation.
+- `use` is not used to manage asynchronous work across an `await` boundary.
+- Cleanup runs on both normal and exceptional exits.
+- Disposal exception precedence is intentional and understood.
+- Lazy predicates and transformations run only under the documented
+  conditions.
+- Nullable receivers use `?.` when callbacks must be skipped for `null`.
+- Unchanged receivers preserve their identity.
+- `applyIf` does not perform a cross-type transformation.
+- Examples and tests match the actual generic signatures and behavior.

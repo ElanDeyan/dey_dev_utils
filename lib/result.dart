@@ -1,3 +1,12 @@
+/// Typed success and failure values for operations that can fail.
+///
+/// [Result] makes failure part of the return type. Handle both [Ok] and [Err]
+/// with a switch, or compose operations with methods such as `map` and
+/// `andThen`. For asynchronous operations, see [FutureResult].
+///
+/// {@example /example/doc_examples/result.dart}
+library;
+
 import 'package:dey_dev_utils/option.dart' show None, Option, Some;
 import 'package:meta/meta.dart';
 
