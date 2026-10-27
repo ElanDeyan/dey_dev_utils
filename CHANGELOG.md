@@ -1,3 +1,11 @@
+## 1.0.1
+
+- Expands API documentation and adds usage examples for the Comparison,
+  Contract, Result, Scope, Spec, and Trampoline libraries.
+- Updates the README and the example application with clearer package guidance
+  and usage demonstrations.
+- Better skills texts.
+
 ## 1.0.0
 
 First stable release of `dey_dev_utils`.
