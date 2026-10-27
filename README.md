@@ -1,31 +1,17 @@
 # dey_dev_utils
 
-Small, focused utilities for Dart development, with explicit APIs for common
-functional programming and control-flow patterns.
+[![Pub Version](https://img.shields.io/pub/v/dey_dev_utils)](https://pub.dev/packages/dey_dev_utils)
+[![License: MIT](https://img.shields.io/badge/license-MIT-blue.svg)](LICENSE)
 
-This package is also a place to explore ideas with AI assistance (many of things here came up from there). AI can help with development concepts, suggest classes and utilities, explain trade-offs, and help implement or test those ideas. The package itself has no AI runtime dependency: the AI guidance lives in the repository's skills and documentation.
+Small, focused utilities for Dart development, with explicit APIs for error handling, functional-style value operations, contracts, and common control-flow patterns.
 
-## Features
+The package contains a supported core and one experimental public library, `Option`. Each utility is imported directly, so applications can depend on the functionality they need without an umbrella library.
 
-The package's tested core includes five libraries:
-
-- **Result**: represent success and typed failure explicitly with `Ok` and
-	`Err`.
-- **Scope helpers**: run blocks, manage cleanup, observe values, transform
-	values, and filter them fluently.
-- **Type-safe comparison**: use `Comparison.less`, `Comparison.equal`, and
-	`Comparison.greater` instead of unexplained comparison integers.
-- **Trampoline**: evaluate synchronous bounce chains iteratively to avoid call
-	stack growth in deep computations.
-- **Specification pattern**: express and compose Boolean business rules.
-
-It also includes experimental libraries for options, validation, lenses,
-isomorphisms, middleware, sagas, tracing, rate limiting,
-contracts, monoids, and lazy initialization.
+AI-assisted exploration is part of the project's development process. The repository includes AI guidance for implementation, testing, documentation, and code review, but the package itself has no AI runtime dependency.
 
 ## Getting started
 
-Requires Dart SDK `3.13.7` or newer.
+**Requirements:** Dart SDK `>=3.13.7 <4.0.0`.
 
 Add the package to your project:
 
@@ -33,237 +19,263 @@ Add the package to your project:
 dart pub add dey_dev_utils
 ```
 
-Then run:
-
-```sh
-dart pub get
-```
-
-There is currently no umbrella library. Import the utility you need directly:
+There is no umbrella library. Import the public library you need directly:
 
 ```dart
 import 'package:dey_dev_utils/result.dart';
 ```
+
+## Core libraries
+
+The package's supported core includes six libraries:
+
+| Library | Purpose | Import |
+|---|---|---|
+| **Result** | Represent success and typed failure explicitly with `Ok` and `Err`. | `result.dart` |
+| **Scope helpers** | Transform and observe values, apply conditional operations, and manage synchronous cleanup. | `scope.dart` |
+| **Type-safe comparison** | Express ordering using `Comparison.less`, `Comparison.equal`, and `Comparison.greater`. | `comparison.dart` |
+| **Trampoline** | Evaluate deeply nested synchronous computations iteratively to avoid recursive call-stack growth. | `trampoline.dart` |
+| **Specification pattern** | Represent, reuse, and compose Boolean business rules. | `spec.dart` |
+| **Contract checks** | Express preconditions, postconditions, and object invariants. | `contract.dart` |
 
 ## Usage
 
 ### Explicit results
 
-Use `Result<T, E>` when an operation can fail and the failure should remain
-visible in its return type:
+Use `Result<T, E>` when an operation can fail and that failure should remain visible in its return type.
 
 ```dart
 import 'package:dey_dev_utils/result.dart';
 
 Result<int, FormatException> parseNumber(String input) {
-	final value = int.tryParse(input);
-	return value == null
-			? Result.err(FormatException('Not a number: $input'), StackTrace.current)
-			: Result.ok(value);
+  final value = int.tryParse(input);
+
+  if (value == null) {
+    return Result.err(
+      FormatException('Invalid integer: $input'),
+      StackTrace.current,
+    );
+  }
+
+  return Result.ok(value);
 }
 
 final result = parseNumber('30');
 final number = result.unwrapOr(0);
 ```
 
-`Result.guardSync` / `Result.guardAsync` convert a matching exception type into
-`Ok`/`Err` while allowing unrelated errors to propagate, and the
-`guardExceptionSync` / `guardExceptionAsync` variants keep `Error` values
-uncaught.
+`Ok` contains the successful value; `Err` contains a typed error and its stack trace. A fallback such as `unwrapOr(0)` is useful when a default makes sense for the application, but choose error-handling behavior according to the operation's requirements.
+
+`Result.guardSync` and `Result.guardAsync` capture exceptions matching the configured error type into `Err`, while allowing unrelated errors to propagate. The `guardExceptionSync` and `guardExceptionAsync` variants are available when you want to capture `Exception` values without catching Dart `Error` values.
 
 ### Scope helpers
 
-Scope utilities support readable transformations and resource cleanup:
+Scope utilities support readable transformations, side effects, conditional operations, and cleanup.
 
 ```dart
 import 'package:dey_dev_utils/scope.dart';
 
 final label = 30
-		.let((value) => value * 2)
-		.also((value) => print('Computed: $value'))
-		.toString();
+    .let((value) => value * 2)
+    .also((value) => print('Computed: $value'))
+    .toString();
 
 final content = use(
-	'temporary resource',
-	(resource) => resource.length,
-	dispose: (resource) => print('Releasing $resource'),
+  'temporary resource',
+  (resource) => resource.length,
+  dispose: (resource) => print('Releasing $resource'),
 );
 ```
 
-Use `applyIf` for type-preserving conditional changes and `takeIf` or
-`takeUnless` when a value should be kept or discarded.
+Use:
 
-### Readable comparisons
+- `let` to transform a value.
+- `also` to perform a side effect while returning the original value.
+- `applyIf` or `applyIfLazy` for type-preserving conditional transformations.
+- `takeIf` or `takeUnless` to conditionally retain a value.
+- `use` to execute a synchronous block and invoke an optional disposer.
+
+**Important:** `use` is synchronous. The disposer runs in a `finally` block, even when the block throws. If both the block and disposer throw, the disposer exception takes precedence, as in a normal Dart `finally` clause. Do not use this helper to manage a resource whose lifetime must extend across asynchronous work.
+
+### Type-safe comparisons
+
+Use `Comparison` instead of raw comparison integers when you want the result to communicate its meaning directly.
 
 ```dart
 import 'package:dey_dev_utils/comparison.dart';
 
 final ordering = 3.compareWith(5);
+
 if (ordering == Comparison.less) {
-	print('3 is smaller than 5');
+  print('3 is smaller than 5');
 }
 
 final isReady = 10.isGreaterThan(5);
 ```
 
-### Stack-safe synchronous steps
+`Comparison.less`, `Comparison.equal`, and `Comparison.greater` represent the three possible ordering outcomes. The `asInt()` method maps them to `-1`, `0`, and `1`, respectively.
 
-Build each next step lazily with `Bounce.more`, then evaluate the chain with
-`trampoline`:
+The extension methods are based on `Comparable.compareTo`. In particular, `isEqualTo` means that `compareTo` returns zero; it does not necessarily have the same semantics as `==` for every type.
+
+### Stack-safe synchronous computations
+
+A trampoline replaces direct recursive calls with deferred computation steps evaluated iteratively.
 
 ```dart
 import 'package:dey_dev_utils/trampoline.dart';
 
 Bounce<int> sumDown(int value, int total) {
-	if (value == 0) return Bounce.done(total);
-	return Bounce.more(() => sumDown(value - 1, total + value));
+  if (value == 0) return Bounce.done(total);
+
+  return Bounce.more(() => sumDown(value - 1, total + value));
 }
 
 final result = trampoline(sumDown(3, 0)); // 6
 ```
 
-The trampoline is synchronous. It does not schedule asynchronous work or
-automatically make arbitrary recursive code stack-safe.
+Wrap the next recursive step in `Bounce.more` so that the trampoline evaluates it rather than executing the recursive call immediately.
+
+The trampoline is synchronous. It does not schedule asynchronous work or automatically make arbitrary recursive code stack-safe; the computation must be expressed using `Bounce` steps.
 
 ### Composable specifications
 
-Represent each business rule as a reusable Boolean specification. Create rules
-with `predicate`, `always`, or `never`, then combine them with `&`, `|`, `^`,
-`nand`, `nor`, `xnor`, `implies`, `iff`, or `~`/`negated()`:
+A `Spec<T>` represents a Boolean rule for candidates of type `T`. Compose small, reusable specifications instead of duplicating business logic across methods.
 
 ```dart
 import 'package:dey_dev_utils/spec.dart';
 
-final isPositive = Spec<int>.predicate((value) => value > 0);
-final isUnderOneHundred = Spec<int>.predicate((value) => value < 100);
-final accepted = Spec<int>.allOf([isPositive, isUnderOneHundred]);
+final isAdult = Spec<int>.predicate((age) => age >= 18);
+final isUnderSixtyFive = Spec<int>.predicate((age) => age < 65);
 
-// .call for tear-offs, instead of using .isSatisfiedBy
-final acceptedValues = [12, -3, 100].where(accepted.call).toList(); // [12]
+final isEligible = isAdult & isUnderSixtyFive;
+
+final eligibleAges = [12, 25, 70]
+    .where(isEligible.call)
+    .toList(); // [25]
 ```
 
-For a named rule, use a `final`, `base`, or `sealed` subclass because `Spec<T>`
-is an `abstract base class`:
+Specifications can be created with `predicate`, `always`, or `never`. Named business rules can be represented by subclasses of `Spec<T>`:
 
 ```dart
 final class IsAdult extends Spec<int> {
-	const IsAdult();
+  const IsAdult();
 
-	@override
-	bool isSatisfiedBy(int age) => age >= 18;
+  @override
+  bool isSatisfiedBy(int age) => age >= 18;
 }
 
 final canVote = IsAdult() & Spec<int>.predicate((age) => age.isEven);
 ```
 
-`contramap` adapts a specification to another candidate type through a
-projection. Aggregate factories snapshot their input when created; `allOf` and
-`noneOf` of an empty iterable are satisfied, while `anyOf` is not. AND, OR,
-NAND, and NOR short-circuit in evaluation order. XOR, XNOR, and `iff` evaluate
-both operands. Predicate callbacks run on every evaluation and are not cached.
+Because `Spec<T>` is an `abstract base class`, Dart's subtype rules apply when creating named specifications.
 
-## Experimental APIs
+Combine rules using `&`, `|`, `^`, `nand`, `nor`, `xnor`, `implies`, `iff`, or `~`/`negated()`.
 
-The following libraries are not exported and may change or be
-removed in future releases without the same compatibility guarantees as the
-tested core:
+Some evaluation details matter:
 
-- `iso.dart` for reversible transformations between types
-- `lens.dart` for composable access to nested immutable data
-- `middleware.dart` for asynchronous handlers and pipelines
-- `monoid.dart` for identity and associative combination
-- `once.dart` for lazy one-time initialization
-- `rate_limit.dart` for debouncing and throttling
-- `saga.dart` for compensating asynchronous workflows
-- `trace.dart` for timing and logging wrappers
-- `validate.dart` for accumulating validation results
-
-The experimental `option.dart` for `Some` and `None` values.
+- AND, OR, NAND, and NOR short-circuit in evaluation order.
+- XOR, XNOR, and `iff` evaluate both operands.
+- `allOf`, `anyOf`, and `noneOf` consume and snapshot their input iterable when created.
+- Empty `allOf` and `noneOf` specifications are satisfied; an empty `anyOf` is not.
+- `contramap` adapts a specification to another candidate type through a projection.
+- Predicate callbacks run on every evaluation; their results are not cached.
 
 ### Contract checks
 
-`runWithChecking` and `runWithCheckingAsync` evaluate a precondition, run an
-operation, and check its result. They default to
-`ContractCheckingMode.assertionsOnly`, where failed checks use Dart assertions
-and callbacks are not evaluated when assertions are disabled. Pass
-`checkingMode: ContractCheckingMode.alwaysThrow` to enforce checks with
-`ContractViolationError` regardless of assertion settings. The `Invariant`
-mixin provides callback-based `pre` and `post` checks, explicit
-`verifyInvariant`, and sync/async `runWithInvariant` helpers. Those helpers
-evaluate the invariant even when the body throws; if both the body and
-invariant check fail, the invariant failure takes precedence.
+Contract checks make assumptions and state guarantees explicit. They are intended to help detect programming errors and invalid state transitions, not to replace ordinary input validation or application error handling.
+
+`runWithChecking` and `runWithCheckingAsync` check a precondition, execute an operation, and check its result.
 
 ```dart
 import 'package:dey_dev_utils/contract.dart';
 
-final input = '  value  ';
-final result = runWithChecking(
-  preCondition: () => input.isNotEmpty,
+String normalizeInput(String input) => runWithChecking<String>(
+  preCondition: () => input.trim().isNotEmpty,
   operation: () => input.trim(),
-  postCondition: (value) => value.isNotEmpty,
+  postCondition: (result) => result.isNotEmpty,
   checkingMode: ContractCheckingMode.alwaysThrow,
 );
 ```
 
-Use `runWithCheckingAsync` for an asynchronous operation:
+Use `runWithCheckingAsync` when the operation returns a `Future`:
 
 ```dart
-final result = await runWithCheckingAsync(
-  preCondition: () => input.isNotEmpty,
-  operation: () async => input.trim(),
-  postCondition: (value) => value.isNotEmpty,
-  checkingMode: ContractCheckingMode.alwaysThrow,
-);
+Future<String> normalizeInputAsync(String input) =>
+    runWithCheckingAsync<String>(
+      preCondition: () => input.trim().isNotEmpty,
+      operation: () async => input.trim(),
+      postCondition: (result) => result.isNotEmpty,
+      checkingMode: ContractCheckingMode.alwaysThrow,
+    );
 ```
 
-## AI skills for stable libraries
+The default checking mode is `ContractCheckingMode.assertionsOnly`. When Dart assertions are disabled, its condition callbacks are not evaluated, so this mode must not be used when runtime enforcement is required.
 
-The repository includes reusable AI skills for the stable libraries. They give
-an AI coding assistant the API model, important semantics, examples, testing
-guidance, and review checklists for:
+Use `ContractCheckingMode.alwaysThrow` to enforce failed checks regardless of assertion settings. These failures throw `ContractViolationError` with a corresponding `ViolationKind`.
 
-- [`Result`](skills/dey-dev-utils-result-type/SKILL.md)
+The `Invariant` mixin provides reusable `pre` and `post` checks, explicit `verifyInvariant`, and synchronous and asynchronous `runWithInvariant` helpers. The invariant is checked in a `finally` block, including when the body throws. If both the body and invariant check fail, the invariant failure takes precedence over the body's exception.
+
+An invariant check does not automatically repair invalid state or roll back mutations. Define invariants in terms of meaningful domain constraints, and test the behavior at the intended operation boundaries.
+
+## Experimental API
+
+The package currently has one experimental public library: `option.dart`.
+
+`Option<T>` represents an optional value with `Some<T>` and `None<T>`. It is useful when the presence or absence of a value matters, but the reason for absence does not need to be carried.
+
+```dart
+import 'package:dey_dev_utils/option.dart';
+
+const present = Option<int>.some(42);
+const absent = Option<int>.none();
+```
+
+The `Option` API is annotated `@experimental` and may change or be removed in a future release without the same compatibility guarantees as the supported core.
+
+**Note:** `Result.toOption()` converts `Ok` to `Some` and `Err` to `None`, discarding error information. The `Result` library is part of the supported core, but `Option` itself remains experimental; use that conversion with this distinction in mind.
+
+Other utilities under `lib/src/` are internal implementation or work in progress. They do not have public library entrypoints and are not advertised as supported package APIs. Import the documented public libraries rather than depending directly on `src` paths.
+
+## AI skills for the supported core
+
+The repository includes reusable `SKILL.md` guides for AI coding assistants. They document the supported libraries' API semantics, important behavioral details, examples, testing guidance, and review checklists for:
+
+- [Result](skills/dey-dev-utils-result-type/SKILL.md)
 - [Contract checks](skills/dey-dev-utils-contract/SKILL.md)
 - [Scope helpers](skills/dey-dev-utils-scope-methods-and-function/SKILL.md)
 - [Trampolines](skills/dey-dev-utils-trampoline/SKILL.md)
 - [Type-safe comparison](skills/dey-dev-utils-type-safe-comparison/SKILL.md)
 - [Specification pattern](skills/dey-dev-utils-spec-pattern/SKILL.md)
 
-To use them, open the relevant `SKILL.md` file in your AI coding assistant or
-copy its path into the assistant's context. Then ask for the task while naming
-the library. For example:
+To use a skill, open the relevant `SKILL.md` in your AI coding assistant's context and describe the task while naming the library. For example:
 
-> Use the dev-utils Result skill to review this function and add focused tests
-> for its success, typed failure, and stack-trace behavior.
+> Use the dey_dev_utils Result skill to review this function and add focused tests for successful results, typed failures, and stack-trace behavior.
 
-These skills are useful for implementation, refactoring, documentation,
-testing, and code review. They are guidance for development tools, not code
-that is loaded by your Dart application.
+These skills are optional development guidance. They are not loaded by Dart applications and do not add an AI runtime dependency. The skill files support development, refactoring, documentation, testing, and code review; the package's runtime behavior is defined by its Dart implementation.
+
+AI-assisted exploration is part of the project's development process, but using the skills is not required to use the libraries.
 
 ## Development
 
-Run the test suite and static analysis locally:
+Format the code, run static analysis, and execute the test suite:
 
 ```sh
+dart format .
 dart analyze
 dart test
 ```
 
-GitHub Actions runs formatting, analysis, and tests on every push and pull
-request. Dedupe, cognitive complexity, and undead reports are published as
-workflow artifacts and summaries for review; they are advisory while the APIs
-are evolving. Mutation testing runs weekly and on manual workflow dispatch,
-and its report is advisory as well. Package contents are validated before
-release publishing.
+GitHub Actions also checks formatting, analysis, and tests on pushes and pull requests. Additional reports from tools such as `dedupe`, `cognitive_complexity`, and `undead` are published as workflow artifacts and summaries for review. These reports are advisory while the APIs continue to evolve.
 
-Contributions are welcome. Please open an issue for bugs or ideas, and include
-the smallest reproducible example when reporting a problem. See the
-[repository](https://github.com/ElanDeyan/dey_dev_utils) for source code and
-project discussions.
+Mutation testing runs weekly and on manual workflow dispatch, with its report also treated as advisory. Package contents are validated before release publishing.
 
-The tested core is released as version `1.0.0`.
+Contributions are welcome. For bug reports or improvement ideas, open an issue and include the smallest reproducible example you can provide.
+
+- [Repository and source code](https://github.com/ElanDeyan/dey_dev_utils)
+- [Package on pub.dev](https://pub.dev/packages/dey_dev_utils)
 
 ## License
 
-`dey_dev_utils` is available under the [MIT License](LICENSE). Copyright (c) 2026
-ElanDeyan.
+This package is available under the [MIT License](LICENSE).
+
+Copyright © 2026 ElanDeyan.
