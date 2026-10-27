@@ -1,14 +1,19 @@
 ---
 name: dey-dev-utils-spec-pattern
-description: "Use when implementing, reviewing, testing, or documenting the Spec<T> specification pattern in dey_dev_utils."
+description: "Use when implementing, reviewing, testing, or refactoring dey_dev_utils Spec<T> rules, Boolean composition, contramap projections, or short-circuit and evaluation-order behavior."
 ---
 
 # dey-dev-utils-spec-pattern
 
-Use this skill when working with `lib/spec.dart`. `Spec<T>` represents a
-reusable Boolean business rule for values of type `T`. Specs can be evaluated
-directly, passed around as predicates, and combined into larger rules without
-embedding validation logic in callers.
+Use this skill for the `Spec<T>` API in `lib/spec.dart`.
+
+`Spec<T>` represents a reusable Boolean business rule for candidates of type
+`T`. A specification can be evaluated directly, passed as a predicate, and
+combined with other specifications to express more complex rules.
+
+A `Spec<T>` answers whether a candidate satisfies a rule. It is not an
+error-accumulating validator, and an ordinary rejection is represented by
+`false`, not by throwing an exception.
 
 ## API model
 
@@ -17,88 +22,136 @@ embedding validation logic in callers.
 - `Spec<T>.never()` is satisfied for no candidate.
 - `Spec<T>.allOf`, `anyOf`, and `noneOf` combine iterable sets of specs.
 - `isSatisfiedBy(candidate)` is the primary evaluation method.
-- `spec(candidate)` is the callable shorthand for `isSatisfiedBy(candidate)`.
-- `&` and `and` create AND compositions.
-- `|` and `or` create OR compositions.
-- `^` and `xor` create exclusive-OR compositions.
-- `nand` creates NOT-AND composition.
-- `nor` creates NOT-OR composition.
-- `xnor` creates logical equivalence: both operands have the same result.
-- `implies` is false only when the first spec is satisfied and the second is not.
-- `iff` is logical equivalence, the same truth condition as `xnor`.
-- `contramap` adapts a spec to a different candidate type using a projection.
+- `spec(candidate)` is callable shorthand for `isSatisfiedBy(candidate)`.
+- `&` and `and` combine specs with AND.
+- `|` and `or` combine specs with OR.
+- `^` and `xor` combine specs with exclusive OR.
+- `nand` and `nor` implement negated AND and negated OR.
+- `xnor` and `iff` implement logical equivalence.
+- `implies` implements logical implication.
 - `~spec` and `negated()` create logical negation.
+- `contramap` adapts a spec to another candidate type through a projection.
 
-Specs are immutable composition objects. Each evaluation walks the composition
-tree and invokes the underlying predicates; results are not cached.
-The aggregate factories snapshot their iterable eagerly, so later source
-mutations do not affect the spec. They are not const factories; `predicate`,
-`always`, and `never` remain const-capable.
+## Choose the operation
 
-## Instructions
+| Requirement | Preferred API |
+|---|---|
+| Define a focused Boolean business rule | `Spec<T>.predicate` or a named subclass |
+| Require every rule to pass | `&`, `and`, or `allOf` |
+| Accept any passing rule | `|`, `or`, or `anyOf` |
+| Require exactly one passing rule | `^` or `xor` |
+| Require that both rules do not pass together | `nand` |
+| Require neither rule to pass | `nor` or `noneOf` |
+| Require both rules to agree | `xnor` or `iff` |
+| Express "if this rule holds, that rule must hold" | `implies` |
+| Invert a rule | `~spec` or `negated()` |
+| Adapt a rule to a different candidate type | `contramap` |
 
-1. Define each meaningful business rule as a focused `Spec<T>` or a predicate
-	created with `Spec<T>.predicate`.
-2. Name domain-specific specs clearly, such as `IsEligibleVoter` or
-	`HasValidEmail`, when the rule is reused or deserves a meaningful boundary.
-3. Compose rules with the smallest operation that expresses the requirement:
-	- Use `&` or `and` when every condition must pass.
-	- Use `|` or `or` when any condition may pass.
-	- Use `^` or `xor` when exactly one condition must pass.
-	- Use `nand` for a "not both" rule.
-	- Use `nor` for a "neither" rule.
-	- Use `xnor` when both conditions must agree.
-	- Use `implies` when one rule's satisfaction requires another.
-	- Use `iff` when two rules must have the same satisfaction state.
-	- Use `~` or `negated()` when inverting one rule.
-4. Use `allOf`, `anyOf`, or `noneOf` to combine many specs without building a
-	deeply nested binary composition. Their evaluation is iterative and
-	short-circuits in iterable order.
-5. Add parentheses around mixed compositions when grouping is important. Do
-	not rely on readers remembering Dart's operator precedence for business
-	rules.
-6. Keep predicates focused and side-effect free where possible. If evaluation
-	has observable side effects, document that behavior and test invocation
-	counts explicitly.
-7. Preserve the generic type. Compose `Spec<T>` with another `Spec<T>` rather
-	than weakening the API with `dynamic` or unchecked casts.
-8. When changing the implementation, update focused tests and Dartdoc in the
-	same change. Keep examples compilable with the actual generic constructor
-	syntax, such as `Spec<int>.predicate((value) => value > 0)`. External
-	subclasses must be declared `final`, `base`, or `sealed` because `Spec<T>`
-	is an `abstract base class`.
+Prefer meaningful domain-specific specifications when a rule is reused or
+deserves a named boundary. Keep each predicate focused, and preserve the
+generic type rather than using `dynamic` or unchecked casts.
 
 ## Critical semantics
 
-Composition does not run either predicate when the composition is created. The
-predicates run only when `isSatisfiedBy` or `call` is evaluated.
+### Composition versus evaluation
+
+Creating a composition does not evaluate its predicates. Predicate execution
+occurs when the resulting spec's `isSatisfiedBy(candidate)` or `call(candidate)`
+method is evaluated.
 
 ```dart
 final valid = hasName & hasEmail;
-// hasEmail is skipped when hasName(candidate) is false.
+// No predicate is evaluated by this composition expression.
 
-final accessible = isAdmin | isOwner;
-// isOwner is skipped when isAdmin(candidate) is true.
+final accepted = valid(candidate);
+// Evaluation happens here. The right side is skipped if hasName fails.
 ```
 
-NAND and NOR preserve the corresponding short-circuit behavior because they
-negate a short-circuiting AND or OR expression:
+Short-circuiting applies to predicate evaluation, not to the creation of the
+operand objects.
 
-```dart
-final notBoth = isAdmin.nand(isSuspended);
-final neither = isBanned.nor(isSuspended);
-```
-
-XOR and XNOR evaluate both operands. Do not rewrite them with short-circuiting
-Boolean expressions when both predicate evaluations are required by the
-contract:
+AND, OR, NAND, and NOR short-circuit in evaluation order. XOR and XNOR evaluate
+both operands because both results are needed.
 
 ```dart
 final exactlyOne = isStudent ^ isWorking;
 final sameState = isVerified.xnor(isApproved);
 ```
 
-Negation is involutive. Applying it twice restores the original behavior:
+Do not replace XOR or XNOR logic with an expression that accidentally skips
+one predicate when both evaluations are part of the contract.
+
+`implies` is false only when the antecedent is satisfied and the consequent
+is not. Its implementation short-circuits when the antecedent is not
+satisfied. `iff` is equivalent to `xnor` and evaluates both specs.
+
+### Aggregate factories
+
+`allOf`, `anyOf`, and `noneOf` consume and copy their source iterable when
+created. Later changes to the original iterable do not affect the resulting
+specification.
+
+Consequences:
+
+- The input iterable is consumed eagerly at construction.
+- Infinite iterables cannot be snapshotted.
+- Iteration errors occur during construction.
+- Evaluation short-circuits in iterable order.
+- An empty `allOf` is satisfied.
+- An empty `anyOf` is not satisfied.
+- An empty `noneOf` is satisfied.
+
+Use the aggregate factories when combining many specs. Their evaluation is
+iterative rather than a recursively nested series of binary evaluations.
+
+### Structural immutability and predicates
+
+Composition objects are structurally immutable, but a predicate can observe
+mutable external state. `@immutable` does not make arbitrary callback behavior
+pure.
+
+Each evaluation invokes the applicable predicates again. Results are not
+cached. Predicates should be pure where practical. If they intentionally
+perform observable work, document it and test their invocation behavior.
+
+### Projection direction in `contramap`
+
+The API is:
+
+```dart
+Spec<R> contramap<R>(T Function(R candidate) projection)
+```
+
+Start with a `Spec<T>`, provide a projection that converts an `R` candidate
+into a `T`, and obtain a `Spec<R>`.
+
+```dart
+final class User {
+  const User(this.name);
+
+  final String name;
+}
+
+final hasNonEmptyName = Spec<String>.predicate(
+  (name) => name.isNotEmpty,
+);
+
+final userHasName = hasNonEmptyName.contramap<User>(
+  (user) => user.name,
+);
+```
+
+The resulting specification accepts a `User`. The projection extracts its
+name, and the original string specification evaluates that value.
+
+The projection runs for each evaluation. Do not reverse the projection's
+input and output types, and do not cache its result unless the application's
+behavior explicitly requires it.
+
+### Negation and named subclasses
+
+Negation is involutive: applying it twice restores the original satisfaction
+behavior.
 
 ```dart
 final original = Spec<int>.predicate((value) => value > 0);
@@ -106,123 +159,97 @@ final inverted = ~original;
 final restored = ~~original;
 ```
 
-`Spec<T>.always()` and `Spec<T>.never()` are const-friendly. Predicate specs
-invoke their callback each time they are evaluated and do not memoize results.
-`allOf` and `noneOf` of an empty iterable are satisfied; `anyOf` of an empty
-iterable is not. Since the aggregate factories snapshot their input at
-construction, they consume the iterable eagerly and cannot accept an infinite
-iterable.
+`Spec<T>` is an abstract base class. External subclasses must use an allowed
+modifier such as `final`, `base`, or `sealed`.
 
 ## Examples
 
-```dart
-import 'package:dey_dev_utils/spec.dart';
-
-final isAdult = Spec<Person>.predicate((person) => person.age >= 18);
-final hasEmail = Spec<Person>.predicate(
-	(person) => person.email.contains('@'),
-);
-final canReceiveNewsletter = hasEmail & isAdult;
-
-final peopleToNotify = people.where(canReceiveNewsletter).toList();
-```
-
-For a named rule, subclass `Spec<T>`:
+A named domain rule can be expressed as a subclass:
 
 ```dart
-final class IsEligibleVoter extends Spec<Person> {
-	const IsEligibleVoter();
+final class IsEligibleForLibraryCard extends Spec<int> {
+  const IsEligibleForLibraryCard();
 
-	@override
-	bool isSatisfiedBy(Person person) => person.age >= 18;
+  @override
+  bool isSatisfiedBy(int age) => age >= 13;
 }
+
+final canGetLibraryCard = IsEligibleForLibraryCard() &
+    Spec<int>.predicate((age) => age <= 120);
 ```
 
-Use explicit grouping for complex rules:
+For complex expressions, use parentheses where they make the intended grouping
+explicit:
 
 ```dart
 final canAccess = isAdmin | (isOwner & hasActiveAccount);
 ```
 
-## Testing
+Prefer readable business-rule groupings over clever expressions whose intent
+depends on remembering operator precedence.
 
-Use `package:checks/checks.dart` for assertions and `package:test` for test
-groups and execution. Place tests in `test/spec_test.dart`.
+## Verification
 
-Cover every public construction and composition path:
+Read `lib/spec.dart` and `test/spec_test.dart` before changing behavior.
+Treat the current implementation as the source of truth. Use the tests to
+confirm observable semantics, and report inconsistencies instead of assuming
+that a description or older example is correct.
 
-- `Spec<T>.predicate`, `always`, `never`, `isSatisfiedBy`, and callable `spec`;
-- all four truth-table combinations for AND, OR, XOR, NAND, NOR, and XNOR;
-- implication and equivalence truth tables;
-- `allOf`, `anyOf`, and `noneOf` truth tables, empty inputs, snapshot behavior,
-	and short-circuit order;
-- `contramap` projection across candidate types;
-- both operator and named-method forms where both are public;
-- negation truth tables and double negation with both `~` and `negated()`;
-- nested compositions with explicit parentheses;
-- AND/NAND skipped-right behavior when the left result is false;
-- OR/NOR skipped-right behavior when the left result is true;
-- XOR/XNOR evaluation of both operands, including invocation counters;
-- implication short-circuiting and eager evaluation by `iff`;
-- repeated evaluation to verify predicates are not unexpectedly cached.
+For a targeted change, test the relevant truth-table cases and evaluation
+behavior. For a change to Boolean composition or negation, cover all affected
+truth-table combinations and callback invocation order.
 
-Prefer behavior and interaction tests over assertions about private classes such
-as `_And` or `_Not`. A useful counter-based test looks like this:
+Prioritize:
 
-```dart
-var calls = 0;
-final right = Spec<int>.predicate((_) {
-	calls++;
-	return true;
-});
+- `predicate`, `always`, `never`, `isSatisfiedBy`, and callable specs.
+- Truth tables for changed operators and named composition methods.
+- Short-circuit order and skipped predicate invocation.
+- XOR and XNOR evaluation of both operands.
+- Implication and equivalence behavior.
+- Empty aggregate inputs and snapshot behavior when aggregate factories change.
+- `contramap` projection direction and execution.
+- Double negation.
+- Repeated evaluation, demonstrating that predicates are not memoized.
 
-final result = (Spec<int>.never() & right)(0);
+Use invocation counters when verifying evaluation order. Prefer behavioral
+assertions over assertions about private classes such as `_And` or `_Not`.
 
-check(result).isFalse();
-check(calls).equals(0);
+Run the focused suite first:
+
+```sh
+dart test test/spec_test.dart
 ```
 
-Run the focused suite first, then the full verification commands:
+Then run the normal project checks when the change warrants them:
 
 ```sh
 dart format --output=none --set-exit-if-changed .
 dart analyze
-dart test test/spec_test.dart
 dart test
+```
+
+For a change affecting Boolean operators or mutation-sensitive behavior, also
+consider mutation testing:
+
+```sh
 dart run mutation_test
 ```
 
-Mutation testing should detect changes to the Boolean operators and negation
-behavior. Inspect the generated `mutation-test-report/lib/spec.dart.html`
-report for surviving mutations.
-
-## Documentation checklist
-
-- Describe `Spec<T>` as a Boolean business rule, not as a validator that
-	accumulates errors or throws on ordinary rejection.
-- Document whether a method uses short-circuit evaluation or evaluates both
-	operands.
-- State that predicate callbacks run on every evaluation and are not cached.
-- Explain that `~(~spec)` and repeated `negated()` restore the original
-	behavior.
-- Use Dartdoc links such as `[candidate]` and `[isSatisfiedBy]` only where those
-	declarations are visible.
-- Keep examples aligned with the actual generic factory syntax and public API.
-- Compile-check public examples, including subclass modifiers, when changing
-	public documentation.
-- Do not promise equality, serialization, caching, flattening, or cross-type
-	composition unless the implementation explicitly provides it.
+Inspect the generated `mutation-test-report/lib/spec.dart.html` report for
+surviving mutations in the changed logic. Do not run mutation testing
+automatically for unrelated documentation-only edits.
 
 ## Review checklist
 
 Before approving Spec-based code, verify that:
 
-- each predicate has a clear business meaning and a suitable `T` type;
-- mixed Boolean expressions use parentheses where intent could be ambiguous;
-- AND/OR/NAND/NOR short-circuit behavior is preserved;
-- XOR/XNOR evaluate both operands and are not accidentally replaced with
-	short-circuiting logic;
-- double negation restores the original result;
-- no memoization or hidden state changes predicate behavior;
-- tests cover truth tables, evaluation order, and public aliases;
-- public documentation matches the implementation and examples compile.
+- Each predicate has a clear business meaning and suitable input type.
+- Composition creation is not confused with predicate evaluation.
+- Short-circuit behavior matches the documented operator semantics.
+- XOR and XNOR evaluate both operands.
+- `implies` and `iff` retain their documented behavior.
+- `contramap` projects from the new candidate type to the original input type.
+- Aggregate snapshot and empty-input behavior are intentional.
+- Predicates are not incorrectly assumed to be cached or necessarily pure.
+- Complex business rules are grouped clearly.
+- Tests cover truth tables and evaluation order where relevant.
