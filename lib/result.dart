@@ -7,7 +7,6 @@
 /// {@example /example/doc_examples/result.dart}
 library;
 
-import 'package:dey_dev_utils/option.dart' show None, Option, Some;
 import 'package:meta/meta.dart';
 
 /// A result type that captures either a successful value or any error.
@@ -467,22 +466,6 @@ sealed class const Result<T extends Object?, E extends Object>() {
 
     return otherBlock();
   }
-
-  /// Converts this result into an [Option].
-  ///
-  /// Converts [Ok] to [Some] and [Err] to [None], discarding error information.
-  /// Use this when you only care whether a value exists, not why it failed.
-  /// If you need the error information, keep it as a [Result].
-  ///
-  /// Example:
-  /// ```dart
-  /// final option = result.toOption(); // Option<T>
-  /// final value = option.unwrapOr(defaultValue);
-  /// ```
-  Option<T> toOption() => switch (this) {
-    Ok(:final value) => .some(value),
-    Err() => const .none(),
-  };
 
   /// Returns the success value, or throws the error with its original stack trace.
   ///

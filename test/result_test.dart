@@ -1,5 +1,4 @@
 import 'package:checks/checks.dart';
-import 'package:dey_dev_utils/option.dart';
 import 'package:dey_dev_utils/result.dart';
 import 'package:test/scaffolding.dart';
 
@@ -184,8 +183,6 @@ void main() {
       check(success.map((value) => value)).isA<Ok<String?, String>>();
       check(success.unwrapOrNull()).isNull();
       check(failure.unwrapOrNull()).isNull();
-      check(success.toOption()).isA<Some<String?>>();
-      check(failure.toOption()).isA<None<String?>>();
     });
 
     test('mapErr transforms only errors and preserves stack trace', () {
@@ -354,12 +351,6 @@ void main() {
   });
 
   group('Result conversion and copying', () {
-    test('toOption converts successes to Some and errors to None', () {
-      check(const Ok<int, String>(30).toOption()).equals(const Some<int>(30));
-      check(const Err<int, String>('failed', .empty).toOption())
-          .isA<None<int>>();
-    });
-
     test('clone creates an equivalent wrapper and preserves trace', () {
       const success = Ok<int, String>(30);
       final trace = StackTrace.current;
