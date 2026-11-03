@@ -20,12 +20,6 @@ sealed class const Option<T extends Object>() {
   /// Creates an option.
   this;
 
-  /// Creates an absent option.
-  const factory none() = None<T>;
-
-  /// Creates an option containing [value].
-  const factory some(T value) = Some<T>;
-
   /// Creates an option from a nullable [value].
   ///
   /// Returns [Option.none] when [value] is `null`, and [Option.some] otherwise.
@@ -37,11 +31,55 @@ sealed class const Option<T extends Object>() {
     return .some(value);
   }
 
+  /// Creates an absent option.
+  const factory none() = None<T>;
+
+  /// Creates an option containing [value].
+  const factory some(T value) = Some<T>;
+
   /// Whether this option represents an absent value.
   bool get isNone => this is None<T>;
 
   /// Whether this option contains a value.
   bool get isSome => this is Some<T>;
+
+  /// An [Iterable] that yields this option once.
+  Iterable<T> get iterable sync* {
+    switch (this) {
+      case None<T>():
+        return;
+      case Some<T>(:final value):
+        yield value;
+    }
+  }
+
+  /// Returns the option that is present only when exactly one operand is
+  /// present.
+  Option<T> operator ^(Option<T> other) => xor(other);
+
+  /// Returns [other] when this option contains a value, or [Option.none]
+  /// otherwise.
+  Option<U> and<U extends Object>(Option<U> other) {
+    switch (this) {
+      case None<T>():
+        return const .none();
+      case Some<T>():
+        return other;
+    }
+  }
+
+  /// Applies [callback] to the contained value and returns its option.
+  ///
+  /// Returns [Option.none] without calling [callback] when this option is
+  /// absent.
+  Option<U> andThen<U extends Object>(Option<U> Function(T value) callback) {
+    switch (this) {
+      case None<T>():
+        return const .none();
+      case Some<T>(:final value):
+        return callback(value);
+    }
+  }
 
   /// Returns the contained value or throws a [StateError] with [message].
   ///
@@ -102,15 +140,15 @@ sealed class const Option<T extends Object>() {
   ///
   /// The result always contains a value: [mapper] is applied to a present
   /// value, and [defaultValue] is used when this option is absent.
-  Option<U> mapOr<U extends Object>(
+  U mapOr<U extends Object>(
     U Function(T value) mapper, {
     required U defaultValue,
   }) {
     switch (this) {
       case Some<T>(:final value):
-        return .some(mapper(value));
+        return mapper(value);
       case None<T>():
-        return .some(defaultValue);
+        return defaultValue;
     }
   }
 
@@ -118,15 +156,37 @@ sealed class const Option<T extends Object>() {
   ///
   /// The result always contains a value. [defaultValue] is called only when
   /// this option is absent.
-  Option<U> mapOrElse<U extends Object>(
+  U mapOrElse<U extends Object>(
     U Function(T value) mapper, {
     required U Function() defaultValue,
   }) {
     switch (this) {
       case Some<T>(:final value):
-        return .some(mapper(value));
+        return mapper(value);
       case None<T>():
-        return .some(defaultValue());
+        return defaultValue();
+    }
+  }
+
+  /// Returns this option when it contains a value, or [other] otherwise.
+  Option<T> or(Option<T> other) {
+    switch (this) {
+      case None<T>():
+        return other;
+      case Some<T>():
+        return this;
+    }
+  }
+
+  /// Returns this option when present, or calls [callback] otherwise.
+  ///
+  /// [callback] is called only when this option is absent.
+  Option<T> orElse(Option<T> Function() callback) {
+    switch (this) {
+      case None<T>():
+        return callback();
+      case Some<T>():
+        return this;
     }
   }
 
@@ -162,33 +222,6 @@ sealed class const Option<T extends Object>() {
     }
   }
 
-  /// An iterator that yields this option once.
-  Iterator<Option<T>> get iterator => _OptionIterator<T>(this);
-
-  /// Returns [other] when this option contains a value, or [Option.none]
-  /// otherwise.
-  Option<U> and<U extends Object>(Option<U> other) {
-    switch (this) {
-      case None<T>():
-        return const .none();
-      case Some<T>():
-        return other;
-    }
-  }
-
-  /// Applies [callback] to the contained value and returns its option.
-  ///
-  /// Returns [Option.none] without calling [callback] when this option is
-  /// absent.
-  Option<U> andThen<U extends Object>(Option<U> Function(T value) callback) {
-    switch (this) {
-      case None<T>():
-        return const .none();
-      case Some<T>(:final value):
-        return callback(value);
-    }
-  }
-
   /// Keeps the contained value only when it satisfies [predicate].
   Option<T> where(bool Function(T value) predicate) {
     switch (this) {
@@ -200,31 +233,6 @@ sealed class const Option<T extends Object>() {
         }
 
         return const .none();
-    }
-  }
-
-  /// Returns this option when it contains a value, or [other] otherwise.
-  Option<T> or(Option<T> other) {
-    switch (this) {
-      case None<T>():
-        return other;
-      case Some<T>():
-        return this;
-    }
-  }
-
-  /// Returns this option when present, or [other] otherwise.
-  Option<T> operator |(Option<T> other) => or(other);
-
-  /// Returns this option when present, or calls [callback] otherwise.
-  ///
-  /// [callback] is called only when this option is absent.
-  Option<T> orElse(Option<T> Function() callback) {
-    switch (this) {
-      case None<T>():
-        return callback();
-      case Some<T>():
-        return this;
     }
   }
 
@@ -242,10 +250,6 @@ sealed class const Option<T extends Object>() {
         return const .none();
     }
   }
-
-  /// Returns the option that is present only when exactly one operand is
-  /// present.
-  Option<T> operator ^(Option<T> other) => xor(other);
 
   /// Combines the two contained values into a record, or returns [Option.none]
   /// if either option is absent.
@@ -279,6 +283,9 @@ sealed class const Option<T extends Object>() {
         return const .none();
     }
   }
+
+  /// Returns this option when present, or [other] otherwise.
+  Option<T> operator |(Option<T> other) => or(other);
 }
 
 /// An absent value.
@@ -297,10 +304,8 @@ final class const None<T extends Object>() extends Option<T> {
   @override
   bool operator ==(Object other) {
     if (identical(this, other)) return true;
-    if (other is! Option<T>) return false;
-    if (other is Some<T>) return false;
 
-    return true;
+    return other is Option<T> && other is None<T>;
   }
 }
 
@@ -317,19 +322,27 @@ final class const Some<T extends Object>(
   this;
 
   @override
-  int get hashCode => value.hashCode;
+  int get hashCode => Object.hash(runtimeType, value);
 
   /// Whether [other] contains a value equal to this option's value.
   @override
   bool operator ==(Object other) {
     if (identical(this, other)) return true;
-    if (other is! Option<T>) return false;
-    if (other is None<T>) return false;
 
-    return switch (other) {
-      None<T>() => false,
-      Some<T>(value: final otherValue) => value == otherValue,
-    };
+    return other is Option<T> && other is Some<T> && other.value == value;
+  }
+}
+
+/// Provides [flatten] for nested options.
+extension FlattenOptionExtension<T extends Object> on Option<Option<T>> {
+  /// Removes one level of nesting from an option.
+  Option<T> flatten() {
+    switch (this) {
+      case None<Option<T>>():
+        return const .none();
+      case Some<Option<T>>(:final value):
+        return value;
+    }
   }
 }
 
@@ -348,45 +361,5 @@ extension UnzipOptionExtension<T extends Object, U extends Object>
         final (first, second) = value;
         return (.some(first), .some(second));
     }
-  }
-}
-
-/// Provides [flatten] for nested options.
-extension FlattenOptionExtension<T extends Object> on Option<Option<T>> {
-  /// Removes one level of nesting from an option.
-  Option<T> flatten() {
-    switch (this) {
-      case None<Option<T>>():
-        return const .none();
-      case Some<Option<T>>(:final value):
-        return value;
-    }
-  }
-}
-
-final class _OptionIterator<T extends Object>(final Option<T> option)
-    implements Iterator<Option<T>> {
-  bool _hasNext = true;
-  bool _isCurrentValid = false;
-
-  @override
-  Option<T> get current {
-    if (!_isCurrentValid) {
-      return throw StateError('No more elements in the iterator.');
-    }
-
-    return option;
-  }
-
-  @override
-  bool moveNext() {
-    if (!_hasNext) {
-      _isCurrentValid = false;
-      return false;
-    }
-
-    _hasNext = false;
-    _isCurrentValid = true;
-    return true;
   }
 }

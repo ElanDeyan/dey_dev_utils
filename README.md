@@ -265,6 +265,36 @@ dart analyze
 dart test
 ```
 
+### Property-based tests
+
+Property-based tests use [`kiri_check`](https://pub.dev/packages/kiri_check), a
+development dependency that generates many inputs for a stated behavior. Add
+them with `property` and `forAll`; a fixed seed makes a failing case
+reproducible:
+
+```dart
+import 'package:dey_dev_utils/option.dart';
+import 'package:kiri_check/kiri_check.dart';
+import 'package:test/test.dart' show equals, expect;
+
+void main() {
+  property('Some options iterate as their contained value', () {
+    forAll(
+      integer(min: -100000, max: 100000),
+      (value) {
+        expect(Option<int>.some(value).iterable.toList(), equals([value]));
+      },
+      maxExamples: 100,
+      seed: 42,
+    );
+  });
+}
+```
+
+Keep generated properties focused on general laws and use ordinary unit tests
+for specific edge cases. Run the property tests with `dart test`, or run one
+file with `dart test test/option_property_test.dart`.
+
 GitHub Actions also checks formatting, analysis, and tests on pushes and pull requests. Additional reports from tools such as `dedupe`, `cognitive_complexity`, and `undead` are published as workflow artifacts and summaries for review. These reports are advisory while the APIs continue to evolve.
 
 Mutation testing runs weekly and on manual workflow dispatch, with its report also treated as advisory. Package contents are validated before release publishing.

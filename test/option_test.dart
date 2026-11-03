@@ -35,7 +35,18 @@ void main() {
       check(const Option<int>.some(42) == const Option<int>.some(7)).isFalse();
       check((const Option<int>.none() as Object) == const Option<int>.some(42))
           .isFalse();
-      check(const Option<int>.some(42).hashCode).equals(42.hashCode);
+    });
+
+    test('equal options have equal hash codes', () {
+      const firstSome = Option<int>.some(42);
+      const secondSome = Option<int>.some(42);
+      const firstNone = Option<int>.none();
+      const secondNone = Option<int>.none();
+
+      check(firstSome).equals(secondSome);
+      check(firstSome.hashCode).equals(secondSome.hashCode);
+      check(firstNone).equals(secondNone);
+      check(firstNone.hashCode).equals(secondNone.hashCode);
     });
   });
 
@@ -125,17 +136,17 @@ void main() {
       check(const Option<int>.none().map((value) => '$value').isNone).isTrue();
     });
 
-    test('mapOr wraps either the mapped value or the fallback', () {
+    test('mapOr returns either the mapped value or the fallback', () {
       check(
         const Option<int>.some(42)
             .mapOr((value) => '$value', defaultValue: 'missing'),
-      ).equals(const Option<String>.some('42'));
+      ).equals('42');
       check(
         const Option<int>.none().mapOr(
           (value) => '$value',
           defaultValue: 'missing',
         ),
-      ).equals(const Option<String>.some('missing'));
+      ).equals('missing');
     });
 
     test('mapOrElse evaluates the appropriate branch only', () {
@@ -153,12 +164,12 @@ void main() {
 
       check(
         const Option<int>.some(42).mapOrElse(mapper, defaultValue: fallback),
-      ).equals(const Option<String>.some('42'));
+      ).equals('42');
       check(mapperCalls).equals(1);
       check(fallbackCalls).equals(0);
 
       check(const Option<int>.none().mapOrElse(mapper, defaultValue: fallback))
-          .equals(const Option<String>.some('missing'));
+          .equals('missing');
       check(mapperCalls).equals(1);
       check(fallbackCalls).equals(1);
     });
@@ -300,25 +311,13 @@ void main() {
     });
   });
 
-  group('Option iterator', () {
-    test('current contains a present option only while positioned on it', () {
-      final iterator = const Option<int>.some(42).iterator;
-
-      check(() => iterator.current).throws<StateError>();
-      check(iterator.moveNext()).isTrue();
-      check(iterator.current).equals(const Option<int>.some(42));
-      check(iterator.current).equals(const Option<int>.some(42));
-      check(iterator.moveNext()).isFalse();
-      check(() => iterator.current).throws<StateError>();
+  group('Option iterable', () {
+    test('a present option yields its value exactly once', () {
+      check(const Option<int>.some(42).iterable.toList()).deepEquals([42]);
     });
 
-    test('current contains an absent option while positioned on it', () {
-      final iterator = const Option<int>.none().iterator;
-
-      check(iterator.moveNext()).isTrue();
-      check(iterator.current.isNone).isTrue();
-      check(iterator.moveNext()).isFalse();
-      check(() => iterator.current).throws<StateError>();
+    test('an absent option yields no values', () {
+      check(const Option<int>.none().iterable).isEmpty();
     });
   });
 }
