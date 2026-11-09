@@ -247,6 +247,7 @@ Other utilities under `lib/src/` are internal implementation or work in progress
 The repository includes reusable `SKILL.md` guides for AI coding assistants. They document the supported libraries' API semantics, important behavioral details, examples, testing guidance, and review checklists for:
 
 - [Result](skills/dey-dev-utils-result-type/SKILL.md)
+- [Option](skills/dey-dev-utils-option-type/SKILL.md)
 - [Contract checks](skills/dey-dev-utils-contract/SKILL.md)
 - [Scope helpers](skills/dey-dev-utils-scope-methods-and-function/SKILL.md)
 - [Trampolines](skills/dey-dev-utils-trampoline/SKILL.md)
