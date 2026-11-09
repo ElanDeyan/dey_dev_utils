@@ -33,7 +33,38 @@ Prefer the smallest operation that expresses the intended control flow:
 | Combine with an already-computed result | `and` / `&`, `or` / `|` |
 | Compute a result only when the current state requires it | `andLazy`, `orLazy` |
 | Remove one nested `Result` layer | `flatten` |
-| Convert to an option when the failure reason is no longer needed | `toOption` |
+| Convert to an option when absence is sufficient and failure details can be discarded | `toOption` |
+
+## Interoperate with `Option`
+
+`Result` and `Option` represent different information. Keep a `Result<T, E>`
+when callers need the typed failure or its stack trace. Use `Option<T>` when
+only presence or absence matters. For the `Option` API and guidance on choosing
+between the two types, see
+[`dey-dev-utils-option-type`](../dey-dev-utils-option-type/SKILL.md).
+
+The conversion extensions are declared in `lib/option_result.dart`; import
+that library in addition to `option.dart` and/or `result.dart` for the types
+used at the call site. It does not re-export those types.
+
+- `Option<T>.okOr(error)` maps `Some(value)` to `Ok(value)` and `None` to
+  `Err(error)`. Use `okOrElse` to create the error only when the option is
+  absent. The optional `stackTrace` is used only for the generated `Err` and
+  defaults to `StackTrace.current`.
+- `Option<Result<T, E>>.transpose()` maps `None` to `Ok(None)`, moves an
+  `Ok(value)` inside `Some(value)`, and forwards an `Err` as `Err`, preserving
+  its original stack trace.
+- `Result<T?, E>.toOption()` maps non-null successes to `Some`, and maps
+  `Err` and `Ok(null)` to `None`. It discards the error and stack trace, and
+  collapses successful null into absence. Do not use it when those states
+  must remain distinguishable; inspect or pattern-match on `Result` instead.
+- `Result<Option<T>, E>.transpose()` maps `Err` to `Some(Err)`, `Ok(None)` to
+  `None`, and `Ok(Some(value))` to `Some(Ok(value))`. It preserves the
+  original stack trace when forwarding an `Err`.
+
+Use `transpose` to change nesting without discarding information. Do not
+replace a `Result` with an `Option` merely to simplify handling if doing so
+loses a failure reason required by callers.
 
 Choose a specific error type when designing an operation. Prefer a domain
 error or concrete exception type over `Object` unless arbitrary failures are
@@ -129,6 +160,8 @@ unrelated programming errors into ordinary failures.
 ## Verification
 
 Read `lib/result.dart` and `test/result_test.dart` before changing behavior.
+For changes to `Option` conversions or transposition, also read
+`lib/option_result.dart`, `lib/option.dart`, and `test/option_test.dart`.
 Treat the implementation in the current checkout as the source of truth for
 current semantics; use tests as executable evidence. If the implementation,
 tests, and documentation disagree, identify the inconsistency rather than
@@ -138,12 +171,20 @@ For a targeted change, test the affected operation, both relevant variants,
 and its boundary conditions. For a new or substantially changed API, cover
 the complete behavioral contract.
 
+For changes to the `Option` interop extensions, run both focused test files:
+
+```sh
+dart test test/result_test.dart test/option_test.dart
+```
+
 Prioritize these cases where relevant:
 
 - Lazy callback invocation and skipped branches.
 - Successful and failed guards, including unrelated exceptions and `Error`
   values.
 - Nullable successes and explicit variant checks.
+- Option conversions that discard error details or collapse `Ok(null)` into
+  absence, and both `transpose` directions.
 - Stack-trace propagation through error forwarding and mapping.
 - Callback exceptions and their propagation.
 - Recovery behavior and the error type returned after recovery.

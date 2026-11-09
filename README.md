@@ -5,7 +5,7 @@
 
 Small, focused utilities for Dart development, with explicit APIs for error handling, functional-style value operations, contracts, and common control-flow patterns.
 
-The package contains a supported core and one experimental public library, `Option`. Each utility is imported directly, so applications can depend on the functionality they need without an umbrella library.
+The package provides focused, supported public libraries. Each utility is imported directly, so applications can depend on the functionality they need without an umbrella library.
 
 AI-assisted exploration is part of the project's development process. The repository includes AI guidance for implementation, testing, documentation, and code review, but the package itself has no AI runtime dependency.
 
@@ -217,9 +217,7 @@ The `Invariant` mixin provides reusable `pre` and `post` checks, explicit `verif
 
 An invariant check does not automatically repair invalid state or roll back mutations. Define invariants in terms of meaningful domain constraints, and test the behavior at the intended operation boundaries.
 
-## Experimental API
-
-The package currently has one experimental public library: `option.dart`.
+## Option
 
 `Option<T>` represents an optional value with `Some<T>` and `None<T>`. It is useful when the presence or absence of a value matters, but the reason for absence does not need to be carried.
 
@@ -230,9 +228,17 @@ const present = Option<int>.some(42);
 const absent = Option<int>.none();
 ```
 
-The `Option` API is annotated `@experimental` and may change or be removed in a future release without the same compatibility guarantees as the supported core.
+`Option` is a supported public API. Import `option_result.dart` when converting or transposing between `Option` and `Result`:
 
-**Note:** `Result.toOption()` converts `Ok` to `Some` and `Err` to `None`, discarding error information. The `Result` library is part of the supported core, but `Option` itself remains experimental; use that conversion with this distinction in mind.
+```dart
+import 'package:dey_dev_utils/option.dart';
+import 'package:dey_dev_utils/option_result.dart';
+import 'package:dey_dev_utils/result.dart';
+
+final option = const Ok<String?, String>(null).toOption();
+```
+
+`Result.toOption()` maps a non-null `Ok` value to `Some` and maps `Err` or `Ok(null)` to `None`. It discards error information and treats a successful `null` as absence because `Option` cannot contain `null`.
 
 Other utilities under `lib/src/` are internal implementation or work in progress. They do not have public library entrypoints and are not advertised as supported package APIs. Import the documented public libraries rather than depending directly on `src` paths.
 
@@ -241,6 +247,7 @@ Other utilities under `lib/src/` are internal implementation or work in progress
 The repository includes reusable `SKILL.md` guides for AI coding assistants. They document the supported libraries' API semantics, important behavioral details, examples, testing guidance, and review checklists for:
 
 - [Result](skills/dey-dev-utils-result-type/SKILL.md)
+- [Option](skills/dey-dev-utils-option-type/SKILL.md)
 - [Contract checks](skills/dey-dev-utils-contract/SKILL.md)
 - [Scope helpers](skills/dey-dev-utils-scope-methods-and-function/SKILL.md)
 - [Trampolines](skills/dey-dev-utils-trampoline/SKILL.md)
@@ -264,6 +271,36 @@ dart format .
 dart analyze
 dart test
 ```
+
+### Property-based tests
+
+Property-based tests use [`kiri_check`](https://pub.dev/packages/kiri_check), a
+development dependency that generates many inputs for a stated behavior. Add
+them with `property` and `forAll`; a fixed seed makes a failing case
+reproducible:
+
+```dart
+import 'package:dey_dev_utils/option.dart';
+import 'package:kiri_check/kiri_check.dart';
+import 'package:test/test.dart' show equals, expect;
+
+void main() {
+  property('Some options iterate as their contained value', () {
+    forAll(
+      integer(min: -100000, max: 100000),
+      (value) {
+        expect(Option<int>.some(value).iterable.toList(), equals([value]));
+      },
+      maxExamples: 100,
+      seed: 42,
+    );
+  });
+}
+```
+
+Keep generated properties focused on general laws and use ordinary unit tests
+for specific edge cases. Run the property tests with `dart test`, or run one
+file with `dart test test/option_property_test.dart`.
 
 GitHub Actions also checks formatting, analysis, and tests on pushes and pull requests. Additional reports from tools such as `dedupe`, `cognitive_complexity`, and `undead` are published as workflow artifacts and summaries for review. These reports are advisory while the APIs continue to evolve.
 
