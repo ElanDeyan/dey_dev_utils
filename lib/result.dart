@@ -9,8 +9,6 @@ library;
 
 import 'package:meta/meta.dart';
 
-export 'src/option_result.dart';
-
 /// A result type that captures either a successful value or any error.
 ///
 /// This is useful for functions that may fail with any type of error.

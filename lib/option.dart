@@ -10,8 +10,6 @@ library;
 
 import 'package:meta/meta.dart';
 
-export 'src/option_result.dart';
-
 /// An optional value that is either present or absent.
 ///
 /// Use [Option.some] for a present value and [Option.none] for absence. The
@@ -65,7 +63,7 @@ sealed class const Option<T extends Object>() {
   Option<U> and<U extends Object>(Option<U> other) {
     switch (this) {
       case None<T>():
-        return const .none();
+        return Option<U>.none();
       case Some<T>():
         return other;
     }
@@ -78,7 +76,7 @@ sealed class const Option<T extends Object>() {
   Option<U> andThen<U extends Object>(Option<U> Function(T value) callback) {
     switch (this) {
       case None<T>():
-        return const .none();
+        return Option<U>.none();
       case Some<T>(:final value):
         return callback(value);
     }
@@ -135,7 +133,7 @@ sealed class const Option<T extends Object>() {
       case Some<T>(:final value):
         return .some(mapper(value));
       case None<T>():
-        return const .none();
+        return Option<U>.none();
     }
   }
 
@@ -229,13 +227,13 @@ sealed class const Option<T extends Object>() {
   Option<T> where(bool Function(T value) predicate) {
     switch (this) {
       case None<T>():
-        return const .none();
+        return Option<T>.none();
       case Some<T>(:final value):
         if (predicate(value)) {
           return this;
         }
 
-        return const .none();
+        return Option<T>.none();
     }
   }
 
@@ -259,13 +257,13 @@ sealed class const Option<T extends Object>() {
   Option<(T, U)> zip<U extends Object>(Option<U> other) {
     switch (this) {
       case None<T>():
-        return const .none();
+        return Option<(T, U)>.fromNullable(null);
       case Some<T>(:final value):
         if (other case Some<U>(value: final otherValue)) {
           return .some((value, otherValue));
         }
 
-        return const .none();
+        return Option<(T, U)>.fromNullable(null);
     }
   }
 
@@ -277,13 +275,13 @@ sealed class const Option<T extends Object>() {
   ) {
     switch (this) {
       case None<T>():
-        return const .none();
+        return Option<R>.none();
       case Some<T>(:final value):
         if (other case Some<U>(value: final otherValue)) {
           return .some(callback(value, otherValue));
         }
 
-        return const .none();
+        return Option<R>.none();
     }
   }
 

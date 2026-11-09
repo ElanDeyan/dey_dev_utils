@@ -44,14 +44,16 @@ extension OptionTransposeExtension<T extends Object, E extends Object>
 
 /// Provides conversions from [Result] to [Option].
 extension ResultOptionExtension<T extends Object, E extends Object>
-    on Result<T, E> {
-  /// Returns a present option for a success, or an absent option for an error.
+    on Result<T?, E> {
+  /// Returns a present option for a non-null success, or an absent option for
+  /// an error or a successful `null` value.
   ///
-  /// This discards error information. Use [isOk] or pattern matching when the
+  /// This discards error information and treats `Ok(null)` as absent because
+  /// [Option] cannot contain `null`. Use [isOk] or pattern matching when the
   /// success or error variant matters.
   Option<T> toOption() => switch (this) {
-    Err<T, E>() => Option<T>.none(),
-    Ok<T, E>(:final value) => .some(value),
+    Err<T?, E>() => Option<T>.none(),
+    Ok<T?, E>(:final value) => Option<T>.fromNullable(value),
   };
 }
 

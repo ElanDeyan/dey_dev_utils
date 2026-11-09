@@ -1,5 +1,6 @@
 import 'package:checks/checks.dart';
 import 'package:dey_dev_utils/option.dart' show Option, Some;
+import 'package:dey_dev_utils/option_result.dart';
 import 'package:dey_dev_utils/result.dart';
 import 'package:test/scaffolding.dart';
 
@@ -359,7 +360,13 @@ void main() {
           .equals(const Option<int>.none());
     });
 
-    test('transpose converts a result of an option', () {
+    test('toOption treats a nullable success containing null as absent', () {
+      const success = Ok<String?, String>(null);
+
+      check(success.toOption()).equals(const Option<String>.none());
+    });
+
+    test('transpose handles absence, success, and failure', () {
       final trace = StackTrace.current;
 
       check(const Ok<Option<int>, String>(Option<int>.none()).transpose())

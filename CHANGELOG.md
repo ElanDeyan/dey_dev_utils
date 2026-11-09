@@ -1,3 +1,11 @@
+## Unreleased
+
+- Promotes `Option` to a supported public API and documents nullable
+  `Result.toOption()` behavior (`Ok(null)` becomes `None`).
+- Exposes Option/Result conversions through the dedicated
+  `option_result.dart` library so each core library remains independent.
+- Expands Option law properties and transpose stack-trace regression coverage.
+
 ## 1.0.1
 
 - Expands API documentation and adds usage examples for the Comparison,

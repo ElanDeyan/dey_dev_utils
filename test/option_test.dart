@@ -1,5 +1,6 @@
 import 'package:checks/checks.dart';
 import 'package:dey_dev_utils/option.dart';
+import 'package:dey_dev_utils/option_result.dart';
 import 'package:dey_dev_utils/result.dart' show Err, Ok, Result;
 import 'package:test/scaffolding.dart';
 
@@ -145,6 +146,42 @@ void main() {
   });
 
   group('Option transformations', () {
+    test('absent generic transformations retain their result types', () {
+      const absent = Option<int>.none();
+      const stringFallback = Option<String>.some('fallback');
+      const pairFallback = Option<(int, String)>.some((42, 'fallback'));
+
+      check(absent.and(stringFallback).or(stringFallback))
+          .equals(stringFallback);
+      check(absent.andThen((_) => stringFallback).or(stringFallback))
+          .equals(stringFallback);
+      check(absent.map((value) => '$value').or(stringFallback))
+          .equals(stringFallback);
+      check(absent.zip(const Option<String>.some('value')).or(pairFallback))
+          .equals(pairFallback);
+      check(
+        const Option<int>.some(42)
+            .zip(const Option<String>.none())
+            .or(pairFallback),
+      ).equals(pairFallback);
+      check(
+        absent
+            .zipWith(
+              const Option<String>.some('value'),
+              (value, label) => '$value $label',
+            )
+            .or(stringFallback),
+      ).equals(stringFallback);
+      check(
+        const Option<int>.some(42)
+            .zipWith(
+              const Option<String>.none(),
+              (value, label) => '$value $label',
+            )
+            .or(stringFallback),
+      ).equals(stringFallback);
+    });
+
     test('map transforms a present value and preserves absence', () {
       check(const Option<int>.some(42).map((value) => '$value'))
           .equals(const Option<String>.some('42'));
@@ -332,10 +369,18 @@ void main() {
 
       check(const Option<int>.some(42).okOr('missing'))
           .equals(const Ok<int, String>(42));
-      check(const Option<int>.none().okOr('missing', stackTrace: trace))
-          .equals(const Err<int, String>('missing', trace));
-      check(const Option<int>.none().okOr('missing', stackTrace: trace).isErr)
-          .isTrue();
+      final result = const Option<int>.none().okOr(
+        'missing',
+        stackTrace: trace,
+      );
+      check(result)
+          .isA<Err<int, String>>()
+          .has((value) => value.error, 'error')
+          .equals('missing');
+      check(result)
+          .isA<Err<int, String>>()
+          .has((result) => result.stackTrace, 'stack trace')
+          .equals(trace);
     });
 
     test('okOrElse computes an error only for an absent option', () {
@@ -348,12 +393,22 @@ void main() {
       check(const Option<int>.some(42).okOrElse(missing))
           .equals(const Ok<int, String>(42));
       check(calls).equals(0);
-      check(const Option<int>.none().okOrElse(missing, stackTrace: .empty))
-          .equals(const Err<int, String>('missing', .empty));
+      final result = const Option<int>.none().okOrElse(
+        missing,
+        stackTrace: .empty,
+      );
+      check(result)
+          .isA<Err<int, String>>()
+          .has((value) => value.error, 'error')
+          .equals('missing');
+      check(result)
+          .isA<Err<int, String>>()
+          .has((result) => result.stackTrace, 'stack trace')
+          .equals(StackTrace.empty);
       check(calls).equals(1);
     });
 
-    test('transpose converts an option of a result', () {
+    test('transpose handles absence, success, and failure', () {
       final trace = StackTrace.current;
 
       check(const Option<Result<int, String>>.none().transpose())
