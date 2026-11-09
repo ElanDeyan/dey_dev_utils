@@ -360,7 +360,7 @@ td.barBg
 
      <tr>
      <td class="ItemLabel" width="10%">Date:</td>
-     <td class="ItemText" width="35%">2026-11-08 21:34:30.660229</td>
+     <td class="ItemText" width="35%">2026-11-08 21:56:17.986866</td>
      <td class="ItemLabel" width="10%">Mutations:</td>
      <td class="ItemReport" width="15%">0</td>
      <td class="ItemReport" width="15%">0</td>
@@ -433,35 +433,37 @@ td.barBg
 <a name="44"><span class="lineNumber">      44 </span></a>
 <a name="45"><span class="lineNumber">      45 </span>/// Provides conversions from [Result] to [Option].</a>
 <a name="46"><span class="lineNumber">      46 </span>extension ResultOptionExtension&lt;T extends Object, E extends Object&gt;</a>
-<a name="47"><span class="lineNumber">      47 </span>    on Result&lt;T, E&gt; {</a>
-<a name="48"><span class="lineNumber">      48 </span>  /// Returns a present option for a success, or an absent option for an error.</a>
-<a name="49"><span class="lineNumber">      49 </span>  ///</a>
-<a name="50"><span class="lineNumber">      50 </span>  /// This discards error information. Use [isOk] or pattern matching when the</a>
-<a name="51"><span class="lineNumber">      51 </span>  /// success or error variant matters.</a>
-<a name="52"><span class="lineNumber">      52 </span>  Option&lt;T&gt; toOption() =&gt; switch (this) {</a>
-<a name="53"><span class="lineNumber">      53 </span>    Err&lt;T, E&gt;() =&gt; Option&lt;T&gt;.none(),</a>
-<a name="54"><span class="lineNumber">      54 </span>    Ok&lt;T, E&gt;(:final value) =&gt; .some(value),</a>
-<a name="55"><span class="lineNumber">      55 </span>  };</a>
-<a name="56"><span class="lineNumber">      56 </span>}</a>
-<a name="57"><span class="lineNumber">      57 </span></a>
-<a name="58"><span class="lineNumber">      58 </span>/// Provides transpose for a result containing an option.</a>
-<a name="59"><span class="lineNumber">      59 </span>extension ResultTransposeExtension&lt;T extends Object, E extends Object&gt;</a>
-<a name="60"><span class="lineNumber">      60 </span>    on Result&lt;Option&lt;T&gt;, E&gt; {</a>
-<a name="61"><span class="lineNumber">      61 </span>  /// Transposes this result of an option into an option of a result.</a>
-<a name="62"><span class="lineNumber">      62 </span>  ///</a>
-<a name="63"><span class="lineNumber">      63 </span>  /// An error becomes a present `Err` with its original stack trace. A</a>
-<a name="64"><span class="lineNumber">      64 </span>  /// successful absent option becomes absent.</a>
-<a name="65"><span class="lineNumber">      65 </span>  Option&lt;Result&lt;T, E&gt;&gt; transpose() =&gt; switch (this) {</a>
-<a name="66"><span class="lineNumber">      66 </span>    Err&lt;Option&lt;T&gt;, E&gt;(:final error, :final stackTrace) =&gt; .some(</a>
-<a name="67"><span class="lineNumber">      67 </span>      .err(error, stackTrace),</a>
-<a name="68"><span class="lineNumber">      68 </span>    ),</a>
-<a name="69"><span class="lineNumber">      69 </span>    Ok&lt;Option&lt;T&gt;, E&gt;(:final value) =&gt; switch (value) {</a>
-<a name="70"><span class="lineNumber">      70 </span>      None&lt;T&gt;() =&gt; Option&lt;Result&lt;T, E&gt;&gt;.none(),</a>
-<a name="71"><span class="lineNumber">      71 </span>      Some&lt;T&gt;(:final value) =&gt; .some(.ok(value)),</a>
-<a name="72"><span class="lineNumber">      72 </span>    },</a>
-<a name="73"><span class="lineNumber">      73 </span>  };</a>
-<a name="74"><span class="lineNumber">      74 </span>}</a>
-<a name="75"><span class="lineNumber">      75 </span></a>
+<a name="47"><span class="lineNumber">      47 </span>    on Result&lt;T?, E&gt; {</a>
+<a name="48"><span class="lineNumber">      48 </span>  /// Returns a present option for a non-null success, or an absent option for</a>
+<a name="49"><span class="lineNumber">      49 </span>  /// an error or a successful `null` value.</a>
+<a name="50"><span class="lineNumber">      50 </span>  ///</a>
+<a name="51"><span class="lineNumber">      51 </span>  /// This discards error information and treats `Ok(null)` as absent because</a>
+<a name="52"><span class="lineNumber">      52 </span>  /// [Option] cannot contain `null`. Use [isOk] or pattern matching when the</a>
+<a name="53"><span class="lineNumber">      53 </span>  /// success or error variant matters.</a>
+<a name="54"><span class="lineNumber">      54 </span>  Option&lt;T&gt; toOption() =&gt; switch (this) {</a>
+<a name="55"><span class="lineNumber">      55 </span>    Err&lt;T?, E&gt;() =&gt; Option&lt;T&gt;.none(),</a>
+<a name="56"><span class="lineNumber">      56 </span>    Ok&lt;T?, E&gt;(:final value) =&gt; Option&lt;T&gt;.fromNullable(value),</a>
+<a name="57"><span class="lineNumber">      57 </span>  };</a>
+<a name="58"><span class="lineNumber">      58 </span>}</a>
+<a name="59"><span class="lineNumber">      59 </span></a>
+<a name="60"><span class="lineNumber">      60 </span>/// Provides transpose for a result containing an option.</a>
+<a name="61"><span class="lineNumber">      61 </span>extension ResultTransposeExtension&lt;T extends Object, E extends Object&gt;</a>
+<a name="62"><span class="lineNumber">      62 </span>    on Result&lt;Option&lt;T&gt;, E&gt; {</a>
+<a name="63"><span class="lineNumber">      63 </span>  /// Transposes this result of an option into an option of a result.</a>
+<a name="64"><span class="lineNumber">      64 </span>  ///</a>
+<a name="65"><span class="lineNumber">      65 </span>  /// An error becomes a present `Err` with its original stack trace. A</a>
+<a name="66"><span class="lineNumber">      66 </span>  /// successful absent option becomes absent.</a>
+<a name="67"><span class="lineNumber">      67 </span>  Option&lt;Result&lt;T, E&gt;&gt; transpose() =&gt; switch (this) {</a>
+<a name="68"><span class="lineNumber">      68 </span>    Err&lt;Option&lt;T&gt;, E&gt;(:final error, :final stackTrace) =&gt; .some(</a>
+<a name="69"><span class="lineNumber">      69 </span>      .err(error, stackTrace),</a>
+<a name="70"><span class="lineNumber">      70 </span>    ),</a>
+<a name="71"><span class="lineNumber">      71 </span>    Ok&lt;Option&lt;T&gt;, E&gt;(:final value) =&gt; switch (value) {</a>
+<a name="72"><span class="lineNumber">      72 </span>      None&lt;T&gt;() =&gt; Option&lt;Result&lt;T, E&gt;&gt;.none(),</a>
+<a name="73"><span class="lineNumber">      73 </span>      Some&lt;T&gt;(:final value) =&gt; .some(.ok(value)),</a>
+<a name="74"><span class="lineNumber">      74 </span>    },</a>
+<a name="75"><span class="lineNumber">      75 </span>  };</a>
+<a name="76"><span class="lineNumber">      76 </span>}</a>
+<a name="77"><span class="lineNumber">      77 </span></a>
 </pre>
 <script>
 var coll = document.getElementsByClassName("collapsible");
