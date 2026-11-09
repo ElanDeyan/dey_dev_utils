@@ -49,6 +49,20 @@ void main() {
       check(firstNone).equals(secondNone);
       check(firstNone.hashCode).equals(secondNone.hashCode);
     });
+
+    test('equality ignores generic type parameters', () {
+      const integerSome = Option<int>.some(0);
+      const numberSome = Option<num>.some(0);
+      const integerNone = Option<int>.none();
+      const numberNone = Option<num>.none();
+
+      check(integerSome == numberSome).isTrue();
+      check(numberSome == integerSome).isTrue();
+      check(integerSome.hashCode).equals(numberSome.hashCode);
+      check(integerNone == numberNone).isTrue();
+      check(numberNone == integerNone).isTrue();
+      check(integerNone.hashCode).equals(numberNone.hashCode);
+    });
   });
 
   group('Option value access', () {

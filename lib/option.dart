@@ -45,7 +45,8 @@ sealed class const Option<T extends Object>() {
   /// Whether this option contains a value.
   bool get isSome => this is Some<T>;
 
-  /// An [Iterable] that yields this option once.
+  /// An [Iterable] that yields the contained value,
+  /// or nothing when this option is absent.
   Iterable<T> get iterable sync* {
     switch (this) {
       case None<T>():
@@ -300,14 +301,14 @@ final class const None<T extends Object>() extends Option<T> {
 
   /// The hash code of this absent option.
   @override
-  int get hashCode => runtimeType.hashCode;
+  int get hashCode => 0;
 
-  /// Whether [other] is an absent option of the same type.
+  /// Whether [other] is an absent option.
   @override
   bool operator ==(Object other) {
     if (identical(this, other)) return true;
 
-    return other is Option<T> && other is None<T>;
+    return other is None;
   }
 }
 
@@ -324,14 +325,14 @@ final class const Some<T extends Object>(
   this;
 
   @override
-  int get hashCode => Object.hash(runtimeType, value);
+  int get hashCode => value.hashCode;
 
   /// Whether [other] contains a value equal to this option's value.
   @override
   bool operator ==(Object other) {
     if (identical(this, other)) return true;
 
-    return other is Option<T> && other is Some<T> && other.value == value;
+    return other is Some && other.value == value;
   }
 }
 
