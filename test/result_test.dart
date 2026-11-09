@@ -1,4 +1,5 @@
 import 'package:checks/checks.dart';
+import 'package:dey_dev_utils/option.dart' show Option, Some;
 import 'package:dey_dev_utils/result.dart';
 import 'package:test/scaffolding.dart';
 
@@ -351,6 +352,35 @@ void main() {
   });
 
   group('Result conversion and copying', () {
+    test('toOption preserves non-null successes and drops errors', () {
+      check(const Ok<int, String>(30).toOption())
+          .equals(const Option<int>.some(30));
+      check(const Err<int, String>('failed', .empty).toOption())
+          .equals(const Option<int>.none());
+    });
+
+    test('transpose converts a result of an option', () {
+      final trace = StackTrace.current;
+
+      check(const Ok<Option<int>, String>(Option<int>.none()).transpose())
+          .equals(const Option<Result<int, String>>.none());
+      check(const Ok<Option<int>, String>(Option<int>.some(42)).transpose())
+          .equals(const Option<Result<int, String>>.some(Ok<int, String>(42)));
+      final failure = Err<Option<int>, String>('failed', trace).transpose();
+      check(failure)
+          .isA<Some<Result<int, String>>>()
+          .has((option) => option.value, 'value')
+          .isA<Err<int, String>>()
+          .has((result) => result.error, 'error')
+          .equals('failed');
+      check(failure)
+          .isA<Some<Result<int, String>>>()
+          .has((option) => option.value, 'value')
+          .isA<Err<int, String>>()
+          .has((result) => result.stackTrace, 'stack trace')
+          .equals(trace);
+    });
+
     test('clone creates an equivalent wrapper and preserves trace', () {
       const success = Ok<int, String>(30);
       final trace = StackTrace.current;

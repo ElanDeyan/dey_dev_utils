@@ -1,5 +1,6 @@
 import 'package:checks/checks.dart';
 import 'package:dey_dev_utils/option.dart';
+import 'package:dey_dev_utils/result.dart' show Err, Ok, Result;
 import 'package:test/scaffolding.dart';
 
 void main() {
@@ -308,6 +309,53 @@ void main() {
       check(const Option<Option<int>>.some(Option<int>.none()).flatten())
           .equals(const Option<int>.none());
       check(const Option<Option<int>>.none().flatten().isNone).isTrue();
+    });
+  });
+
+  group('Option and Result conversions', () {
+    test('okOr returns Ok for present values and Err for absence', () {
+      const trace = StackTrace.empty;
+
+      check(const Option<int>.some(42).okOr('missing'))
+          .equals(const Ok<int, String>(42));
+      check(const Option<int>.none().okOr('missing', stackTrace: trace))
+          .equals(const Err<int, String>('missing', trace));
+      check(const Option<int>.none().okOr('missing', stackTrace: trace).isErr)
+          .isTrue();
+    });
+
+    test('okOrElse computes an error only for an absent option', () {
+      var calls = 0;
+      String missing() {
+        calls++;
+        return 'missing';
+      }
+
+      check(const Option<int>.some(42).okOrElse(missing))
+          .equals(const Ok<int, String>(42));
+      check(calls).equals(0);
+      check(const Option<int>.none().okOrElse(missing, stackTrace: .empty))
+          .equals(const Err<int, String>('missing', .empty));
+      check(calls).equals(1);
+    });
+
+    test('transpose converts an option of a result', () {
+      final trace = StackTrace.current;
+
+      check(const Option<Result<int, String>>.none().transpose())
+          .equals(const Ok<Option<int>, String>(Option<int>.none()));
+      check(const Option<Result<int, String>>.some(Ok(42)).transpose())
+          .equals(const Ok<Option<int>, String>(Option<int>.some(42)));
+      final failure = Option<Result<int, String>>.some(Err('failed', trace))
+          .transpose();
+      check(failure)
+          .isA<Err<Option<int>, String>>()
+          .has((result) => result.error, 'error')
+          .equals('failed');
+      check(failure)
+          .isA<Err<Option<int>, String>>()
+          .has((result) => result.stackTrace, 'stack trace')
+          .equals(trace);
     });
   });
 

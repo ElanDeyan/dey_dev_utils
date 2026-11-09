@@ -10,6 +10,8 @@ library;
 
 import 'package:meta/meta.dart';
 
+export 'src/option_result.dart';
+
 /// An optional value that is either present or absent.
 ///
 /// Use [Option.some] for a present value and [Option.none] for absence. The
@@ -140,7 +142,7 @@ sealed class const Option<T extends Object>() {
   ///
   /// The result always contains a value: [mapper] is applied to a present
   /// value, and [defaultValue] is used when this option is absent.
-  U mapOr<U extends Object>(
+  U mapOr<U extends Object?>(
     U Function(T value) mapper, {
     required U defaultValue,
   }) {
@@ -156,7 +158,7 @@ sealed class const Option<T extends Object>() {
   ///
   /// The result always contains a value. [defaultValue] is called only when
   /// this option is absent.
-  U mapOrElse<U extends Object>(
+  U mapOrElse<U extends Object?>(
     U Function(T value) mapper, {
     required U Function() defaultValue,
   }) {

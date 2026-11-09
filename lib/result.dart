@@ -9,6 +9,8 @@ library;
 
 import 'package:meta/meta.dart';
 
+export 'src/option_result.dart';
+
 /// A result type that captures either a successful value or any error.
 ///
 /// This is useful for functions that may fail with any type of error.
@@ -209,7 +211,8 @@ sealed class const Result<T extends Object?, E extends Object>() {
   ///
   /// **Warning:** If [T] is nullable, this method cannot distinguish between
   /// `Ok(null)` and `Err(...)` — both return null. For nullable [T], use
-  /// [toOption] for safe extraction, or [isOk] to check the state first.
+  /// [isOk] or pattern matching for nullable [T]; `Option` can represent only
+  /// non-null values.
   ///
   /// For most cases, prefer [unwrapOr], [unwrapOrNull], or [isOkAnd] instead
   /// of this getter for clearer intent.
@@ -528,7 +531,8 @@ sealed class const Result<T extends Object?, E extends Object>() {
   ///
   /// **Warning:** If [T] is nullable, this method cannot distinguish between
   /// `Ok(null)` and `Err(...)`—both return null. For nullable [T] types,
-  /// use [toOption] for safe extraction, or [isOk] to check the state first.
+  /// use [isOk] or pattern matching for nullable [T]; `Option` can represent
+  /// only non-null values.
   ///
   /// Example:
   /// ```dart
