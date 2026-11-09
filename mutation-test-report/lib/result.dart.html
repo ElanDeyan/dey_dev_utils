@@ -360,7 +360,7 @@ td.barBg
 
      <tr>
      <td class="ItemLabel" width="10%">Date:</td>
-     <td class="ItemText" width="35%">2026-11-08 21:56:17.960245</td>
+     <td class="ItemText" width="35%">2026-11-08 22:28:16.925353</td>
      <td class="ItemLabel" width="10%">Mutations:</td>
      <td class="ItemReport" width="15%">13</td>
      <td class="ItemReport" width="15%">13</td>
@@ -644,577 +644,574 @@ td.barBg
 <a name="229"><span class="lineNumber">     229 </span>  /// ```dart</a>
 <a name="230"><span class="lineNumber">     230 </span>  /// final result = checkAuth(user) &amp; validateData(data) &amp; saveData(data);</a>
 <a name="231"><span class="lineNumber">     231 </span>  /// ```</a>
-<a name="232"><span class="lineNumber">     232 </span>  Result&lt;T, E&gt; operator &amp;(Result&lt;T, E&gt; other) =&gt; and(other);</a>
-<a name="233"><span class="lineNumber">     233 </span></a>
-<a name="234"><span class="lineNumber">     234 </span>  /// Chains operations: returns this result if it's an error, otherwise [other].</a>
-<a name="235"><span class="lineNumber">     235 </span>  ///</a>
-<a name="236"><span class="lineNumber">     236 </span>  /// This is useful for performing sequential operations where the second</a>
-<a name="237"><span class="lineNumber">     237 </span>  /// depends on the first succeeding. If this result is [Err], it's returned</a>
-<a name="238"><span class="lineNumber">     238 </span>  /// unchanged (short-circuit). If this is [Ok], the [other] result is returned.</a>
-<a name="239"><span class="lineNumber">     239 </span>  /// Both value types and error types must match—for transformations, use</a>
-<a name="240"><span class="lineNumber">     240 </span>  /// [andThen] instead.</a>
-<a name="241"><span class="lineNumber">     241 </span>  ///</a>
-<a name="242"><span class="lineNumber">     242 </span>  /// Example:</a>
-<a name="243"><span class="lineNumber">     243 </span>  /// ```dart</a>
-<a name="244"><span class="lineNumber">     244 </span>  /// Result&lt;int, String&gt; a = Ok(5);</a>
-<a name="245"><span class="lineNumber">     245 </span>  /// Result&lt;int, String&gt; b = Ok(10);</a>
-<a name="246"><span class="lineNumber">     246 </span>  /// final result = a.and(b); // Returns b (Ok(10))</a>
-<a name="247"><span class="lineNumber">     247 </span>  ///</a>
-<a name="248"><span class="lineNumber">     248 </span>  /// Result&lt;int, String&gt; c = Err('failed', StackTrace.current);</a>
-<a name="249"><span class="lineNumber">     249 </span>  /// final result2 = c.and(b); // Returns c (Err('failed')), b is skipped</a>
-<a name="250"><span class="lineNumber">     250 </span>  /// ```</a>
-<a name="251"><span class="lineNumber">     251 </span>  Result&lt;T, E&gt; and(Result&lt;T, E&gt; other) {</a>
-<a name="252"><button class="collapsible hit"><pre class="fileContents"><span class="lineNumber">     252 </span>    if (this is Err&lt;T, E&gt;) return this;</pre></button>
+<a name="232"><span class="lineNumber">     232 </span>  @Deprecated(</a>
+<a name="233"><span class="lineNumber">     233 </span>    'due to dart not support generics on operators, prefer the and method',</a>
+<a name="234"><span class="lineNumber">     234 </span>  )</a>
+<a name="235"><span class="lineNumber">     235 </span>  Result&lt;T, E&gt; operator &amp;(Result&lt;T, E&gt; other) =&gt; and(other);</a>
+<a name="236"><span class="lineNumber">     236 </span></a>
+<a name="237"><span class="lineNumber">     237 </span>  /// Chains results: returns this error, or [other] if this is successful.</a>
+<a name="238"><span class="lineNumber">     238 </span>  ///</a>
+<a name="239"><span class="lineNumber">     239 </span>  /// The success type of [other] can differ from this result's success type;</a>
+<a name="240"><span class="lineNumber">     240 </span>  /// both results must use the same error type. If this result is [Err], its</a>
+<a name="241"><span class="lineNumber">     241 </span>  /// error and stack trace are preserved. The [other] argument is evaluated</a>
+<a name="242"><span class="lineNumber">     242 </span>  /// before this method is called; use [andLazy] or [andThen] when the next</a>
+<a name="243"><span class="lineNumber">     243 </span>  /// operation should run only after success.</a>
+<a name="244"><span class="lineNumber">     244 </span>  ///</a>
+<a name="245"><span class="lineNumber">     245 </span>  /// Example:</a>
+<a name="246"><span class="lineNumber">     246 </span>  /// ```dart</a>
+<a name="247"><span class="lineNumber">     247 </span>  /// Result&lt;int, String&gt; a = Ok(5);</a>
+<a name="248"><span class="lineNumber">     248 </span>  /// Result&lt;String, String&gt; b = Ok('done');</a>
+<a name="249"><span class="lineNumber">     249 </span>  /// final result = a.and(b); // Returns b (Ok('done'))</a>
+<a name="250"><span class="lineNumber">     250 </span>  ///</a>
+<a name="251"><span class="lineNumber">     251 </span>  /// Result&lt;int, String&gt; c = Err('failed', StackTrace.current);</a>
+<a name="252"><span class="lineNumber">     252 </span>  /// final result2 = c.and(b); // Returns c's error</a>
+<a name="253"><span class="lineNumber">     253 </span>  /// ```</a>
+<a name="254"><span class="lineNumber">     254 </span>  Result&lt;U, E&gt; and&lt;U extends Object?&gt;(Result&lt;U, E&gt; other) {</a>
+<a name="255"><button class="collapsible hit"><pre class="fileContents"><span class="lineNumber">     255 </span>    if (this case final Err&lt;U, E&gt; failure) return failure;</pre></button>
 <div class="content">
 <b>Detected mutations:</b>
 <table class="mutationTable" width="100%">
-<tr><td class="mutationLabel" width="5%">1 :</td><td class="mutationText" width="87%"><span class="addedLine">+    <span class="changedTokens"> if (!(this is Err&lt;T, E&gt;) return this;
+<tr><td class="mutationLabel" width="5%">1 :</td><td class="mutationText" width="87%"><span class="addedLine">+    <span class="changedTokens"> if (!(this case final Err&lt;U, E&gt; failure) return failure;
 
-    return other;
-  }
+    return switch (this)) {</span></span></td><td class="match">RegExp: pattern=[\s]if[\s]*\((.*?)\)[\s]*{ flags=ms<span class="tooltip">Id: builtin.if</span></td></tr></table>
 
-  /// Evaluates [otherBlock] only when this result is successful.
-  ///
-  /// Use this method for lazy sequential composition. Unlike [and] and
-  /// [operator &amp;], the callback is not invoked when this result is an error.
-  Result&lt;T, E&gt; andLazy(Result&lt;T, E&gt; Function() otherBlock)) {</span></span></td><td class="match">RegExp: pattern=[\s]if[\s]*\((.*?)\)[\s]*{ flags=ms<span class="tooltip">Id: builtin.if</span></td></tr></table>
-
-</div></a><a name="253"><span class="lineNumber">     253 </span></a>
-<a name="254"><span class="lineNumber">     254 </span>    return other;</a>
-<a name="255"><span class="lineNumber">     255 </span>  }</a>
-<a name="256"><span class="lineNumber">     256 </span></a>
-<a name="257"><span class="lineNumber">     257 </span>  /// Evaluates [otherBlock] only when this result is successful.</a>
-<a name="258"><span class="lineNumber">     258 </span>  ///</a>
-<a name="259"><span class="lineNumber">     259 </span>  /// Use this method for lazy sequential composition. Unlike [and] and</a>
-<a name="260"><span class="lineNumber">     260 </span>  /// [operator &amp;], the callback is not invoked when this result is an error.</a>
-<a name="261"><span class="lineNumber">     261 </span>  Result&lt;T, E&gt; andLazy(Result&lt;T, E&gt; Function() otherBlock) {</a>
-<a name="262"><button class="collapsible hit"><pre class="fileContents"><span class="lineNumber">     262 </span>    if (this is Err&lt;T, E&gt;) return this;</pre></button>
+</div></a><a name="256"><span class="lineNumber">     256 </span></a>
+<a name="257"><span class="lineNumber">     257 </span>    return switch (this) {</a>
+<a name="258"><span class="lineNumber">     258 </span>      Err(:final error, :final stackTrace) =&gt; .err(error, stackTrace),</a>
+<a name="259"><span class="lineNumber">     259 </span>      Ok() =&gt; other,</a>
+<a name="260"><span class="lineNumber">     260 </span>    };</a>
+<a name="261"><span class="lineNumber">     261 </span>  }</a>
+<a name="262"><span class="lineNumber">     262 </span></a>
+<a name="263"><span class="lineNumber">     263 </span>  /// Evaluates [otherBlock] only when this result is successful.</a>
+<a name="264"><span class="lineNumber">     264 </span>  ///</a>
+<a name="265"><span class="lineNumber">     265 </span>  /// Use this method for lazy sequential composition. Unlike [and], the</a>
+<a name="266"><span class="lineNumber">     266 </span>  /// callback is not invoked when this result is an error. The callback's</a>
+<a name="267"><span class="lineNumber">     267 </span>  /// success type can differ from this result's success type, but its error</a>
+<a name="268"><span class="lineNumber">     268 </span>  /// type must match.</a>
+<a name="269"><span class="lineNumber">     269 </span>  Result&lt;U, E&gt; andLazy&lt;U extends Object?&gt;(Result&lt;U, E&gt; Function() otherBlock) {</a>
+<a name="270"><button class="collapsible hit"><pre class="fileContents"><span class="lineNumber">     270 </span>    if (this case final Err&lt;U, E&gt; failure) return failure;</pre></button>
 <div class="content">
 <b>Detected mutations:</b>
 <table class="mutationTable" width="100%">
-<tr><td class="mutationLabel" width="5%">1 :</td><td class="mutationText" width="87%"><span class="addedLine">+    <span class="changedTokens"> if (!(this is Err&lt;T, E&gt;) return this;
+<tr><td class="mutationLabel" width="5%">1 :</td><td class="mutationText" width="87%"><span class="addedLine">+    <span class="changedTokens"> if (!(this case final Err&lt;U, E&gt; failure) return failure;
 
-    return otherBlock();
-  }
+    return switch (this)) {</span></span></td><td class="match">RegExp: pattern=[\s]if[\s]*\((.*?)\)[\s]*{ flags=ms<span class="tooltip">Id: builtin.if</span></td></tr></table>
 
-  /// Transforms the success value into a new result, or propagates the error.
-  ///
-  /// If this is [Ok], applies [otherBlock] to the value and returns its result.
-  /// If this is [Err], propagates the error unchanged (short-circuit behavior).
-  /// Stack traces are preserved through error propagation.
-  ///
-  /// This is the monadic bind operation (flatMap), useful for chaining
-  /// operations that might fail while maintaining error information throughout
-  /// the chain. Use [map] for simple value transformations that can't fail.
-  ///
-  /// Example:
-  /// ```dart
-  /// final result = getUserId()
-  ///   .andThen((id) =&gt; getUser(id))
-  ///   .andThen((user) =&gt; loadPreferences(user.id));
-  /// // If any step fails, subsequent steps are skipped
-  /// ```
-  Result&lt;U, E&gt; andThen&lt;U extends Object?&gt;(
-    Result&lt;U, E&gt; Function(T value) otherBlock,
-  ) =&gt; switch (this)) {</span></span></td><td class="match">RegExp: pattern=[\s]if[\s]*\((.*?)\)[\s]*{ flags=ms<span class="tooltip">Id: builtin.if</span></td></tr></table>
-
-</div></a><a name="263"><span class="lineNumber">     263 </span></a>
-<a name="264"><span class="lineNumber">     264 </span>    return otherBlock();</a>
-<a name="265"><span class="lineNumber">     265 </span>  }</a>
-<a name="266"><span class="lineNumber">     266 </span></a>
-<a name="267"><span class="lineNumber">     267 </span>  /// Transforms the success value into a new result, or propagates the error.</a>
-<a name="268"><span class="lineNumber">     268 </span>  ///</a>
-<a name="269"><span class="lineNumber">     269 </span>  /// If this is [Ok], applies [otherBlock] to the value and returns its result.</a>
-<a name="270"><span class="lineNumber">     270 </span>  /// If this is [Err], propagates the error unchanged (short-circuit behavior).</a>
-<a name="271"><span class="lineNumber">     271 </span>  /// Stack traces are preserved through error propagation.</a>
-<a name="272"><span class="lineNumber">     272 </span>  ///</a>
-<a name="273"><span class="lineNumber">     273 </span>  /// This is the monadic bind operation (flatMap), useful for chaining</a>
-<a name="274"><span class="lineNumber">     274 </span>  /// operations that might fail while maintaining error information throughout</a>
-<a name="275"><span class="lineNumber">     275 </span>  /// the chain. Use [map] for simple value transformations that can't fail.</a>
-<a name="276"><span class="lineNumber">     276 </span>  ///</a>
-<a name="277"><span class="lineNumber">     277 </span>  /// Example:</a>
-<a name="278"><span class="lineNumber">     278 </span>  /// ```dart</a>
-<a name="279"><span class="lineNumber">     279 </span>  /// final result = getUserId()</a>
-<a name="280"><span class="lineNumber">     280 </span>  ///   .andThen((id) =&gt; getUser(id))</a>
-<a name="281"><span class="lineNumber">     281 </span>  ///   .andThen((user) =&gt; loadPreferences(user.id));</a>
-<a name="282"><span class="lineNumber">     282 </span>  /// // If any step fails, subsequent steps are skipped</a>
-<a name="283"><span class="lineNumber">     283 </span>  /// ```</a>
-<a name="284"><span class="lineNumber">     284 </span>  Result&lt;U, E&gt; andThen&lt;U extends Object?&gt;(</a>
-<a name="285"><span class="lineNumber">     285 </span>    Result&lt;U, E&gt; Function(T value) otherBlock,</a>
-<a name="286"><span class="lineNumber">     286 </span>  ) =&gt; switch (this) {</a>
-<a name="287"><span class="lineNumber">     287 </span>    Ok(:final value) =&gt; otherBlock(value),</a>
-<a name="288"><span class="lineNumber">     288 </span>    Err(:final error, :final stackTrace) =&gt; .err(error, stackTrace),</a>
-<a name="289"><span class="lineNumber">     289 </span>  };</a>
-<a name="290"><span class="lineNumber">     290 </span></a>
-<a name="291"><span class="lineNumber">     291 </span>  /// Returns a new independent copy of this result.</a>
-<a name="292"><span class="lineNumber">     292 </span>  ///</a>
-<a name="293"><span class="lineNumber">     293 </span>  /// Useful when you need to pass the result to multiple places without</a>
-<a name="294"><span class="lineNumber">     294 </span>  /// sharing state. Clones preserve error stack traces. For creating new</a>
-<a name="295"><span class="lineNumber">     295 </span>  /// results, prefer [Ok] or [Err] constructors directly.</a>
-<a name="296"><span class="lineNumber">     296 </span>  Result&lt;T, E&gt; clone() =&gt; switch (this) {</a>
-<a name="297"><span class="lineNumber">     297 </span>    Err&lt;T, E&gt;(:final error, :final stackTrace) =&gt; .err(error, stackTrace),</a>
-<a name="298"><span class="lineNumber">     298 </span>    Ok&lt;T, E&gt;(:final value) =&gt; .ok(value),</a>
-<a name="299"><span class="lineNumber">     299 </span>  };</a>
-<a name="300"><span class="lineNumber">     300 </span></a>
-<a name="301"><span class="lineNumber">     301 </span>  /// Unwraps the success value, or throws an exception with [message].</a>
-<a name="302"><span class="lineNumber">     302 </span>  ///</a>
-<a name="303"><span class="lineNumber">     303 </span>  /// Use this when you're certain the result should be [Ok], but want to</a>
-<a name="304"><span class="lineNumber">     304 </span>  /// provide a custom error message if it's not. The original stack trace</a>
-<a name="305"><span class="lineNumber">     305 </span>  /// is preserved. For unwrapping with fallback values, use [unwrapOr] or</a>
-<a name="306"><span class="lineNumber">     306 </span>  /// [unwrapOrElse] instead.</a>
-<a name="307"><span class="lineNumber">     307 </span>  ///</a>
-<a name="308"><span class="lineNumber">     308 </span>  /// Example:</a>
-<a name="309"><span class="lineNumber">     309 </span>  /// ```dart</a>
-<a name="310"><span class="lineNumber">     310 </span>  /// final value = result.expect('Operation should have succeeded');</a>
-<a name="311"><span class="lineNumber">     311 </span>  /// final config = loadConfig().expect('Config file must be valid');</a>
-<a name="312"><span class="lineNumber">     312 </span>  /// ```</a>
-<a name="313"><span class="lineNumber">     313 </span>  T expect(String message) =&gt; switch (this) {</a>
-<a name="314"><span class="lineNumber">     314 </span>    Ok(:final value) =&gt; value,</a>
-<a name="315"><span class="lineNumber">     315 </span>    Err(:final stackTrace) =&gt; Error.throwWithStackTrace(</a>
-<a name="316"><span class="lineNumber">     316 </span>      Exception(message),</a>
-<a name="317"><span class="lineNumber">     317 </span>      stackTrace,</a>
-<a name="318"><span class="lineNumber">     318 </span>    ),</a>
-<a name="319"><span class="lineNumber">     319 </span>  };</a>
-<a name="320"><span class="lineNumber">     320 </span></a>
-<a name="321"><span class="lineNumber">     321 </span>  /// Unwraps the error value, or throws an exception with [message].</a>
-<a name="322"><span class="lineNumber">     322 </span>  ///</a>
-<a name="323"><span class="lineNumber">     323 </span>  /// Use this when you're certain the result should be [Err], but want to</a>
-<a name="324"><span class="lineNumber">     324 </span>  /// provide a custom error message if it's not. The original stack trace</a>
-<a name="325"><span class="lineNumber">     325 </span>  /// is preserved. Primarily useful for testing or assertions. For normal</a>
-<a name="326"><span class="lineNumber">     326 </span>  /// error handling, prefer [err], [isErr], or pattern matching.</a>
-<a name="327"><span class="lineNumber">     327 </span>  ///</a>
-<a name="328"><span class="lineNumber">     328 </span>  /// Example:</a>
-<a name="329"><span class="lineNumber">     329 </span>  /// ```dart</a>
-<a name="330"><span class="lineNumber">     330 </span>  /// final error = result.expectErr('Operation should have failed');</a>
-<a name="331"><span class="lineNumber">     331 </span>  /// ```</a>
-<a name="332"><span class="lineNumber">     332 </span>  E expectErr(String message) =&gt; switch (this) {</a>
-<a name="333"><span class="lineNumber">     333 </span>    Ok() =&gt; throw Exception(message),</a>
-<a name="334"><span class="lineNumber">     334 </span>    Err(:final error) =&gt; error,</a>
-<a name="335"><span class="lineNumber">     335 </span>  };</a>
-<a name="336"><span class="lineNumber">     336 </span></a>
-<a name="337"><span class="lineNumber">     337 </span>  /// Checks if this is an error and the error matches the [predicate].</a>
+</div></a><a name="271"><span class="lineNumber">     271 </span></a>
+<a name="272"><span class="lineNumber">     272 </span>    return switch (this) {</a>
+<a name="273"><span class="lineNumber">     273 </span>      Err(:final error, :final stackTrace) =&gt; .err(error, stackTrace),</a>
+<a name="274"><span class="lineNumber">     274 </span>      Ok() =&gt; otherBlock(),</a>
+<a name="275"><span class="lineNumber">     275 </span>    };</a>
+<a name="276"><span class="lineNumber">     276 </span>  }</a>
+<a name="277"><span class="lineNumber">     277 </span></a>
+<a name="278"><span class="lineNumber">     278 </span>  /// Transforms the success value into a new result, or propagates the error.</a>
+<a name="279"><span class="lineNumber">     279 </span>  ///</a>
+<a name="280"><span class="lineNumber">     280 </span>  /// If this is [Ok], applies [otherBlock] to the value and returns its result.</a>
+<a name="281"><span class="lineNumber">     281 </span>  /// If this is [Err], propagates the error unchanged (short-circuit behavior).</a>
+<a name="282"><span class="lineNumber">     282 </span>  /// Stack traces are preserved through error propagation.</a>
+<a name="283"><span class="lineNumber">     283 </span>  ///</a>
+<a name="284"><span class="lineNumber">     284 </span>  /// This is the monadic bind operation (flatMap), useful for chaining</a>
+<a name="285"><span class="lineNumber">     285 </span>  /// operations that might fail while maintaining error information throughout</a>
+<a name="286"><span class="lineNumber">     286 </span>  /// the chain. Use [map] for simple value transformations that can't fail.</a>
+<a name="287"><span class="lineNumber">     287 </span>  ///</a>
+<a name="288"><span class="lineNumber">     288 </span>  /// Example:</a>
+<a name="289"><span class="lineNumber">     289 </span>  /// ```dart</a>
+<a name="290"><span class="lineNumber">     290 </span>  /// final result = getUserId()</a>
+<a name="291"><span class="lineNumber">     291 </span>  ///   .andThen((id) =&gt; getUser(id))</a>
+<a name="292"><span class="lineNumber">     292 </span>  ///   .andThen((user) =&gt; loadPreferences(user.id));</a>
+<a name="293"><span class="lineNumber">     293 </span>  /// // If any step fails, subsequent steps are skipped</a>
+<a name="294"><span class="lineNumber">     294 </span>  /// ```</a>
+<a name="295"><span class="lineNumber">     295 </span>  Result&lt;U, E&gt; andThen&lt;U extends Object?&gt;(</a>
+<a name="296"><span class="lineNumber">     296 </span>    Result&lt;U, E&gt; Function(T value) otherBlock,</a>
+<a name="297"><span class="lineNumber">     297 </span>  ) =&gt; switch (this) {</a>
+<a name="298"><span class="lineNumber">     298 </span>    Ok(:final value) =&gt; otherBlock(value),</a>
+<a name="299"><span class="lineNumber">     299 </span>    Err(:final error, :final stackTrace) =&gt; .err(error, stackTrace),</a>
+<a name="300"><span class="lineNumber">     300 </span>  };</a>
+<a name="301"><span class="lineNumber">     301 </span></a>
+<a name="302"><span class="lineNumber">     302 </span>  /// Returns a new independent copy of this result.</a>
+<a name="303"><span class="lineNumber">     303 </span>  ///</a>
+<a name="304"><span class="lineNumber">     304 </span>  /// Useful when you need to pass the result to multiple places without</a>
+<a name="305"><span class="lineNumber">     305 </span>  /// sharing state. Clones preserve error stack traces. For creating new</a>
+<a name="306"><span class="lineNumber">     306 </span>  /// results, prefer [Ok] or [Err] constructors directly.</a>
+<a name="307"><span class="lineNumber">     307 </span>  Result&lt;T, E&gt; clone() =&gt; switch (this) {</a>
+<a name="308"><span class="lineNumber">     308 </span>    Err&lt;T, E&gt;(:final error, :final stackTrace) =&gt; .err(error, stackTrace),</a>
+<a name="309"><span class="lineNumber">     309 </span>    Ok&lt;T, E&gt;(:final value) =&gt; .ok(value),</a>
+<a name="310"><span class="lineNumber">     310 </span>  };</a>
+<a name="311"><span class="lineNumber">     311 </span></a>
+<a name="312"><span class="lineNumber">     312 </span>  /// Unwraps the success value, or throws an exception with [message] and the</a>
+<a name="313"><span class="lineNumber">     313 </span>  /// error value.</a>
+<a name="314"><span class="lineNumber">     314 </span>  ///</a>
+<a name="315"><span class="lineNumber">     315 </span>  /// Use this when you're certain the result should be [Ok], but want to</a>
+<a name="316"><span class="lineNumber">     316 </span>  /// provide context if it's not. The original error stack trace is preserved.</a>
+<a name="317"><span class="lineNumber">     317 </span>  /// For unwrapping with fallback values, use [unwrapOr] or [unwrapOrElse].</a>
+<a name="318"><span class="lineNumber">     318 </span>  ///</a>
+<a name="319"><span class="lineNumber">     319 </span>  /// Example:</a>
+<a name="320"><span class="lineNumber">     320 </span>  /// ```dart</a>
+<a name="321"><span class="lineNumber">     321 </span>  /// final value = result.expect('Operation should have succeeded');</a>
+<a name="322"><span class="lineNumber">     322 </span>  /// final config = loadConfig().expect('Config file must be valid');</a>
+<a name="323"><span class="lineNumber">     323 </span>  /// ```</a>
+<a name="324"><span class="lineNumber">     324 </span>  T expect(String message) =&gt; switch (this) {</a>
+<a name="325"><span class="lineNumber">     325 </span>    Ok(:final value) =&gt; value,</a>
+<a name="326"><span class="lineNumber">     326 </span>    Err(:final error, :final stackTrace) =&gt; Error.throwWithStackTrace(</a>
+<a name="327"><span class="lineNumber">     327 </span>      Exception('$message: $error'),</a>
+<a name="328"><span class="lineNumber">     328 </span>      stackTrace,</a>
+<a name="329"><span class="lineNumber">     329 </span>    ),</a>
+<a name="330"><span class="lineNumber">     330 </span>  };</a>
+<a name="331"><span class="lineNumber">     331 </span></a>
+<a name="332"><span class="lineNumber">     332 </span>  /// Unwraps the error value, or throws an exception with [message] and the</a>
+<a name="333"><span class="lineNumber">     333 </span>  /// success value.</a>
+<a name="334"><span class="lineNumber">     334 </span>  ///</a>
+<a name="335"><span class="lineNumber">     335 </span>  /// Use this when you're certain the result should be [Err], but want to</a>
+<a name="336"><span class="lineNumber">     336 </span>  /// provide context if it's not. As a success has no stored stack trace,</a>
+<a name="337"><span class="lineNumber">     337 </span>  /// the exception uses the current stack trace.</a>
 <a name="338"><span class="lineNumber">     338 </span>  ///</a>
-<a name="339"><span class="lineNumber">     339 </span>  /// Returns true only if this is [Err] and [predicate] returns true for the error.</a>
-<a name="340"><span class="lineNumber">     340 </span>  /// Use this for conditional error checking without extracting the error value.</a>
-<a name="341"><span class="lineNumber">     341 </span>  /// For other checks, use [isErr] or pattern matching.</a>
-<a name="342"><span class="lineNumber">     342 </span>  ///</a>
-<a name="343"><span class="lineNumber">     343 </span>  /// Example:</a>
-<a name="344"><span class="lineNumber">     344 </span>  /// ```dart</a>
-<a name="345"><span class="lineNumber">     345 </span>  /// if (result.isErrAnd((e) =&gt; e.code == 404)) {</a>
-<a name="346"><span class="lineNumber">     346 </span>  ///   print('Not found');</a>
-<a name="347"><span class="lineNumber">     347 </span>  /// }</a>
-<a name="348"><span class="lineNumber">     348 </span>  /// ```</a>
-<a name="349"><span class="lineNumber">     349 </span>  bool isErrAnd(bool Function(E error) predicate) =&gt; switch (this) {</a>
-<a name="350"><span class="lineNumber">     350 </span>    Err(:final error) =&gt; predicate(error),</a>
-<a name="351"><span class="lineNumber">     351 </span>    Ok() =&gt; false,</a>
-<a name="352"><span class="lineNumber">     352 </span>  };</a>
-<a name="353"><span class="lineNumber">     353 </span></a>
-<a name="354"><span class="lineNumber">     354 </span>  /// Checks if this is a success and the value matches the [predicate].</a>
-<a name="355"><span class="lineNumber">     355 </span>  ///</a>
-<a name="356"><span class="lineNumber">     356 </span>  /// Returns true only if this is [Ok] and [predicate] returns true for the value.</a>
-<a name="357"><span class="lineNumber">     357 </span>  /// Use this for conditional logic without extracting the value, maintaining</a>
-<a name="358"><span class="lineNumber">     358 </span>  /// type safety. For other checks, use pattern matching or [isOk].</a>
-<a name="359"><span class="lineNumber">     359 </span>  ///</a>
-<a name="360"><span class="lineNumber">     360 </span>  /// Example:</a>
-<a name="361"><span class="lineNumber">     361 </span>  /// ```dart</a>
-<a name="362"><span class="lineNumber">     362 </span>  /// if (result.isOkAnd((value) =&gt; value &gt; 0)) {</a>
-<a name="363"><span class="lineNumber">     363 </span>  ///   print('Positive value');</a>
-<a name="364"><span class="lineNumber">     364 </span>  /// }</a>
-<a name="365"><span class="lineNumber">     365 </span>  /// ```</a>
-<a name="366"><span class="lineNumber">     366 </span>  bool isOkAnd(bool Function(T value) predicate) =&gt; switch (this) {</a>
-<a name="367"><span class="lineNumber">     367 </span>    Ok(:final value) =&gt; predicate(value),</a>
-<a name="368"><span class="lineNumber">     368 </span>    Err() =&gt; false,</a>
-<a name="369"><span class="lineNumber">     369 </span>  };</a>
-<a name="370"><span class="lineNumber">     370 </span></a>
-<a name="371"><span class="lineNumber">     371 </span>  /// Transforms the success value using [block], leaving errors unchanged.</a>
-<a name="372"><span class="lineNumber">     372 </span>  ///</a>
-<a name="373"><span class="lineNumber">     373 </span>  /// If this is [Ok], applies [block] to the value and wraps the result in [Ok].</a>
-<a name="374"><span class="lineNumber">     374 </span>  /// If this is [Err], returns the same error unchanged. The error type remains</a>
-<a name="375"><span class="lineNumber">     375 </span>  /// the same; for transforming errors, use [mapErr] instead.</a>
-<a name="376"><span class="lineNumber">     376 </span>  ///</a>
-<a name="377"><span class="lineNumber">     377 </span>  /// This is useful for value transformations that can't fail. For operations</a>
-<a name="378"><span class="lineNumber">     378 </span>  /// that might fail, use [andThen] (flatMap) instead. Errors short-circuit</a>
-<a name="379"><span class="lineNumber">     379 </span>  /// the transformation and are returned immediately.</a>
-<a name="380"><span class="lineNumber">     380 </span>  ///</a>
-<a name="381"><span class="lineNumber">     381 </span>  /// Example:</a>
-<a name="382"><span class="lineNumber">     382 </span>  /// ```dart</a>
-<a name="383"><span class="lineNumber">     383 </span>  /// Result&lt;int, String&gt; result = Ok(5);</a>
-<a name="384"><span class="lineNumber">     384 </span>  /// final doubled = result.map((value) =&gt; value * 2); // Ok(10)</a>
-<a name="385"><span class="lineNumber">     385 </span>  ///</a>
-<a name="386"><span class="lineNumber">     386 </span>  /// Result&lt;int, String&gt; error = Err('failed', StackTrace.current);</a>
-<a name="387"><span class="lineNumber">     387 </span>  /// final doubled2 = error.map((value) =&gt; value * 2); // Err('failed')</a>
-<a name="388"><span class="lineNumber">     388 </span>  /// ```</a>
-<a name="389"><span class="lineNumber">     389 </span>  Result&lt;Y, E&gt; map&lt;Y extends Object?&gt;(Y Function(T value) block) =&gt;</a>
-<a name="390"><span class="lineNumber">     390 </span>      switch (this) {</a>
-<a name="391"><span class="lineNumber">     391 </span>        Err&lt;T, E&gt;(:final error, :final stackTrace) =&gt; .err(error, stackTrace),</a>
-<a name="392"><span class="lineNumber">     392 </span>        Ok&lt;T, E&gt;(:final value) =&gt; .ok(block(value)),</a>
-<a name="393"><span class="lineNumber">     393 </span>      };</a>
-<a name="394"><span class="lineNumber">     394 </span></a>
-<a name="395"><span class="lineNumber">     395 </span>  /// Transforms the error value using [block], leaving success values unchanged.</a>
+<a name="339"><span class="lineNumber">     339 </span>  /// Example:</a>
+<a name="340"><span class="lineNumber">     340 </span>  /// ```dart</a>
+<a name="341"><span class="lineNumber">     341 </span>  /// final error = result.expectErr('Operation should have failed');</a>
+<a name="342"><span class="lineNumber">     342 </span>  /// ```</a>
+<a name="343"><span class="lineNumber">     343 </span>  E expectErr(String message) =&gt; switch (this) {</a>
+<a name="344"><span class="lineNumber">     344 </span>    Ok(:final value) =&gt; throw Exception('$message: $value'),</a>
+<a name="345"><span class="lineNumber">     345 </span>    Err(:final error) =&gt; error,</a>
+<a name="346"><span class="lineNumber">     346 </span>  };</a>
+<a name="347"><span class="lineNumber">     347 </span></a>
+<a name="348"><span class="lineNumber">     348 </span>  /// Checks if this is an error and the error matches the [predicate].</a>
+<a name="349"><span class="lineNumber">     349 </span>  ///</a>
+<a name="350"><span class="lineNumber">     350 </span>  /// Returns true only if this is [Err] and [predicate] returns true for the error.</a>
+<a name="351"><span class="lineNumber">     351 </span>  /// Use this for conditional error checking without extracting the error value.</a>
+<a name="352"><span class="lineNumber">     352 </span>  /// For other checks, use [isErr] or pattern matching.</a>
+<a name="353"><span class="lineNumber">     353 </span>  ///</a>
+<a name="354"><span class="lineNumber">     354 </span>  /// Example:</a>
+<a name="355"><span class="lineNumber">     355 </span>  /// ```dart</a>
+<a name="356"><span class="lineNumber">     356 </span>  /// if (result.isErrAnd((e) =&gt; e.code == 404)) {</a>
+<a name="357"><span class="lineNumber">     357 </span>  ///   print('Not found');</a>
+<a name="358"><span class="lineNumber">     358 </span>  /// }</a>
+<a name="359"><span class="lineNumber">     359 </span>  /// ```</a>
+<a name="360"><span class="lineNumber">     360 </span>  bool isErrAnd(bool Function(E error) predicate) =&gt; switch (this) {</a>
+<a name="361"><span class="lineNumber">     361 </span>    Err(:final error) =&gt; predicate(error),</a>
+<a name="362"><span class="lineNumber">     362 </span>    Ok() =&gt; false,</a>
+<a name="363"><span class="lineNumber">     363 </span>  };</a>
+<a name="364"><span class="lineNumber">     364 </span></a>
+<a name="365"><span class="lineNumber">     365 </span>  /// Checks if this is a success and the value matches the [predicate].</a>
+<a name="366"><span class="lineNumber">     366 </span>  ///</a>
+<a name="367"><span class="lineNumber">     367 </span>  /// Returns true only if this is [Ok] and [predicate] returns true for the value.</a>
+<a name="368"><span class="lineNumber">     368 </span>  /// Use this for conditional logic without extracting the value, maintaining</a>
+<a name="369"><span class="lineNumber">     369 </span>  /// type safety. For other checks, use pattern matching or [isOk].</a>
+<a name="370"><span class="lineNumber">     370 </span>  ///</a>
+<a name="371"><span class="lineNumber">     371 </span>  /// Example:</a>
+<a name="372"><span class="lineNumber">     372 </span>  /// ```dart</a>
+<a name="373"><span class="lineNumber">     373 </span>  /// if (result.isOkAnd((value) =&gt; value &gt; 0)) {</a>
+<a name="374"><span class="lineNumber">     374 </span>  ///   print('Positive value');</a>
+<a name="375"><span class="lineNumber">     375 </span>  /// }</a>
+<a name="376"><span class="lineNumber">     376 </span>  /// ```</a>
+<a name="377"><span class="lineNumber">     377 </span>  bool isOkAnd(bool Function(T value) predicate) =&gt; switch (this) {</a>
+<a name="378"><span class="lineNumber">     378 </span>    Ok(:final value) =&gt; predicate(value),</a>
+<a name="379"><span class="lineNumber">     379 </span>    Err() =&gt; false,</a>
+<a name="380"><span class="lineNumber">     380 </span>  };</a>
+<a name="381"><span class="lineNumber">     381 </span></a>
+<a name="382"><span class="lineNumber">     382 </span>  /// Transforms the success value using [block], leaving errors unchanged.</a>
+<a name="383"><span class="lineNumber">     383 </span>  ///</a>
+<a name="384"><span class="lineNumber">     384 </span>  /// If this is [Ok], applies [block] to the value and wraps the result in [Ok].</a>
+<a name="385"><span class="lineNumber">     385 </span>  /// If this is [Err], returns the same error unchanged. The error type remains</a>
+<a name="386"><span class="lineNumber">     386 </span>  /// the same; for transforming errors, use [mapErr] instead.</a>
+<a name="387"><span class="lineNumber">     387 </span>  ///</a>
+<a name="388"><span class="lineNumber">     388 </span>  /// This is useful for value transformations that can't fail. For operations</a>
+<a name="389"><span class="lineNumber">     389 </span>  /// that might fail, use [andThen] (flatMap) instead. Errors short-circuit</a>
+<a name="390"><span class="lineNumber">     390 </span>  /// the transformation and are returned immediately.</a>
+<a name="391"><span class="lineNumber">     391 </span>  ///</a>
+<a name="392"><span class="lineNumber">     392 </span>  /// Example:</a>
+<a name="393"><span class="lineNumber">     393 </span>  /// ```dart</a>
+<a name="394"><span class="lineNumber">     394 </span>  /// Result&lt;int, String&gt; result = Ok(5);</a>
+<a name="395"><span class="lineNumber">     395 </span>  /// final doubled = result.map((value) =&gt; value * 2); // Ok(10)</a>
 <a name="396"><span class="lineNumber">     396 </span>  ///</a>
-<a name="397"><span class="lineNumber">     397 </span>  /// If this is [Err], applies [block] to the error and wraps the result in</a>
-<a name="398"><span class="lineNumber">     398 </span>  /// a new error type. If this is [Ok], returns the same success value with</a>
-<a name="399"><span class="lineNumber">     399 </span>  /// the new error type. Useful for converting error types when delegating</a>
-<a name="400"><span class="lineNumber">     400 </span>  /// to functions expecting different error types.</a>
-<a name="401"><span class="lineNumber">     401 </span>  ///</a>
-<a name="402"><span class="lineNumber">     402 </span>  /// Example:</a>
-<a name="403"><span class="lineNumber">     403 </span>  /// ```dart</a>
-<a name="404"><span class="lineNumber">     404 </span>  /// Result&lt;String, String&gt; result = Err('failed', StackTrace.current);</a>
-<a name="405"><span class="lineNumber">     405 </span>  /// final mapped = result.mapErr((e) =&gt; CustomError(e)); // Err(CustomError)</a>
-<a name="406"><span class="lineNumber">     406 </span>  /// ```</a>
-<a name="407"><span class="lineNumber">     407 </span>  Result&lt;T, F&gt; mapErr&lt;F extends Object&gt;(F Function(E error) block) =&gt;</a>
-<a name="408"><span class="lineNumber">     408 </span>      switch (this) {</a>
-<a name="409"><span class="lineNumber">     409 </span>        Err&lt;T, E&gt;(:final error, :final stackTrace) =&gt; .err(</a>
-<a name="410"><span class="lineNumber">     410 </span>          block(error),</a>
-<a name="411"><span class="lineNumber">     411 </span>          stackTrace,</a>
-<a name="412"><span class="lineNumber">     412 </span>        ),</a>
-<a name="413"><span class="lineNumber">     413 </span>        Ok&lt;T, E&gt;(:final value) =&gt; .ok(value),</a>
-<a name="414"><span class="lineNumber">     414 </span>      };</a>
-<a name="415"><span class="lineNumber">     415 </span></a>
-<a name="416"><span class="lineNumber">     416 </span>  /// Returns this result if it's a success, otherwise [other].</a>
-<a name="417"><span class="lineNumber">     417 </span>  ///</a>
-<a name="418"><span class="lineNumber">     418 </span>  /// Use this to provide a fallback result when the first result fails.</a>
-<a name="419"><span class="lineNumber">     419 </span>  /// The first successful result is returned; if both fail, the second error</a>
-<a name="420"><span class="lineNumber">     420 </span>  /// is returned. Useful for fallback operations like cache-then-network.</a>
-<a name="421"><span class="lineNumber">     421 </span>  /// For computed fallbacks based on the error, use [orElse] instead.</a>
-<a name="422"><span class="lineNumber">     422 </span>  ///</a>
-<a name="423"><span class="lineNumber">     423 </span>  /// Example:</a>
-<a name="424"><span class="lineNumber">     424 </span>  /// ```dart</a>
-<a name="425"><span class="lineNumber">     425 </span>  /// Result&lt;int, String&gt; a = Err('failed', StackTrace.current);</a>
-<a name="426"><span class="lineNumber">     426 </span>  /// Result&lt;int, String&gt; b = Ok(10);</a>
-<a name="427"><span class="lineNumber">     427 </span>  /// final result = a | b; // Returns b (Ok(10))</a>
-<a name="428"><span class="lineNumber">     428 </span>  /// final cached = getCachedResult() | fetchFresh(); // Try cache first</a>
-<a name="429"><span class="lineNumber">     429 </span>  /// ```</a>
-<a name="430"><span class="lineNumber">     430 </span>  Result&lt;T, E&gt; or(Result&lt;T, E&gt; other) {</a>
-<a name="431"><button class="collapsible hit"><pre class="fileContents"><span class="lineNumber">     431 </span>    if (this is Ok&lt;T, E&gt;) return this;</pre></button>
+<a name="397"><span class="lineNumber">     397 </span>  /// Result&lt;int, String&gt; error = Err('failed', StackTrace.current);</a>
+<a name="398"><span class="lineNumber">     398 </span>  /// final doubled2 = error.map((value) =&gt; value * 2); // Err('failed')</a>
+<a name="399"><span class="lineNumber">     399 </span>  /// ```</a>
+<a name="400"><span class="lineNumber">     400 </span>  Result&lt;Y, E&gt; map&lt;Y extends Object?&gt;(Y Function(T value) block) =&gt;</a>
+<a name="401"><span class="lineNumber">     401 </span>      switch (this) {</a>
+<a name="402"><span class="lineNumber">     402 </span>        Err&lt;T, E&gt;(:final error, :final stackTrace) =&gt; .err(error, stackTrace),</a>
+<a name="403"><span class="lineNumber">     403 </span>        Ok&lt;T, E&gt;(:final value) =&gt; .ok(block(value)),</a>
+<a name="404"><span class="lineNumber">     404 </span>      };</a>
+<a name="405"><span class="lineNumber">     405 </span></a>
+<a name="406"><span class="lineNumber">     406 </span>  /// Maps a success value, or returns [defaultValue] for an error.</a>
+<a name="407"><span class="lineNumber">     407 </span>  ///</a>
+<a name="408"><span class="lineNumber">     408 </span>  /// The default is evaluated before this method is called. Use [mapOrElse]</a>
+<a name="409"><span class="lineNumber">     409 </span>  /// when the fallback should be computed only for an error.</a>
+<a name="410"><span class="lineNumber">     410 </span>  U mapOr&lt;U extends Object?&gt;(</a>
+<a name="411"><span class="lineNumber">     411 </span>    U Function(T value) mapper, {</a>
+<a name="412"><span class="lineNumber">     412 </span>    required U defaultValue,</a>
+<a name="413"><span class="lineNumber">     413 </span>  }) =&gt; switch (this) {</a>
+<a name="414"><span class="lineNumber">     414 </span>    Ok(:final value) =&gt; mapper(value),</a>
+<a name="415"><span class="lineNumber">     415 </span>    Err() =&gt; defaultValue,</a>
+<a name="416"><span class="lineNumber">     416 </span>  };</a>
+<a name="417"><span class="lineNumber">     417 </span></a>
+<a name="418"><span class="lineNumber">     418 </span>  /// Maps a success value, or computes a fallback from the error.</a>
+<a name="419"><span class="lineNumber">     419 </span>  ///</a>
+<a name="420"><span class="lineNumber">     420 </span>  /// Exactly one callback is invoked: [mapper] for [Ok], or [defaultValue]</a>
+<a name="421"><span class="lineNumber">     421 </span>  /// for [Err].</a>
+<a name="422"><span class="lineNumber">     422 </span>  U mapOrElse&lt;U extends Object?&gt;(</a>
+<a name="423"><span class="lineNumber">     423 </span>    U Function(T value) mapper, {</a>
+<a name="424"><span class="lineNumber">     424 </span>    required U Function(E error) defaultValue,</a>
+<a name="425"><span class="lineNumber">     425 </span>  }) =&gt; switch (this) {</a>
+<a name="426"><span class="lineNumber">     426 </span>    Ok(:final value) =&gt; mapper(value),</a>
+<a name="427"><span class="lineNumber">     427 </span>    Err(:final error) =&gt; defaultValue(error),</a>
+<a name="428"><span class="lineNumber">     428 </span>  };</a>
+<a name="429"><span class="lineNumber">     429 </span></a>
+<a name="430"><span class="lineNumber">     430 </span>  /// Transforms the error value using [block], leaving success values unchanged.</a>
+<a name="431"><span class="lineNumber">     431 </span>  ///</a>
+<a name="432"><span class="lineNumber">     432 </span>  /// If this is [Err], applies [block] to the error and wraps the result in</a>
+<a name="433"><span class="lineNumber">     433 </span>  /// a new error type. If this is [Ok], returns the same success value with</a>
+<a name="434"><span class="lineNumber">     434 </span>  /// the new error type. Useful for converting error types when delegating</a>
+<a name="435"><span class="lineNumber">     435 </span>  /// to functions expecting different error types.</a>
+<a name="436"><span class="lineNumber">     436 </span>  ///</a>
+<a name="437"><span class="lineNumber">     437 </span>  /// Example:</a>
+<a name="438"><span class="lineNumber">     438 </span>  /// ```dart</a>
+<a name="439"><span class="lineNumber">     439 </span>  /// Result&lt;String, String&gt; result = Err('failed', StackTrace.current);</a>
+<a name="440"><span class="lineNumber">     440 </span>  /// final mapped = result.mapErr((e) =&gt; CustomError(e)); // Err(CustomError)</a>
+<a name="441"><span class="lineNumber">     441 </span>  /// ```</a>
+<a name="442"><span class="lineNumber">     442 </span>  Result&lt;T, F&gt; mapErr&lt;F extends Object&gt;(F Function(E error) block) =&gt;</a>
+<a name="443"><span class="lineNumber">     443 </span>      switch (this) {</a>
+<a name="444"><span class="lineNumber">     444 </span>        Err&lt;T, E&gt;(:final error, :final stackTrace) =&gt; .err(</a>
+<a name="445"><span class="lineNumber">     445 </span>          block(error),</a>
+<a name="446"><span class="lineNumber">     446 </span>          stackTrace,</a>
+<a name="447"><span class="lineNumber">     447 </span>        ),</a>
+<a name="448"><span class="lineNumber">     448 </span>        Ok&lt;T, E&gt;(:final value) =&gt; .ok(value),</a>
+<a name="449"><span class="lineNumber">     449 </span>      };</a>
+<a name="450"><span class="lineNumber">     450 </span></a>
+<a name="451"><span class="lineNumber">     451 </span>  /// Returns [other] if this is an error, or this success otherwise.</a>
+<a name="452"><span class="lineNumber">     452 </span>  ///</a>
+<a name="453"><span class="lineNumber">     453 </span>  /// The error type of [other] can differ from this result's error type; both</a>
+<a name="454"><span class="lineNumber">     454 </span>  /// results must use the same success type. If this result is [Ok], its value</a>
+<a name="455"><span class="lineNumber">     455 </span>  /// is preserved. The [other] argument is evaluated before this method is</a>
+<a name="456"><span class="lineNumber">     456 </span>  /// called; use [orLazy] or [orElse] for a conditional fallback.</a>
+<a name="457"><span class="lineNumber">     457 </span>  ///</a>
+<a name="458"><span class="lineNumber">     458 </span>  /// Example:</a>
+<a name="459"><span class="lineNumber">     459 </span>  /// ```dart</a>
+<a name="460"><span class="lineNumber">     460 </span>  /// Result&lt;int, String&gt; a = Err('failed', StackTrace.current);</a>
+<a name="461"><span class="lineNumber">     461 </span>  /// Result&lt;int, FormatException&gt; b = Ok(10);</a>
+<a name="462"><span class="lineNumber">     462 </span>  /// final result = a.or(b); // Result&lt;int, FormatException&gt;</a>
+<a name="463"><span class="lineNumber">     463 </span>  /// ```</a>
+<a name="464"><span class="lineNumber">     464 </span>  Result&lt;T, F&gt; or&lt;F extends Object&gt;(Result&lt;T, F&gt; other) {</a>
+<a name="465"><button class="collapsible hit"><pre class="fileContents"><span class="lineNumber">     465 </span>    if (this case final Ok&lt;T, F&gt; success) return success;</pre></button>
 <div class="content">
 <b>Detected mutations:</b>
 <table class="mutationTable" width="100%">
-<tr><td class="mutationLabel" width="5%">1 :</td><td class="mutationText" width="87%"><span class="addedLine">+    <span class="changedTokens"> if (!(this is Ok&lt;T, E&gt;) return this;
+<tr><td class="mutationLabel" width="5%">1 :</td><td class="mutationText" width="87%"><span class="addedLine">+    <span class="changedTokens"> if (!(this case final Ok&lt;T, F&gt; success) return success;
 
-    return other;
-  }
+    return switch (this)) {</span></span></td><td class="match">RegExp: pattern=[\s]if[\s]*\((.*?)\)[\s]*{ flags=ms<span class="tooltip">Id: builtin.if</span></td></tr></table>
 
-  /// Returns this success value, or computes a recovery result from the error.
-  ///
-  /// If this is [Ok], returns it unchanged. If this is [Err], applies [otherBlock]
-  /// to the error and stack trace, returning the computed result. Use this for
-  /// dynamic recovery that depends on what the error was. For static fallbacks,
-  /// use [or] instead.
-  ///
-  /// This allows context-aware error handling—examine the error and decide
-  /// whether to recover or propagate a different result.
-  ///
-  /// Example:
-  /// ```dart
-  /// final result = operation.orElse(
-  ///   (error, st) =&gt; error is NotFoundException
-  ///     ? Ok(defaultValue)
-  ///     : Err(error),
-  /// );
-  /// ```
-  Result&lt;T, F&gt; orElse&lt;F extends Object&gt;(
-    Result&lt;T, F&gt; Function(E error, StackTrace st) otherBlock,
-  ) =&gt; switch (this)) {</span></span></td><td class="match">RegExp: pattern=[\s]if[\s]*\((.*?)\)[\s]*{ flags=ms<span class="tooltip">Id: builtin.if</span></td></tr></table>
-
-</div></a><a name="432"><span class="lineNumber">     432 </span></a>
-<a name="433"><span class="lineNumber">     433 </span>    return other;</a>
-<a name="434"><span class="lineNumber">     434 </span>  }</a>
-<a name="435"><span class="lineNumber">     435 </span></a>
-<a name="436"><span class="lineNumber">     436 </span>  /// Returns this success value, or computes a recovery result from the error.</a>
-<a name="437"><span class="lineNumber">     437 </span>  ///</a>
-<a name="438"><span class="lineNumber">     438 </span>  /// If this is [Ok], returns it unchanged. If this is [Err], applies [otherBlock]</a>
-<a name="439"><span class="lineNumber">     439 </span>  /// to the error and stack trace, returning the computed result. Use this for</a>
-<a name="440"><span class="lineNumber">     440 </span>  /// dynamic recovery that depends on what the error was. For static fallbacks,</a>
-<a name="441"><span class="lineNumber">     441 </span>  /// use [or] instead.</a>
-<a name="442"><span class="lineNumber">     442 </span>  ///</a>
-<a name="443"><span class="lineNumber">     443 </span>  /// This allows context-aware error handling—examine the error and decide</a>
-<a name="444"><span class="lineNumber">     444 </span>  /// whether to recover or propagate a different result.</a>
-<a name="445"><span class="lineNumber">     445 </span>  ///</a>
-<a name="446"><span class="lineNumber">     446 </span>  /// Example:</a>
-<a name="447"><span class="lineNumber">     447 </span>  /// ```dart</a>
-<a name="448"><span class="lineNumber">     448 </span>  /// final result = operation.orElse(</a>
-<a name="449"><span class="lineNumber">     449 </span>  ///   (error, st) =&gt; error is NotFoundException</a>
-<a name="450"><span class="lineNumber">     450 </span>  ///     ? Ok(defaultValue)</a>
-<a name="451"><span class="lineNumber">     451 </span>  ///     : Err(error),</a>
-<a name="452"><span class="lineNumber">     452 </span>  /// );</a>
-<a name="453"><span class="lineNumber">     453 </span>  /// ```</a>
-<a name="454"><span class="lineNumber">     454 </span>  Result&lt;T, F&gt; orElse&lt;F extends Object&gt;(</a>
-<a name="455"><span class="lineNumber">     455 </span>    Result&lt;T, F&gt; Function(E error, StackTrace st) otherBlock,</a>
-<a name="456"><span class="lineNumber">     456 </span>  ) =&gt; switch (this) {</a>
-<a name="457"><span class="lineNumber">     457 </span>    Err(:final error, :final stackTrace) =&gt; otherBlock(error, stackTrace),</a>
-<a name="458"><span class="lineNumber">     458 </span>    Ok(:final value) =&gt; .ok(value),</a>
-<a name="459"><span class="lineNumber">     459 </span>  };</a>
-<a name="460"><span class="lineNumber">     460 </span></a>
-<a name="461"><span class="lineNumber">     461 </span>  /// Evaluates [otherBlock] only when this result is an error.</a>
-<a name="462"><span class="lineNumber">     462 </span>  ///</a>
-<a name="463"><span class="lineNumber">     463 </span>  /// Use this method for lazy fallback composition. Unlike [or] and</a>
-<a name="464"><span class="lineNumber">     464 </span>  /// [operator |], the callback is not invoked when this result is successful.</a>
-<a name="465"><span class="lineNumber">     465 </span>  Result&lt;T, E&gt; orLazy(Result&lt;T, E&gt; Function() otherBlock) {</a>
-<a name="466"><button class="collapsible hit"><pre class="fileContents"><span class="lineNumber">     466 </span>    if (this is Ok&lt;T, E&gt;) return this;</pre></button>
+</div></a><a name="466"><span class="lineNumber">     466 </span></a>
+<a name="467"><span class="lineNumber">     467 </span>    return switch (this) {</a>
+<a name="468"><span class="lineNumber">     468 </span>      Ok(:final value) =&gt; .ok(value),</a>
+<a name="469"><span class="lineNumber">     469 </span>      Err() =&gt; other,</a>
+<a name="470"><span class="lineNumber">     470 </span>    };</a>
+<a name="471"><span class="lineNumber">     471 </span>  }</a>
+<a name="472"><span class="lineNumber">     472 </span></a>
+<a name="473"><span class="lineNumber">     473 </span>  /// Returns this success value, or computes a recovery result from the error.</a>
+<a name="474"><span class="lineNumber">     474 </span>  ///</a>
+<a name="475"><span class="lineNumber">     475 </span>  /// If this is [Ok], returns it unchanged. If this is [Err], applies [otherBlock]</a>
+<a name="476"><span class="lineNumber">     476 </span>  /// to the error and stack trace, returning the computed result. Use this for</a>
+<a name="477"><span class="lineNumber">     477 </span>  /// dynamic recovery that depends on what the error was. For static fallbacks,</a>
+<a name="478"><span class="lineNumber">     478 </span>  /// use [or] instead.</a>
+<a name="479"><span class="lineNumber">     479 </span>  ///</a>
+<a name="480"><span class="lineNumber">     480 </span>  /// This allows context-aware error handling—examine the error and decide</a>
+<a name="481"><span class="lineNumber">     481 </span>  /// whether to recover or propagate a different result.</a>
+<a name="482"><span class="lineNumber">     482 </span>  ///</a>
+<a name="483"><span class="lineNumber">     483 </span>  /// Example:</a>
+<a name="484"><span class="lineNumber">     484 </span>  /// ```dart</a>
+<a name="485"><span class="lineNumber">     485 </span>  /// final result = operation.orElse(</a>
+<a name="486"><span class="lineNumber">     486 </span>  ///   (error, st) =&gt; error is FormatException</a>
+<a name="487"><span class="lineNumber">     487 </span>  ///     ? Ok(defaultValue)</a>
+<a name="488"><span class="lineNumber">     488 </span>  ///     : Err(error, st),</a>
+<a name="489"><span class="lineNumber">     489 </span>  /// );</a>
+<a name="490"><span class="lineNumber">     490 </span>  /// ```</a>
+<a name="491"><span class="lineNumber">     491 </span>  Result&lt;T, F&gt; orElse&lt;F extends Object&gt;(</a>
+<a name="492"><span class="lineNumber">     492 </span>    Result&lt;T, F&gt; Function(E error, StackTrace st) otherBlock,</a>
+<a name="493"><span class="lineNumber">     493 </span>  ) =&gt; switch (this) {</a>
+<a name="494"><span class="lineNumber">     494 </span>    Err(:final error, :final stackTrace) =&gt; otherBlock(error, stackTrace),</a>
+<a name="495"><span class="lineNumber">     495 </span>    Ok(:final value) =&gt; .ok(value),</a>
+<a name="496"><span class="lineNumber">     496 </span>  };</a>
+<a name="497"><span class="lineNumber">     497 </span></a>
+<a name="498"><span class="lineNumber">     498 </span>  /// Evaluates [otherBlock] only when this result is an error.</a>
+<a name="499"><span class="lineNumber">     499 </span>  ///</a>
+<a name="500"><span class="lineNumber">     500 </span>  /// Use this method for lazy fallback composition. Unlike [or], the callback</a>
+<a name="501"><span class="lineNumber">     501 </span>  /// is not invoked when this result is successful. The callback's error type</a>
+<a name="502"><span class="lineNumber">     502 </span>  /// can differ from this result's error type, but its success type must match.</a>
+<a name="503"><span class="lineNumber">     503 </span>  Result&lt;T, F&gt; orLazy&lt;F extends Object&gt;(Result&lt;T, F&gt; Function() otherBlock) {</a>
+<a name="504"><button class="collapsible hit"><pre class="fileContents"><span class="lineNumber">     504 </span>    if (this case final Ok&lt;T, F&gt; success) return success;</pre></button>
 <div class="content">
 <b>Detected mutations:</b>
 <table class="mutationTable" width="100%">
-<tr><td class="mutationLabel" width="5%">1 :</td><td class="mutationText" width="87%"><span class="addedLine">+    <span class="changedTokens"> if (!(this is Ok&lt;T, E&gt;) return this;
+<tr><td class="mutationLabel" width="5%">1 :</td><td class="mutationText" width="87%"><span class="addedLine">+    <span class="changedTokens"> if (!(this case final Ok&lt;T, F&gt; success) return success;
 
-    return otherBlock();
-  }
+    return switch (this)) {</span></span></td><td class="match">RegExp: pattern=[\s]if[\s]*\((.*?)\)[\s]*{ flags=ms<span class="tooltip">Id: builtin.if</span></td></tr></table>
 
-  /// Returns the success value, or throws the error with its original stack trace.
-  ///
-  /// This is the most direct way to extract the value. Use with caution—only
-  /// when you're certain the result should be [Ok] or want to fail hard if
-  /// it's not. For safer extraction with fallbacks, use [unwrapOr],
-  /// [unwrapOrNull], or [expect] instead.
-  ///
-  /// The original stack trace is preserved when throwing, making debugging easier.
-  T unwrap() =&gt; switch (this)) {</span></span></td><td class="match">RegExp: pattern=[\s]if[\s]*\((.*?)\)[\s]*{ flags=ms<span class="tooltip">Id: builtin.if</span></td></tr></table>
-
-</div></a><a name="467"><span class="lineNumber">     467 </span></a>
-<a name="468"><span class="lineNumber">     468 </span>    return otherBlock();</a>
-<a name="469"><span class="lineNumber">     469 </span>  }</a>
-<a name="470"><span class="lineNumber">     470 </span></a>
-<a name="471"><span class="lineNumber">     471 </span>  /// Returns the success value, or throws the error with its original stack trace.</a>
-<a name="472"><span class="lineNumber">     472 </span>  ///</a>
-<a name="473"><span class="lineNumber">     473 </span>  /// This is the most direct way to extract the value. Use with caution—only</a>
-<a name="474"><span class="lineNumber">     474 </span>  /// when you're certain the result should be [Ok] or want to fail hard if</a>
-<a name="475"><span class="lineNumber">     475 </span>  /// it's not. For safer extraction with fallbacks, use [unwrapOr],</a>
-<a name="476"><span class="lineNumber">     476 </span>  /// [unwrapOrNull], or [expect] instead.</a>
-<a name="477"><span class="lineNumber">     477 </span>  ///</a>
-<a name="478"><span class="lineNumber">     478 </span>  /// The original stack trace is preserved when throwing, making debugging easier.</a>
-<a name="479"><span class="lineNumber">     479 </span>  T unwrap() =&gt; switch (this) {</a>
-<a name="480"><span class="lineNumber">     480 </span>    Ok(:final value) =&gt; value,</a>
-<a name="481"><span class="lineNumber">     481 </span>    Err(:final error, :final stackTrace) =&gt; Error.throwWithStackTrace(</a>
-<a name="482"><span class="lineNumber">     482 </span>      error,</a>
-<a name="483"><span class="lineNumber">     483 </span>      stackTrace,</a>
-<a name="484"><span class="lineNumber">     484 </span>    ),</a>
-<a name="485"><span class="lineNumber">     485 </span>  };</a>
-<a name="486"><span class="lineNumber">     486 </span></a>
-<a name="487"><span class="lineNumber">     487 </span>  /// Returns the success value, or [defaultValue] if this is an error.</a>
-<a name="488"><span class="lineNumber">     488 </span>  ///</a>
-<a name="489"><span class="lineNumber">     489 </span>  /// A safe way to extract a value with a guaranteed fallback. This method</a>
-<a name="490"><span class="lineNumber">     490 </span>  /// never throws and always returns a value. Use this when you have a</a>
-<a name="491"><span class="lineNumber">     491 </span>  /// sensible default value that doesn't depend on the error.</a>
-<a name="492"><span class="lineNumber">     492 </span>  /// For defaults computed from the error, use [unwrapOrElse] instead.</a>
-<a name="493"><span class="lineNumber">     493 </span>  ///</a>
-<a name="494"><span class="lineNumber">     494 </span>  /// Example:</a>
-<a name="495"><span class="lineNumber">     495 </span>  /// ```dart</a>
-<a name="496"><span class="lineNumber">     496 </span>  /// final value = result.unwrapOr(0); // Returns 0 if error</a>
-<a name="497"><span class="lineNumber">     497 </span>  /// final name = result.unwrapOr('Unknown'); // Returns 'Unknown' if error</a>
-<a name="498"><span class="lineNumber">     498 </span>  /// ```</a>
-<a name="499"><span class="lineNumber">     499 </span>  T unwrapOr(T defaultValue) =&gt; switch (this) {</a>
-<a name="500"><span class="lineNumber">     500 </span>    Ok(:final value) =&gt; value,</a>
-<a name="501"><span class="lineNumber">     501 </span>    Err() =&gt; defaultValue,</a>
-<a name="502"><span class="lineNumber">     502 </span>  };</a>
-<a name="503"><span class="lineNumber">     503 </span></a>
-<a name="504"><span class="lineNumber">     504 </span>  /// Returns the success value, or computes a default from the error.</a>
-<a name="505"><span class="lineNumber">     505 </span>  ///</a>
-<a name="506"><span class="lineNumber">     506 </span>  /// Applies [block] to the error to compute a fallback value if this is [Err].</a>
-<a name="507"><span class="lineNumber">     507 </span>  /// Use this when the default value depends on what the error was, allowing</a>
-<a name="508"><span class="lineNumber">     508 </span>  /// context-aware recovery. For static defaults, use [unwrapOr] instead.</a>
-<a name="509"><span class="lineNumber">     509 </span>  ///</a>
-<a name="510"><span class="lineNumber">     510 </span>  /// Example:</a>
-<a name="511"><span class="lineNumber">     511 </span>  /// ```dart</a>
-<a name="512"><span class="lineNumber">     512 </span>  /// final value = result.unwrapOrElse(</a>
-<a name="513"><span class="lineNumber">     513 </span>  ///   (e) =&gt; handleError(e),</a>
-<a name="514"><span class="lineNumber">     514 </span>  /// );</a>
-<a name="515"><span class="lineNumber">     515 </span>  /// final retryCount = result.unwrapOrElse(</a>
-<a name="516"><span class="lineNumber">     516 </span>  ///   (e) =&gt; e.isRetryable ? 3 : 0,</a>
-<a name="517"><span class="lineNumber">     517 </span>  /// );</a>
-<a name="518"><span class="lineNumber">     518 </span>  /// ```</a>
-<a name="519"><span class="lineNumber">     519 </span>  T unwrapOrElse(T Function(E error) block) =&gt; switch (this) {</a>
-<a name="520"><span class="lineNumber">     520 </span>    Ok(:final value) =&gt; value,</a>
-<a name="521"><span class="lineNumber">     521 </span>    Err(:final error) =&gt; block(error),</a>
-<a name="522"><span class="lineNumber">     522 </span>  };</a>
-<a name="523"><span class="lineNumber">     523 </span></a>
-<a name="524"><span class="lineNumber">     524 </span>  /// Returns the success value as nullable, or null if this is an error.</a>
-<a name="525"><span class="lineNumber">     525 </span>  ///</a>
-<a name="526"><span class="lineNumber">     526 </span>  /// A safe way to extract a value when null is an acceptable default for</a>
-<a name="527"><span class="lineNumber">     527 </span>  /// errors. Never throws an exception. Use this for optional extraction</a>
-<a name="528"><span class="lineNumber">     528 </span>  /// without distinguishing between error states.</a>
+</div></a><a name="505"><span class="lineNumber">     505 </span></a>
+<a name="506"><span class="lineNumber">     506 </span>    return switch (this) {</a>
+<a name="507"><span class="lineNumber">     507 </span>      Ok(:final value) =&gt; .ok(value),</a>
+<a name="508"><span class="lineNumber">     508 </span>      Err() =&gt; otherBlock(),</a>
+<a name="509"><span class="lineNumber">     509 </span>    };</a>
+<a name="510"><span class="lineNumber">     510 </span>  }</a>
+<a name="511"><span class="lineNumber">     511 </span></a>
+<a name="512"><span class="lineNumber">     512 </span>  /// Returns the success value, or throws the error with its original stack trace.</a>
+<a name="513"><span class="lineNumber">     513 </span>  ///</a>
+<a name="514"><span class="lineNumber">     514 </span>  /// This is the most direct way to extract the value. Use with caution—only</a>
+<a name="515"><span class="lineNumber">     515 </span>  /// when you're certain the result should be [Ok] or want to fail hard if</a>
+<a name="516"><span class="lineNumber">     516 </span>  /// it's not. For safer extraction with fallbacks, use [unwrapOr],</a>
+<a name="517"><span class="lineNumber">     517 </span>  /// [unwrapOrNull], or [expect] instead.</a>
+<a name="518"><span class="lineNumber">     518 </span>  ///</a>
+<a name="519"><span class="lineNumber">     519 </span>  /// The original stack trace is preserved when throwing, making debugging easier.</a>
+<a name="520"><span class="lineNumber">     520 </span>  T unwrap() =&gt; switch (this) {</a>
+<a name="521"><span class="lineNumber">     521 </span>    Ok(:final value) =&gt; value,</a>
+<a name="522"><span class="lineNumber">     522 </span>    Err(:final error, :final stackTrace) =&gt; Error.throwWithStackTrace(</a>
+<a name="523"><span class="lineNumber">     523 </span>      error,</a>
+<a name="524"><span class="lineNumber">     524 </span>      stackTrace,</a>
+<a name="525"><span class="lineNumber">     525 </span>    ),</a>
+<a name="526"><span class="lineNumber">     526 </span>  };</a>
+<a name="527"><span class="lineNumber">     527 </span></a>
+<a name="528"><span class="lineNumber">     528 </span>  /// Returns the error value, or throws a [StateError] if this is successful.</a>
 <a name="529"><span class="lineNumber">     529 </span>  ///</a>
-<a name="530"><span class="lineNumber">     530 </span>  /// **Warning:** If [T] is nullable, this method cannot distinguish between</a>
-<a name="531"><span class="lineNumber">     531 </span>  /// `Ok(null)` and `Err(...)`—both return null. For nullable [T] types,</a>
-<a name="532"><span class="lineNumber">     532 </span>  /// use [isOk] or pattern matching for nullable [T]; `Option` can represent</a>
-<a name="533"><span class="lineNumber">     533 </span>  /// only non-null values.</a>
-<a name="534"><span class="lineNumber">     534 </span>  ///</a>
-<a name="535"><span class="lineNumber">     535 </span>  /// Example:</a>
-<a name="536"><span class="lineNumber">     536 </span>  /// ```dart</a>
-<a name="537"><span class="lineNumber">     537 </span>  /// final value = result.unwrapOrNull(); // Nullable&lt;T&gt;</a>
-<a name="538"><span class="lineNumber">     538 </span>  /// final name = getName().unwrapOrNull() ?? 'Unknown';</a>
-<a name="539"><span class="lineNumber">     539 </span>  /// ```</a>
-<a name="540"><span class="lineNumber">     540 </span>  T? unwrapOrNull() =&gt; switch (this) {</a>
-<a name="541"><span class="lineNumber">     541 </span>    Ok(:final value) =&gt; value,</a>
-<a name="542"><span class="lineNumber">     542 </span>    Err() =&gt; null,</a>
-<a name="543"><span class="lineNumber">     543 </span>  };</a>
-<a name="544"><span class="lineNumber">     544 </span></a>
-<a name="545"><span class="lineNumber">     545 </span>  /// Combines two results using the [or] operator (|).</a>
+<a name="530"><span class="lineNumber">     530 </span>  /// Use this when you're certain the result should be [Err]. The original</a>
+<a name="531"><span class="lineNumber">     531 </span>  /// error is returned without changing its stack trace. For a successful</a>
+<a name="532"><span class="lineNumber">     532 </span>  /// result, the thrown error includes its value.</a>
+<a name="533"><span class="lineNumber">     533 </span>  E unwrapErr() =&gt; switch (this) {</a>
+<a name="534"><span class="lineNumber">     534 </span>    Err(:final error) =&gt; error,</a>
+<a name="535"><span class="lineNumber">     535 </span>    Ok(:final value) =&gt; throw StateError(</a>
+<a name="536"><span class="lineNumber">     536 </span>      'Called `unwrapErr` on an `Ok` value: $value',</a>
+<a name="537"><span class="lineNumber">     537 </span>    ),</a>
+<a name="538"><span class="lineNumber">     538 </span>  };</a>
+<a name="539"><span class="lineNumber">     539 </span></a>
+<a name="540"><span class="lineNumber">     540 </span>  /// Returns the success value, or [defaultValue] if this is an error.</a>
+<a name="541"><span class="lineNumber">     541 </span>  ///</a>
+<a name="542"><span class="lineNumber">     542 </span>  /// A safe way to extract a value with a guaranteed fallback. This method</a>
+<a name="543"><span class="lineNumber">     543 </span>  /// never throws and always returns a value. Use this when you have a</a>
+<a name="544"><span class="lineNumber">     544 </span>  /// sensible default value that doesn't depend on the error.</a>
+<a name="545"><span class="lineNumber">     545 </span>  /// For defaults computed from the error, use [unwrapOrElse] instead.</a>
 <a name="546"><span class="lineNumber">     546 </span>  ///</a>
-<a name="547"><span class="lineNumber">     547 </span>  /// Shorthand for calling [or]. Returns this result if it's a success,</a>
-<a name="548"><span class="lineNumber">     548 </span>  /// otherwise returns [other]. Use this to provide fallback values when</a>
-<a name="549"><span class="lineNumber">     549 </span>  /// the first operation fails. The first success is returned.</a>
-<a name="550"><span class="lineNumber">     550 </span>  ///</a>
-<a name="551"><span class="lineNumber">     551 </span>  /// Example:</a>
-<a name="552"><span class="lineNumber">     552 </span>  /// ```dart</a>
-<a name="553"><span class="lineNumber">     553 </span>  /// final result = fetchFromCache() | fetchFromNetwork();</a>
-<a name="554"><span class="lineNumber">     554 </span>  /// ```</a>
-<a name="555"><span class="lineNumber">     555 </span>  Result&lt;T, E&gt; operator |(Result&lt;T, E&gt; other) =&gt; or(other);</a>
+<a name="547"><span class="lineNumber">     547 </span>  /// Example:</a>
+<a name="548"><span class="lineNumber">     548 </span>  /// ```dart</a>
+<a name="549"><span class="lineNumber">     549 </span>  /// final value = result.unwrapOr(0); // Returns 0 if error</a>
+<a name="550"><span class="lineNumber">     550 </span>  /// final name = result.unwrapOr('Unknown'); // Returns 'Unknown' if error</a>
+<a name="551"><span class="lineNumber">     551 </span>  /// ```</a>
+<a name="552"><span class="lineNumber">     552 </span>  T unwrapOr(T defaultValue) =&gt; switch (this) {</a>
+<a name="553"><span class="lineNumber">     553 </span>    Ok(:final value) =&gt; value,</a>
+<a name="554"><span class="lineNumber">     554 </span>    Err() =&gt; defaultValue,</a>
+<a name="555"><span class="lineNumber">     555 </span>  };</a>
 <a name="556"><span class="lineNumber">     556 </span></a>
-<a name="557"><span class="lineNumber">     557 </span>  /// Executes an asynchronous function and wraps the result.</a>
+<a name="557"><span class="lineNumber">     557 </span>  /// Returns the success value, or computes a default from the error.</a>
 <a name="558"><span class="lineNumber">     558 </span>  ///</a>
-<a name="559"><span class="lineNumber">     559 </span>  /// Attempts to execute [asyncBlock] and wraps any exception in [Err] with</a>
-<a name="560"><span class="lineNumber">     560 </span>  /// the captured stack trace. Returns [Ok] if the async operation succeeds,</a>
-<a name="561"><span class="lineNumber">     561 </span>  /// [Err] if an exception matching type [E] is thrown. For catching [Exception]</a>
-<a name="562"><span class="lineNumber">     562 </span>  /// types specifically, use [guardExceptionAsync] instead.</a>
-<a name="563"><span class="lineNumber">     563 </span>  ///</a>
-<a name="564"><span class="lineNumber">     564 </span>  /// **Note:** Only catches [E] or subtypes of [E]. Other exceptions will</a>
-<a name="565"><span class="lineNumber">     565 </span>  /// propagate uncaught.</a>
-<a name="566"><span class="lineNumber">     566 </span>  ///</a>
-<a name="567"><span class="lineNumber">     567 </span>  /// This is the async counterpart to [guardSync]. Stack traces are preserved</a>
-<a name="568"><span class="lineNumber">     568 </span>  /// for better debugging.</a>
-<a name="569"><span class="lineNumber">     569 </span>  ///</a>
-<a name="570"><span class="lineNumber">     570 </span>  /// Example:</a>
-<a name="571"><span class="lineNumber">     571 </span>  /// ```dart</a>
-<a name="572"><span class="lineNumber">     572 </span>  /// final result = await Result&lt;String, HttpException&gt;.guardAsync(</a>
-<a name="573"><span class="lineNumber">     573 </span>  ///   () =&gt; fetchData(),</a>
-<a name="574"><span class="lineNumber">     574 </span>  /// );</a>
-<a name="575"><span class="lineNumber">     575 </span>  /// ```</a>
-<a name="576"><span class="lineNumber">     576 </span>  static Future&lt;Result&lt;T, E&gt;&gt; guardAsync&lt;T extends Object?, E extends Object&gt;(</a>
-<a name="577"><span class="lineNumber">     577 </span>    Future&lt;T&gt; Function() asyncBlock,</a>
-<a name="578"><span class="lineNumber">     578 </span>  ) async {</a>
-<a name="579"><span class="lineNumber">     579 </span>    try {</a>
-<a name="580"><span class="lineNumber">     580 </span>      final value = await asyncBlock();</a>
-<a name="581"><span class="lineNumber">     581 </span>      return .ok(value);</a>
-<a name="582"><span class="lineNumber">     582 </span>    } on E catch (e, st) {</a>
-<a name="583"><span class="lineNumber">     583 </span>      return .err(e, st);</a>
-<a name="584"><span class="lineNumber">     584 </span>    }</a>
-<a name="585"><span class="lineNumber">     585 </span>  }</a>
-<a name="586"><span class="lineNumber">     586 </span></a>
-<a name="587"><span class="lineNumber">     587 </span>  /// Executes an asynchronous function, catching only [Exception] types.</a>
-<a name="588"><span class="lineNumber">     588 </span>  ///</a>
-<a name="589"><span class="lineNumber">     589 </span>  /// A convenience method that constrains the error type to [Exception]</a>
-<a name="590"><span class="lineNumber">     590 </span>  /// rather than accepting any [Object]. Use this when you know the async</a>
-<a name="591"><span class="lineNumber">     591 </span>  /// function will throw [Exception] or its subtypes, but you want to let</a>
-<a name="592"><span class="lineNumber">     592 </span>  /// other errors (like [Error]) propagate uncaught.</a>
-<a name="593"><span class="lineNumber">     593 </span>  ///</a>
-<a name="594"><span class="lineNumber">     594 </span>  /// Example:</a>
-<a name="595"><span class="lineNumber">     595 </span>  /// ```dart</a>
-<a name="596"><span class="lineNumber">     596 </span>  /// final result = await Result&lt;String, IOException&gt;.guardExceptionAsync(</a>
-<a name="597"><span class="lineNumber">     597 </span>  ///   () =&gt; file.readAsString(),</a>
-<a name="598"><span class="lineNumber">     598 </span>  /// );</a>
-<a name="599"><span class="lineNumber">     599 </span>  /// ```</a>
-<a name="600"><span class="lineNumber">     600 </span>  static Future&lt;Result&lt;T, E&gt;&gt; guardExceptionAsync&lt;</a>
-<a name="601"><span class="lineNumber">     601 </span>    T extends Object?,</a>
-<a name="602"><span class="lineNumber">     602 </span>    E extends Exception</a>
-<a name="603"><span class="lineNumber">     603 </span>  &gt;(Future&lt;T&gt; Function() asyncBlock) =&gt; guardAsync&lt;T, E&gt;(asyncBlock);</a>
-<a name="604"><span class="lineNumber">     604 </span></a>
-<a name="605"><span class="lineNumber">     605 </span>  /// Executes a synchronous function, catching only [Exception] types.</a>
-<a name="606"><span class="lineNumber">     606 </span>  ///</a>
-<a name="607"><span class="lineNumber">     607 </span>  /// A convenience method that constrains the error type to [Exception]</a>
-<a name="608"><span class="lineNumber">     608 </span>  /// rather than accepting any [Object]. Use this when you know the function</a>
-<a name="609"><span class="lineNumber">     609 </span>  /// will throw [Exception] or its subtypes, but you want to let other errors</a>
-<a name="610"><span class="lineNumber">     610 </span>  /// (like [Error]) propagate uncaught.</a>
-<a name="611"><span class="lineNumber">     611 </span>  ///</a>
-<a name="612"><span class="lineNumber">     612 </span>  /// Example:</a>
-<a name="613"><span class="lineNumber">     613 </span>  /// ```dart</a>
-<a name="614"><span class="lineNumber">     614 </span>  /// final result = Result&lt;int, FormatException&gt;.guardExceptionSync(</a>
-<a name="615"><span class="lineNumber">     615 </span>  ///   () =&gt; int.parse(input),</a>
-<a name="616"><span class="lineNumber">     616 </span>  /// );</a>
-<a name="617"><span class="lineNumber">     617 </span>  /// ```</a>
-<a name="618"><span class="lineNumber">     618 </span>  static Result&lt;T, E&gt; guardExceptionSync&lt;</a>
-<a name="619"><span class="lineNumber">     619 </span>    T extends Object?,</a>
-<a name="620"><span class="lineNumber">     620 </span>    E extends Exception</a>
-<a name="621"><span class="lineNumber">     621 </span>  &gt;(T Function() block) =&gt; Result&lt;T, E&gt;.guardSync(block);</a>
-<a name="622"><span class="lineNumber">     622 </span>}</a>
-<a name="623"><span class="lineNumber">     623 </span></a>
-<a name="624"><span class="lineNumber">     624 </span>/// Extension methods for flattening nested result types.</a>
-<a name="625"><span class="lineNumber">     625 </span>///</a>
-<a name="626"><span class="lineNumber">     626 </span>/// Useful when you have a [Result] containing another [Result] and need to</a>
-<a name="627"><span class="lineNumber">     627 </span>/// flatten it into a single result. This is the join/mu operation in monad terminology.</a>
-<a name="628"><span class="lineNumber">     628 </span>extension FlattenResultExtension&lt;T extends Object?, E extends Object&gt;</a>
-<a name="629"><span class="lineNumber">     629 </span>    on Result&lt;Result&lt;T, E&gt;, E&gt; {</a>
-<a name="630"><span class="lineNumber">     630 </span>  /// Flattens a nested [Result] into a single [Result].</a>
-<a name="631"><span class="lineNumber">     631 </span>  ///</a>
-<a name="632"><span class="lineNumber">     632 </span>  /// Converts [Result&lt;Result&lt;T, E&gt;, E&gt;] into [Result&lt;T, E&gt;]. Use this when</a>
-<a name="633"><span class="lineNumber">     633 </span>  /// you have a result that contains another result (e.g., from [andThen] chains</a>
-<a name="634"><span class="lineNumber">     634 </span>  /// that return nested results). This unwraps one level of nesting.</a>
-<a name="635"><span class="lineNumber">     635 </span>  ///</a>
-<a name="636"><span class="lineNumber">     636 </span>  /// Example:</a>
-<a name="637"><span class="lineNumber">     637 </span>  /// ```dart</a>
-<a name="638"><span class="lineNumber">     638 </span>  /// final nested = Ok(Ok(30));</a>
-<a name="639"><span class="lineNumber">     639 </span>  /// final flat = nested.flatten(); // Ok(30)</a>
-<a name="640"><span class="lineNumber">     640 </span>  ///</a>
-<a name="641"><span class="lineNumber">     641 </span>  /// final nested2 = Ok(Err('error', StackTrace.current));</a>
-<a name="642"><span class="lineNumber">     642 </span>  /// final flat2 = nested2.flatten(); // Err('error')</a>
-<a name="643"><span class="lineNumber">     643 </span>  /// ```</a>
-<a name="644"><span class="lineNumber">     644 </span>  Result&lt;T, E&gt; flatten() =&gt; switch (this) {</a>
-<a name="645"><span class="lineNumber">     645 </span>    Ok(:final value) =&gt; value,</a>
-<a name="646"><span class="lineNumber">     646 </span>    Err(:final error, :final stackTrace) =&gt; .err(error, stackTrace),</a>
-<a name="647"><span class="lineNumber">     647 </span>  };</a>
-<a name="648"><span class="lineNumber">     648 </span>}</a>
-<a name="649"><span class="lineNumber">     649 </span></a>
-<a name="650"><span class="lineNumber">     650 </span>/// Extension methods for inspecting result values without transforming them.</a>
-<a name="651"><span class="lineNumber">     651 </span>///</a>
-<a name="652"><span class="lineNumber">     652 </span>/// Useful for logging, debugging, or side effects while preserving the result.</a>
-<a name="653"><span class="lineNumber">     653 </span>/// These methods allow you to peek at the value or error without consuming</a>
-<a name="654"><span class="lineNumber">     654 </span>/// the result, enabling fluent method chaining.</a>
-<a name="655"><span class="lineNumber">     655 </span>extension InspectResultExtension&lt;T extends Object?, E extends Object&gt;</a>
-<a name="656"><span class="lineNumber">     656 </span>    on Result&lt;T, E&gt; {</a>
-<a name="657"><span class="lineNumber">     657 </span>  /// Executes a side effect if this is an error, then returns this unchanged.</a>
-<a name="658"><span class="lineNumber">     658 </span>  ///</a>
-<a name="659"><span class="lineNumber">     659 </span>  /// The [block] callback is invoked with the error value if this is [Err].</a>
-<a name="660"><span class="lineNumber">     660 </span>  /// The result is returned unchanged, allowing for method chaining. Useful</a>
-<a name="661"><span class="lineNumber">     661 </span>  /// for logging errors, metrics, or cleanup without consuming the result.</a>
-<a name="662"><span class="lineNumber">     662 </span>  /// Does nothing if this is [Ok].</a>
-<a name="663"><span class="lineNumber">     663 </span>  ///</a>
-<a name="664"><span class="lineNumber">     664 </span>  /// Example:</a>
-<a name="665"><span class="lineNumber">     665 </span>  /// ```dart</a>
-<a name="666"><span class="lineNumber">     666 </span>  /// result</a>
-<a name="667"><span class="lineNumber">     667 </span>  ///   .inspectErr((e) =&gt; logger.error('Failed: $e'))</a>
-<a name="668"><span class="lineNumber">     668 </span>  ///   .inspectErr((e) =&gt; metrics.recordError(e))</a>
-<a name="669"><span class="lineNumber">     669 </span>  ///   .unwrapOr(defaultValue);</a>
-<a name="670"><span class="lineNumber">     670 </span>  /// ```</a>
-<a name="671"><span class="lineNumber">     671 </span>  Result&lt;T, E&gt; inspectErr(void Function(E error) block) {</a>
-<a name="672"><button class="collapsible hit"><pre class="fileContents"><span class="lineNumber">     672 </span>    if (this case Err(:final error)) {</pre></button>
+<a name="559"><span class="lineNumber">     559 </span>  /// Applies [block] to the error to compute a fallback value if this is [Err].</a>
+<a name="560"><span class="lineNumber">     560 </span>  /// Use this when the default value depends on what the error was, allowing</a>
+<a name="561"><span class="lineNumber">     561 </span>  /// context-aware recovery. For static defaults, use [unwrapOr] instead.</a>
+<a name="562"><span class="lineNumber">     562 </span>  ///</a>
+<a name="563"><span class="lineNumber">     563 </span>  /// Example:</a>
+<a name="564"><span class="lineNumber">     564 </span>  /// ```dart</a>
+<a name="565"><span class="lineNumber">     565 </span>  /// final value = result.unwrapOrElse(</a>
+<a name="566"><span class="lineNumber">     566 </span>  ///   (e) =&gt; handleError(e),</a>
+<a name="567"><span class="lineNumber">     567 </span>  /// );</a>
+<a name="568"><span class="lineNumber">     568 </span>  /// final retryCount = result.unwrapOrElse(</a>
+<a name="569"><span class="lineNumber">     569 </span>  ///   (e) =&gt; e.isRetryable ? 3 : 0,</a>
+<a name="570"><span class="lineNumber">     570 </span>  /// );</a>
+<a name="571"><span class="lineNumber">     571 </span>  /// ```</a>
+<a name="572"><span class="lineNumber">     572 </span>  T unwrapOrElse(T Function(E error) block) =&gt; switch (this) {</a>
+<a name="573"><span class="lineNumber">     573 </span>    Ok(:final value) =&gt; value,</a>
+<a name="574"><span class="lineNumber">     574 </span>    Err(:final error) =&gt; block(error),</a>
+<a name="575"><span class="lineNumber">     575 </span>  };</a>
+<a name="576"><span class="lineNumber">     576 </span></a>
+<a name="577"><span class="lineNumber">     577 </span>  /// Returns the success value as nullable, or null if this is an error.</a>
+<a name="578"><span class="lineNumber">     578 </span>  ///</a>
+<a name="579"><span class="lineNumber">     579 </span>  /// A safe way to extract a value when null is an acceptable default for</a>
+<a name="580"><span class="lineNumber">     580 </span>  /// errors. Never throws an exception. Use this for optional extraction</a>
+<a name="581"><span class="lineNumber">     581 </span>  /// without distinguishing between error states.</a>
+<a name="582"><span class="lineNumber">     582 </span>  ///</a>
+<a name="583"><span class="lineNumber">     583 </span>  /// **Warning:** If [T] is nullable, this method cannot distinguish between</a>
+<a name="584"><span class="lineNumber">     584 </span>  /// `Ok(null)` and `Err(...)`—both return null. For nullable [T] types,</a>
+<a name="585"><span class="lineNumber">     585 </span>  /// use [isOk] or pattern matching for nullable [T]; `Option` can represent</a>
+<a name="586"><span class="lineNumber">     586 </span>  /// only non-null values.</a>
+<a name="587"><span class="lineNumber">     587 </span>  ///</a>
+<a name="588"><span class="lineNumber">     588 </span>  /// Example:</a>
+<a name="589"><span class="lineNumber">     589 </span>  /// ```dart</a>
+<a name="590"><span class="lineNumber">     590 </span>  /// final value = result.unwrapOrNull(); // Nullable&lt;T&gt;</a>
+<a name="591"><span class="lineNumber">     591 </span>  /// final name = getName().unwrapOrNull() ?? 'Unknown';</a>
+<a name="592"><span class="lineNumber">     592 </span>  /// ```</a>
+<a name="593"><span class="lineNumber">     593 </span>  T? unwrapOrNull() =&gt; switch (this) {</a>
+<a name="594"><span class="lineNumber">     594 </span>    Ok(:final value) =&gt; value,</a>
+<a name="595"><span class="lineNumber">     595 </span>    Err() =&gt; null,</a>
+<a name="596"><span class="lineNumber">     596 </span>  };</a>
+<a name="597"><span class="lineNumber">     597 </span></a>
+<a name="598"><span class="lineNumber">     598 </span>  /// Combines two results using the [or] operator (|).</a>
+<a name="599"><span class="lineNumber">     599 </span>  ///</a>
+<a name="600"><span class="lineNumber">     600 </span>  /// Shorthand for calling [or]. Returns this result if it's a success,</a>
+<a name="601"><span class="lineNumber">     601 </span>  /// otherwise returns [other]. Use this to provide fallback values when</a>
+<a name="602"><span class="lineNumber">     602 </span>  /// the first operation fails. The first success is returned.</a>
+<a name="603"><span class="lineNumber">     603 </span>  ///</a>
+<a name="604"><span class="lineNumber">     604 </span>  /// Example:</a>
+<a name="605"><span class="lineNumber">     605 </span>  /// ```dart</a>
+<a name="606"><span class="lineNumber">     606 </span>  /// final result = fetchFromCache() | fetchFromNetwork();</a>
+<a name="607"><span class="lineNumber">     607 </span>  /// ```</a>
+<a name="608"><span class="lineNumber">     608 </span>    @Deprecated(</a>
+<a name="609"><span class="lineNumber">     609 </span>    'due to dart not support generics on operators, prefer the or method',</a>
+<a name="610"><span class="lineNumber">     610 </span>  )</a>
+<a name="611"><span class="lineNumber">     611 </span>  Result&lt;T, E&gt; operator |(Result&lt;T, E&gt; other) =&gt; or(other);</a>
+<a name="612"><span class="lineNumber">     612 </span></a>
+<a name="613"><span class="lineNumber">     613 </span>  /// Executes an asynchronous function and wraps the result.</a>
+<a name="614"><span class="lineNumber">     614 </span>  ///</a>
+<a name="615"><span class="lineNumber">     615 </span>  /// Attempts to execute [asyncBlock] and wraps any exception in [Err] with</a>
+<a name="616"><span class="lineNumber">     616 </span>  /// the captured stack trace. Returns [Ok] if the async operation succeeds,</a>
+<a name="617"><span class="lineNumber">     617 </span>  /// [Err] if an exception matching type [E] is thrown. For catching [Exception]</a>
+<a name="618"><span class="lineNumber">     618 </span>  /// types specifically, use [guardExceptionAsync] instead.</a>
+<a name="619"><span class="lineNumber">     619 </span>  ///</a>
+<a name="620"><span class="lineNumber">     620 </span>  /// **Note:** Only catches [E] or subtypes of [E]. Other exceptions will</a>
+<a name="621"><span class="lineNumber">     621 </span>  /// propagate uncaught.</a>
+<a name="622"><span class="lineNumber">     622 </span>  ///</a>
+<a name="623"><span class="lineNumber">     623 </span>  /// This is the async counterpart to [Result.guardSync]. Stack traces are</a>
+<a name="624"><span class="lineNumber">     624 </span>  /// preserved for better debugging.</a>
+<a name="625"><span class="lineNumber">     625 </span>  ///</a>
+<a name="626"><span class="lineNumber">     626 </span>  /// Example:</a>
+<a name="627"><span class="lineNumber">     627 </span>  /// ```dart</a>
+<a name="628"><span class="lineNumber">     628 </span>  /// final result = await Result&lt;String, FormatException&gt;.guardAsync(</a>
+<a name="629"><span class="lineNumber">     629 </span>  ///   () =&gt; fetchData(),</a>
+<a name="630"><span class="lineNumber">     630 </span>  /// );</a>
+<a name="631"><span class="lineNumber">     631 </span>  /// ```</a>
+<a name="632"><span class="lineNumber">     632 </span>  static Future&lt;Result&lt;T, E&gt;&gt; guardAsync&lt;T extends Object?, E extends Object&gt;(</a>
+<a name="633"><span class="lineNumber">     633 </span>    Future&lt;T&gt; Function() asyncBlock,</a>
+<a name="634"><span class="lineNumber">     634 </span>  ) async {</a>
+<a name="635"><span class="lineNumber">     635 </span>    try {</a>
+<a name="636"><span class="lineNumber">     636 </span>      final value = await asyncBlock();</a>
+<a name="637"><span class="lineNumber">     637 </span>      return .ok(value);</a>
+<a name="638"><span class="lineNumber">     638 </span>    } on E catch (e, st) {</a>
+<a name="639"><span class="lineNumber">     639 </span>      return .err(e, st);</a>
+<a name="640"><span class="lineNumber">     640 </span>    }</a>
+<a name="641"><span class="lineNumber">     641 </span>  }</a>
+<a name="642"><span class="lineNumber">     642 </span></a>
+<a name="643"><span class="lineNumber">     643 </span>  /// Executes an asynchronous function, catching only [Exception] types.</a>
+<a name="644"><span class="lineNumber">     644 </span>  ///</a>
+<a name="645"><span class="lineNumber">     645 </span>  /// A convenience method that constrains the error type to [Exception]</a>
+<a name="646"><span class="lineNumber">     646 </span>  /// rather than accepting any [Object]. Use this when you know the async</a>
+<a name="647"><span class="lineNumber">     647 </span>  /// function will throw [Exception] or its subtypes, but you want to let</a>
+<a name="648"><span class="lineNumber">     648 </span>  /// other errors (like [Error]) propagate uncaught.</a>
+<a name="649"><span class="lineNumber">     649 </span>  ///</a>
+<a name="650"><span class="lineNumber">     650 </span>  /// Example:</a>
+<a name="651"><span class="lineNumber">     651 </span>  /// ```dart</a>
+<a name="652"><span class="lineNumber">     652 </span>  /// final result = await Result&lt;String, IOException&gt;.guardExceptionAsync(</a>
+<a name="653"><span class="lineNumber">     653 </span>  ///   () =&gt; file.readAsString(),</a>
+<a name="654"><span class="lineNumber">     654 </span>  /// );</a>
+<a name="655"><span class="lineNumber">     655 </span>  /// ```</a>
+<a name="656"><span class="lineNumber">     656 </span>  static Future&lt;Result&lt;T, E&gt;&gt; guardExceptionAsync&lt;</a>
+<a name="657"><span class="lineNumber">     657 </span>    T extends Object?,</a>
+<a name="658"><span class="lineNumber">     658 </span>    E extends Exception</a>
+<a name="659"><span class="lineNumber">     659 </span>  &gt;(Future&lt;T&gt; Function() asyncBlock) =&gt; guardAsync&lt;T, E&gt;(asyncBlock);</a>
+<a name="660"><span class="lineNumber">     660 </span></a>
+<a name="661"><span class="lineNumber">     661 </span>  /// Executes a synchronous function, catching only [Exception] types.</a>
+<a name="662"><span class="lineNumber">     662 </span>  ///</a>
+<a name="663"><span class="lineNumber">     663 </span>  /// A convenience method that constrains the error type to [Exception]</a>
+<a name="664"><span class="lineNumber">     664 </span>  /// rather than accepting any [Object]. Use this when you know the function</a>
+<a name="665"><span class="lineNumber">     665 </span>  /// will throw [Exception] or its subtypes, but you want to let other errors</a>
+<a name="666"><span class="lineNumber">     666 </span>  /// (like [Error]) propagate uncaught.</a>
+<a name="667"><span class="lineNumber">     667 </span>  ///</a>
+<a name="668"><span class="lineNumber">     668 </span>  /// Example:</a>
+<a name="669"><span class="lineNumber">     669 </span>  /// ```dart</a>
+<a name="670"><span class="lineNumber">     670 </span>  /// final result = Result&lt;int, FormatException&gt;.guardExceptionSync(</a>
+<a name="671"><span class="lineNumber">     671 </span>  ///   () =&gt; int.parse(input),</a>
+<a name="672"><span class="lineNumber">     672 </span>  /// );</a>
+<a name="673"><span class="lineNumber">     673 </span>  /// ```</a>
+<a name="674"><span class="lineNumber">     674 </span>  static Result&lt;T, E&gt; guardExceptionSync&lt;</a>
+<a name="675"><span class="lineNumber">     675 </span>    T extends Object?,</a>
+<a name="676"><span class="lineNumber">     676 </span>    E extends Exception</a>
+<a name="677"><span class="lineNumber">     677 </span>  &gt;(T Function() block) =&gt; Result&lt;T, E&gt;.guardSync(block);</a>
+<a name="678"><span class="lineNumber">     678 </span>}</a>
+<a name="679"><span class="lineNumber">     679 </span></a>
+<a name="680"><span class="lineNumber">     680 </span>/// Extension methods for flattening nested result types.</a>
+<a name="681"><span class="lineNumber">     681 </span>///</a>
+<a name="682"><span class="lineNumber">     682 </span>/// Useful when you have a [Result] containing another [Result] and need to</a>
+<a name="683"><span class="lineNumber">     683 </span>/// flatten it into a single result. This is the join/mu operation in monad terminology.</a>
+<a name="684"><span class="lineNumber">     684 </span>extension FlattenResultExtension&lt;T extends Object?, E extends Object&gt;</a>
+<a name="685"><span class="lineNumber">     685 </span>    on Result&lt;Result&lt;T, E&gt;, E&gt; {</a>
+<a name="686"><span class="lineNumber">     686 </span>  /// Flattens a nested [Result] into a single [Result].</a>
+<a name="687"><span class="lineNumber">     687 </span>  ///</a>
+<a name="688"><span class="lineNumber">     688 </span>  /// Converts [Result&lt;Result&lt;T, E&gt;, E&gt;] into [Result&lt;T, E&gt;]. Use this when</a>
+<a name="689"><span class="lineNumber">     689 </span>  /// you have a result that contains another result (e.g., from [andThen] chains</a>
+<a name="690"><span class="lineNumber">     690 </span>  /// that return nested results). This unwraps one level of nesting.</a>
+<a name="691"><span class="lineNumber">     691 </span>  ///</a>
+<a name="692"><span class="lineNumber">     692 </span>  /// Example:</a>
+<a name="693"><span class="lineNumber">     693 </span>  /// ```dart</a>
+<a name="694"><span class="lineNumber">     694 </span>  /// final nested = Ok(Ok(30));</a>
+<a name="695"><span class="lineNumber">     695 </span>  /// final flat = nested.flatten(); // Ok(30)</a>
+<a name="696"><span class="lineNumber">     696 </span>  ///</a>
+<a name="697"><span class="lineNumber">     697 </span>  /// final nested2 = Ok(Err('error', StackTrace.current));</a>
+<a name="698"><span class="lineNumber">     698 </span>  /// final flat2 = nested2.flatten(); // Err('error')</a>
+<a name="699"><span class="lineNumber">     699 </span>  /// ```</a>
+<a name="700"><span class="lineNumber">     700 </span>  Result&lt;T, E&gt; flatten() =&gt; switch (this) {</a>
+<a name="701"><span class="lineNumber">     701 </span>    Ok(:final value) =&gt; value,</a>
+<a name="702"><span class="lineNumber">     702 </span>    Err(:final error, :final stackTrace) =&gt; .err(error, stackTrace),</a>
+<a name="703"><span class="lineNumber">     703 </span>  };</a>
+<a name="704"><span class="lineNumber">     704 </span>}</a>
+<a name="705"><span class="lineNumber">     705 </span></a>
+<a name="706"><span class="lineNumber">     706 </span>/// Extension methods for inspecting result values without transforming them.</a>
+<a name="707"><span class="lineNumber">     707 </span>///</a>
+<a name="708"><span class="lineNumber">     708 </span>/// Useful for logging, debugging, or side effects while preserving the result.</a>
+<a name="709"><span class="lineNumber">     709 </span>/// These methods allow you to peek at the value or error without consuming</a>
+<a name="710"><span class="lineNumber">     710 </span>/// the result, enabling fluent method chaining.</a>
+<a name="711"><span class="lineNumber">     711 </span>extension InspectResultExtension&lt;T extends Object?, E extends Object&gt;</a>
+<a name="712"><span class="lineNumber">     712 </span>    on Result&lt;T, E&gt; {</a>
+<a name="713"><span class="lineNumber">     713 </span>  /// Executes a side effect if this is an error, then returns this unchanged.</a>
+<a name="714"><span class="lineNumber">     714 </span>  ///</a>
+<a name="715"><span class="lineNumber">     715 </span>  /// The [block] callback is invoked with the error value if this is [Err].</a>
+<a name="716"><span class="lineNumber">     716 </span>  /// The result is returned unchanged, allowing for method chaining. Useful</a>
+<a name="717"><span class="lineNumber">     717 </span>  /// for logging errors, metrics, or cleanup without consuming the result.</a>
+<a name="718"><span class="lineNumber">     718 </span>  /// Does nothing if this is [Ok].</a>
+<a name="719"><span class="lineNumber">     719 </span>  ///</a>
+<a name="720"><span class="lineNumber">     720 </span>  /// Example:</a>
+<a name="721"><span class="lineNumber">     721 </span>  /// ```dart</a>
+<a name="722"><span class="lineNumber">     722 </span>  /// result</a>
+<a name="723"><span class="lineNumber">     723 </span>  ///   .inspectErr((e) =&gt; logger.error('Failed: $e'))</a>
+<a name="724"><span class="lineNumber">     724 </span>  ///   .inspectErr((e) =&gt; metrics.recordError(e))</a>
+<a name="725"><span class="lineNumber">     725 </span>  ///   .unwrapOr(defaultValue);</a>
+<a name="726"><span class="lineNumber">     726 </span>  /// ```</a>
+<a name="727"><span class="lineNumber">     727 </span>  Result&lt;T, E&gt; inspectErr(void Function(E error) block) {</a>
+<a name="728"><button class="collapsible hit"><pre class="fileContents"><span class="lineNumber">     728 </span>    if (this case Err(:final error)) {</pre></button>
 <div class="content">
 <b>Detected mutations:</b>
 <table class="mutationTable" width="100%">
 <tr><td class="mutationLabel" width="5%">1 :</td><td class="mutationText" width="87%"><span class="addedLine">+    <span class="changedTokens"> if (!(this case Err(:final error))) {</span></span></td><td class="match">RegExp: pattern=[\s]if[\s]*\((.*?)\)[\s]*{ flags=ms<span class="tooltip">Id: builtin.if</span></td></tr><tr><td colspan="3"><hr class="ruler"/></td></tr><tr><td class="mutationLabel" width="5%">2 :</td><td class="mutationText" width="87%"><span class="addedLine">+     if (this case Err(:final error)) <span class="changedTokens">{
       </span></span></td><td class="match">RegExp: pattern=([{]\s*)([^\(;=\s}]+\([^;]+\)\s*;) flags=m<span class="tooltip">Id: builtin.function.removeVoidCall1</span></td></tr></table>
 
-</div></a><a name="673"><span class="lineNumber">     673 </span>      block(error);</a>
-<a name="674"><span class="lineNumber">     674 </span>    }</a>
-<a name="675"><span class="lineNumber">     675 </span>    return this;</a>
-<a name="676"><span class="lineNumber">     676 </span>  }</a>
-<a name="677"><span class="lineNumber">     677 </span></a>
-<a name="678"><span class="lineNumber">     678 </span>  /// Executes a side effect if this is a success, then returns this unchanged.</a>
-<a name="679"><span class="lineNumber">     679 </span>  ///</a>
-<a name="680"><span class="lineNumber">     680 </span>  /// The [block] callback is invoked with the success value if this is [Ok].</a>
-<a name="681"><span class="lineNumber">     681 </span>  /// The result is returned unchanged, allowing for method chaining. Useful</a>
-<a name="682"><span class="lineNumber">     682 </span>  /// for logging, validation, or side effects without transforming the value.</a>
-<a name="683"><span class="lineNumber">     683 </span>  /// Does nothing if this is [Err].</a>
-<a name="684"><span class="lineNumber">     684 </span>  ///</a>
-<a name="685"><span class="lineNumber">     685 </span>  /// Example:</a>
-<a name="686"><span class="lineNumber">     686 </span>  /// ```dart</a>
-<a name="687"><span class="lineNumber">     687 </span>  /// result</a>
-<a name="688"><span class="lineNumber">     688 </span>  ///   .inspectOk((value) =&gt; logger.info('Success: $value'))</a>
-<a name="689"><span class="lineNumber">     689 </span>  ///   .inspectOk((value) =&gt; metrics.recordSuccess(value))</a>
-<a name="690"><span class="lineNumber">     690 </span>  ///   .andThen((v) =&gt; nextOperation(v));</a>
-<a name="691"><span class="lineNumber">     691 </span>  /// ```</a>
-<a name="692"><span class="lineNumber">     692 </span>  Result&lt;T, E&gt; inspectOk(void Function(T value) block) {</a>
-<a name="693"><button class="collapsible hit"><pre class="fileContents"><span class="lineNumber">     693 </span>    if (this case Ok(:final value)) {</pre></button>
+</div></a><a name="729"><span class="lineNumber">     729 </span>      block(error);</a>
+<a name="730"><span class="lineNumber">     730 </span>    }</a>
+<a name="731"><span class="lineNumber">     731 </span>    return this;</a>
+<a name="732"><span class="lineNumber">     732 </span>  }</a>
+<a name="733"><span class="lineNumber">     733 </span></a>
+<a name="734"><span class="lineNumber">     734 </span>  /// Executes a side effect if this is a success, then returns this unchanged.</a>
+<a name="735"><span class="lineNumber">     735 </span>  ///</a>
+<a name="736"><span class="lineNumber">     736 </span>  /// The [block] callback is invoked with the success value if this is [Ok].</a>
+<a name="737"><span class="lineNumber">     737 </span>  /// The result is returned unchanged, allowing for method chaining. Useful</a>
+<a name="738"><span class="lineNumber">     738 </span>  /// for logging, validation, or side effects without transforming the value.</a>
+<a name="739"><span class="lineNumber">     739 </span>  /// Does nothing if this is [Err].</a>
+<a name="740"><span class="lineNumber">     740 </span>  ///</a>
+<a name="741"><span class="lineNumber">     741 </span>  /// Example:</a>
+<a name="742"><span class="lineNumber">     742 </span>  /// ```dart</a>
+<a name="743"><span class="lineNumber">     743 </span>  /// result</a>
+<a name="744"><span class="lineNumber">     744 </span>  ///   .inspect((value) =&gt; logger.info('Success: $value'))</a>
+<a name="745"><span class="lineNumber">     745 </span>  ///   .inspect((value) =&gt; metrics.recordSuccess(value))</a>
+<a name="746"><span class="lineNumber">     746 </span>  ///   .andThen((v) =&gt; nextOperation(v));</a>
+<a name="747"><span class="lineNumber">     747 </span>  /// ```</a>
+<a name="748"><span class="lineNumber">     748 </span>  Result&lt;T, E&gt; inspect(void Function(T value) block) {</a>
+<a name="749"><button class="collapsible hit"><pre class="fileContents"><span class="lineNumber">     749 </span>    if (this case Ok(:final value)) {</pre></button>
 <div class="content">
 <b>Detected mutations:</b>
 <table class="mutationTable" width="100%">
 <tr><td class="mutationLabel" width="5%">1 :</td><td class="mutationText" width="87%"><span class="addedLine">+    <span class="changedTokens"> if (!(this case Ok(:final value))) {</span></span></td><td class="match">RegExp: pattern=[\s]if[\s]*\((.*?)\)[\s]*{ flags=ms<span class="tooltip">Id: builtin.if</span></td></tr><tr><td colspan="3"><hr class="ruler"/></td></tr><tr><td class="mutationLabel" width="5%">2 :</td><td class="mutationText" width="87%"><span class="addedLine">+     if (this case Ok(:final value)) <span class="changedTokens">{
       </span></span></td><td class="match">RegExp: pattern=([{]\s*)([^\(;=\s}]+\([^;]+\)\s*;) flags=m<span class="tooltip">Id: builtin.function.removeVoidCall1</span></td></tr></table>
 
-</div></a><a name="694"><span class="lineNumber">     694 </span>      block(value);</a>
-<a name="695"><span class="lineNumber">     695 </span>    }</a>
-<a name="696"><span class="lineNumber">     696 </span>    return this;</a>
-<a name="697"><span class="lineNumber">     697 </span>  }</a>
-<a name="698"><span class="lineNumber">     698 </span>}</a>
-<a name="699"><span class="lineNumber">     699 </span></a>
+</div></a><a name="750"><span class="lineNumber">     750 </span>      block(value);</a>
+<a name="751"><span class="lineNumber">     751 </span>    }</a>
+<a name="752"><span class="lineNumber">     752 </span>    return this;</a>
+<a name="753"><span class="lineNumber">     753 </span>  }</a>
+<a name="754"><span class="lineNumber">     754 </span></a>
+<a name="755"><span class="lineNumber">     755 </span>  /// Alias for [inspect].</a>
+<a name="756"><span class="lineNumber">     756 </span>  @Deprecated('Use inspect instead.')</a>
+<a name="757"><span class="lineNumber">     757 </span>  Result&lt;T, E&gt; inspectOk(void Function(T value) block) =&gt; inspect(block);</a>
+<a name="758"><span class="lineNumber">     758 </span>}</a>
+<a name="759"><span class="lineNumber">     759 </span></a>
 </pre>
 <script>
 var coll = document.getElementsByClassName("collapsible");
