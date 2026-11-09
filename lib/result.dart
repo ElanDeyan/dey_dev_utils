@@ -229,39 +229,50 @@ sealed class const Result<T extends Object?, E extends Object>() {
   /// ```dart
   /// final result = checkAuth(user) & validateData(data) & saveData(data);
   /// ```
+  @Deprecated(
+    'due to dart not support generics on operators, prefer the and method',
+  )
   Result<T, E> operator &(Result<T, E> other) => and(other);
 
-  /// Chains operations: returns this result if it's an error, otherwise [other].
+  /// Chains results: returns this error, or [other] if this is successful.
   ///
-  /// This is useful for performing sequential operations where the second
-  /// depends on the first succeeding. If this result is [Err], it's returned
-  /// unchanged (short-circuit). If this is [Ok], the [other] result is returned.
-  /// Both value types and error types must match—for transformations, use
-  /// [andThen] instead.
+  /// The success type of [other] can differ from this result's success type;
+  /// both results must use the same error type. If this result is [Err], its
+  /// error and stack trace are preserved. The [other] argument is evaluated
+  /// before this method is called; use [andLazy] or [andThen] when the next
+  /// operation should run only after success.
   ///
   /// Example:
   /// ```dart
   /// Result<int, String> a = Ok(5);
-  /// Result<int, String> b = Ok(10);
-  /// final result = a.and(b); // Returns b (Ok(10))
+  /// Result<String, String> b = Ok('done');
+  /// final result = a.and(b); // Returns b (Ok('done'))
   ///
   /// Result<int, String> c = Err('failed', StackTrace.current);
-  /// final result2 = c.and(b); // Returns c (Err('failed')), b is skipped
+  /// final result2 = c.and(b); // Returns c's error
   /// ```
-  Result<T, E> and(Result<T, E> other) {
-    if (this is Err<T, E>) return this;
+  Result<U, E> and<U extends Object?>(Result<U, E> other) {
+    if (this case final Err<U, E> failure) return failure;
 
-    return other;
+    return switch (this) {
+      Err(:final error, :final stackTrace) => .err(error, stackTrace),
+      Ok() => other,
+    };
   }
 
   /// Evaluates [otherBlock] only when this result is successful.
   ///
-  /// Use this method for lazy sequential composition. Unlike [and] and
-  /// [operator &], the callback is not invoked when this result is an error.
-  Result<T, E> andLazy(Result<T, E> Function() otherBlock) {
-    if (this is Err<T, E>) return this;
+  /// Use this method for lazy sequential composition. Unlike [and], the
+  /// callback is not invoked when this result is an error. The callback's
+  /// success type can differ from this result's success type, but its error
+  /// type must match.
+  Result<U, E> andLazy<U extends Object?>(Result<U, E> Function() otherBlock) {
+    if (this case final Err<U, E> failure) return failure;
 
-    return otherBlock();
+    return switch (this) {
+      Err(:final error, :final stackTrace) => .err(error, stackTrace),
+      Ok() => otherBlock(),
+    };
   }
 
   /// Transforms the success value into a new result, or propagates the error.
@@ -298,12 +309,12 @@ sealed class const Result<T extends Object?, E extends Object>() {
     Ok<T, E>(:final value) => .ok(value),
   };
 
-  /// Unwraps the success value, or throws an exception with [message].
+  /// Unwraps the success value, or throws an exception with [message] and the
+  /// error value.
   ///
   /// Use this when you're certain the result should be [Ok], but want to
-  /// provide a custom error message if it's not. The original stack trace
-  /// is preserved. For unwrapping with fallback values, use [unwrapOr] or
-  /// [unwrapOrElse] instead.
+  /// provide context if it's not. The original error stack trace is preserved.
+  /// For unwrapping with fallback values, use [unwrapOr] or [unwrapOrElse].
   ///
   /// Example:
   /// ```dart
@@ -312,25 +323,25 @@ sealed class const Result<T extends Object?, E extends Object>() {
   /// ```
   T expect(String message) => switch (this) {
     Ok(:final value) => value,
-    Err(:final stackTrace) => Error.throwWithStackTrace(
-      Exception(message),
+    Err(:final error, :final stackTrace) => Error.throwWithStackTrace(
+      Exception('$message: $error'),
       stackTrace,
     ),
   };
 
-  /// Unwraps the error value, or throws an exception with [message].
+  /// Unwraps the error value, or throws an exception with [message] and the
+  /// success value.
   ///
   /// Use this when you're certain the result should be [Err], but want to
-  /// provide a custom error message if it's not. The original stack trace
-  /// is preserved. Primarily useful for testing or assertions. For normal
-  /// error handling, prefer [err], [isErr], or pattern matching.
+  /// provide context if it's not. As a success has no stored stack trace,
+  /// the exception uses the current stack trace.
   ///
   /// Example:
   /// ```dart
   /// final error = result.expectErr('Operation should have failed');
   /// ```
   E expectErr(String message) => switch (this) {
-    Ok() => throw Exception(message),
+    Ok(:final value) => throw Exception('$message: $value'),
     Err(:final error) => error,
   };
 
@@ -392,6 +403,30 @@ sealed class const Result<T extends Object?, E extends Object>() {
         Ok<T, E>(:final value) => .ok(block(value)),
       };
 
+  /// Maps a success value, or returns [defaultValue] for an error.
+  ///
+  /// The default is evaluated before this method is called. Use [mapOrElse]
+  /// when the fallback should be computed only for an error.
+  U mapOr<U extends Object?>(
+    U Function(T value) mapper, {
+    required U defaultValue,
+  }) => switch (this) {
+    Ok(:final value) => mapper(value),
+    Err() => defaultValue,
+  };
+
+  /// Maps a success value, or computes a fallback from the error.
+  ///
+  /// Exactly one callback is invoked: [mapper] for [Ok], or [defaultValue]
+  /// for [Err].
+  U mapOrElse<U extends Object?>(
+    U Function(T value) mapper, {
+    required U Function(E error) defaultValue,
+  }) => switch (this) {
+    Ok(:final value) => mapper(value),
+    Err(:final error) => defaultValue(error),
+  };
+
   /// Transforms the error value using [block], leaving success values unchanged.
   ///
   /// If this is [Err], applies [block] to the error and wraps the result in
@@ -413,24 +448,26 @@ sealed class const Result<T extends Object?, E extends Object>() {
         Ok<T, E>(:final value) => .ok(value),
       };
 
-  /// Returns this result if it's a success, otherwise [other].
+  /// Returns [other] if this is an error, or this success otherwise.
   ///
-  /// Use this to provide a fallback result when the first result fails.
-  /// The first successful result is returned; if both fail, the second error
-  /// is returned. Useful for fallback operations like cache-then-network.
-  /// For computed fallbacks based on the error, use [orElse] instead.
+  /// The error type of [other] can differ from this result's error type; both
+  /// results must use the same success type. If this result is [Ok], its value
+  /// is preserved. The [other] argument is evaluated before this method is
+  /// called; use [orLazy] or [orElse] for a conditional fallback.
   ///
   /// Example:
   /// ```dart
   /// Result<int, String> a = Err('failed', StackTrace.current);
-  /// Result<int, String> b = Ok(10);
-  /// final result = a | b; // Returns b (Ok(10))
-  /// final cached = getCachedResult() | fetchFresh(); // Try cache first
+  /// Result<int, FormatException> b = Ok(10);
+  /// final result = a.or(b); // Result<int, FormatException>
   /// ```
-  Result<T, E> or(Result<T, E> other) {
-    if (this is Ok<T, E>) return this;
+  Result<T, F> or<F extends Object>(Result<T, F> other) {
+    if (this case final Ok<T, F> success) return success;
 
-    return other;
+    return switch (this) {
+      Ok(:final value) => .ok(value),
+      Err() => other,
+    };
   }
 
   /// Returns this success value, or computes a recovery result from the error.
@@ -446,9 +483,9 @@ sealed class const Result<T extends Object?, E extends Object>() {
   /// Example:
   /// ```dart
   /// final result = operation.orElse(
-  ///   (error, st) => error is NotFoundException
+  ///   (error, st) => error is FormatException
   ///     ? Ok(defaultValue)
-  ///     : Err(error),
+  ///     : Err(error, st),
   /// );
   /// ```
   Result<T, F> orElse<F extends Object>(
@@ -460,12 +497,16 @@ sealed class const Result<T extends Object?, E extends Object>() {
 
   /// Evaluates [otherBlock] only when this result is an error.
   ///
-  /// Use this method for lazy fallback composition. Unlike [or] and
-  /// [operator |], the callback is not invoked when this result is successful.
-  Result<T, E> orLazy(Result<T, E> Function() otherBlock) {
-    if (this is Ok<T, E>) return this;
+  /// Use this method for lazy fallback composition. Unlike [or], the callback
+  /// is not invoked when this result is successful. The callback's error type
+  /// can differ from this result's error type, but its success type must match.
+  Result<T, F> orLazy<F extends Object>(Result<T, F> Function() otherBlock) {
+    if (this case final Ok<T, F> success) return success;
 
-    return otherBlock();
+    return switch (this) {
+      Ok(:final value) => .ok(value),
+      Err() => otherBlock(),
+    };
   }
 
   /// Returns the success value, or throws the error with its original stack trace.
@@ -481,6 +522,18 @@ sealed class const Result<T extends Object?, E extends Object>() {
     Err(:final error, :final stackTrace) => Error.throwWithStackTrace(
       error,
       stackTrace,
+    ),
+  };
+
+  /// Returns the error value, or throws a [StateError] if this is successful.
+  ///
+  /// Use this when you're certain the result should be [Err]. The original
+  /// error is returned without changing its stack trace. For a successful
+  /// result, the thrown error includes its value.
+  E unwrapErr() => switch (this) {
+    Err(:final error) => error,
+    Ok(:final value) => throw StateError(
+      'Called `unwrapErr` on an `Ok` value: $value',
     ),
   };
 
@@ -552,6 +605,9 @@ sealed class const Result<T extends Object?, E extends Object>() {
   /// ```dart
   /// final result = fetchFromCache() | fetchFromNetwork();
   /// ```
+    @Deprecated(
+    'due to dart not support generics on operators, prefer the or method',
+  )
   Result<T, E> operator |(Result<T, E> other) => or(other);
 
   /// Executes an asynchronous function and wraps the result.
@@ -564,12 +620,12 @@ sealed class const Result<T extends Object?, E extends Object>() {
   /// **Note:** Only catches [E] or subtypes of [E]. Other exceptions will
   /// propagate uncaught.
   ///
-  /// This is the async counterpart to [guardSync]. Stack traces are preserved
-  /// for better debugging.
+  /// This is the async counterpart to [Result.guardSync]. Stack traces are
+  /// preserved for better debugging.
   ///
   /// Example:
   /// ```dart
-  /// final result = await Result<String, HttpException>.guardAsync(
+  /// final result = await Result<String, FormatException>.guardAsync(
   ///   () => fetchData(),
   /// );
   /// ```
@@ -685,14 +741,18 @@ extension InspectResultExtension<T extends Object?, E extends Object>
   /// Example:
   /// ```dart
   /// result
-  ///   .inspectOk((value) => logger.info('Success: $value'))
-  ///   .inspectOk((value) => metrics.recordSuccess(value))
+  ///   .inspect((value) => logger.info('Success: $value'))
+  ///   .inspect((value) => metrics.recordSuccess(value))
   ///   .andThen((v) => nextOperation(v));
   /// ```
-  Result<T, E> inspectOk(void Function(T value) block) {
+  Result<T, E> inspect(void Function(T value) block) {
     if (this case Ok(:final value)) {
       block(value);
     }
     return this;
   }
+
+  /// Alias for [inspect].
+  @Deprecated('Use inspect instead.')
+  Result<T, E> inspectOk(void Function(T value) block) => inspect(block);
 }

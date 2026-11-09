@@ -27,13 +27,18 @@ Prefer the smallest operation that expresses the intended control flow:
 | Requirement | API |
 |---|---|
 | Transform a successful value without changing the error type | `map` |
+| Transform a success or provide a fixed fallback | `mapOr` |
+| Transform a success or compute a fallback from the error | `mapOrElse` |
 | Run a success-dependent operation that returns another result | `andThen` |
 | Transform an error into another error type | `mapErr` |
 | Recover from an error using its value and stack trace | `orElse` |
-| Combine with an already-computed result | `and` / `&`, `or` / `|` |
+| Combine results with different success or error types | `and` / `or` |
+| Combine same-typed results with operators | `&`, `|` |
 | Compute a result only when the current state requires it | `andLazy`, `orLazy` |
 | Remove one nested `Result` layer | `flatten` |
 | Convert to an option when absence is sufficient and failure details can be discarded | `toOption` |
+| Extract the error when the result is known to have failed | `unwrapErr` |
+| Inspect a success or failure without changing the result | `inspect`, `inspectErr` |
 
 ## Interoperate with `Option`
 
@@ -78,8 +83,10 @@ must remain uncaught.
 At an extraction boundary, choose deliberately:
 
 - Use pattern matching, `isOk`, or `isErr` when the variant matters.
-- Use `unwrap` to rethrow the original error with its stored stack trace.
-- Use `expect` when a failed expectation needs a custom message.
+- Use `unwrap` to rethrow the original error with its stored stack trace, or
+  `unwrapErr` to extract the error value.
+- Use `expect` or `expectErr` when a failed expectation needs a custom message;
+  each includes the unexpected value and `expect` preserves an `Err`'s trace.
 - Use `unwrapOr`, `unwrapOrElse`, or `unwrapOrNull` for explicit fallbacks.
 - Use `isOkAnd` or `isErrAnd` to test a value or error without extracting it.
 
@@ -125,8 +132,9 @@ callback propagates to the caller; it is not automatically converted into
 `clone()` copies the result wrapper shallowly. It does not clone the success
 value or error object.
 
-`inspectOk` and `inspectErr` invoke only the callback for the matching variant
+`inspect` and `inspectErr` invoke only the callback for the matching variant
 and return the original result instance when the callback completes normally.
+`inspectOk` remains as a deprecated alias for `inspect`.
 
 `Ok` equality compares its value. `Err` equality compares its error payload.
 The `Err.stackTrace` and phantom generic parameter are not part of equality.
