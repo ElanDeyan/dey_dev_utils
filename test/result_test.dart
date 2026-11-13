@@ -94,17 +94,24 @@ void main() {
 
     test('andLazy invokes only after success', () {
       var calls = 0;
+      final trace = StackTrace.current;
       final success = const Ok<int, String>(1).andLazy(() {
         calls++;
         return const Ok('done');
       });
-      final failure = const Err<int, String>('failed', .empty).andLazy(() {
+      final failure = Err<int, String>('failed', trace).andLazy(() {
         calls++;
         return const Ok('skipped');
       });
 
+      check(success).isA<Result<String, String>>();
       check(success).equals(const Ok<String, String>('done'));
+      check(failure).isA<Result<String, String>>();
       check(failure).equals(const Err<String, String>('failed', .empty));
+      check(failure)
+          .isA<Err<String, String>>()
+          .has((result) => result.stackTrace, 'stack trace')
+          .equals(trace);
       check(calls).equals(1);
     });
 
@@ -119,7 +126,9 @@ void main() {
           trace,
         ).and(const Ok<String, String>('skipped'));
 
+        check(success).isA<Result<String, String>>();
         check(success).equals(const Ok<String, String>('done'));
+        check(failure).isA<Result<String, String>>();
         check(failure)
             .isA<Err<String, String>>()
             .has((result) => result.stackTrace, 'stack trace')
@@ -154,7 +163,9 @@ void main() {
         return const Ok<int, FormatException>(3);
       });
 
+      check(success).isA<Result<int, FormatException>>();
       check(success).equals(const Ok<int, FormatException>(1));
+      check(failure).isA<Result<int, FormatException>>();
       check(failure).equals(const Ok<int, FormatException>(3));
       check(calls).equals(1);
     });
@@ -163,9 +174,13 @@ void main() {
       const success = Ok<int, String>(1);
       const fallback = Ok<int, FormatException>(2);
       const failure = Err<int, String>('failed', .empty);
+      final recovered = success.or(fallback);
+      final propagated = failure.or(fallback);
 
-      check(success.or(fallback)).equals(const Ok<int, FormatException>(1));
-      check(failure.or(fallback)).equals(fallback);
+      check(recovered).isA<Result<int, FormatException>>();
+      check(recovered).equals(const Ok<int, FormatException>(1));
+      check(propagated).isA<Result<int, FormatException>>();
+      check(propagated).equals(fallback);
     });
   });
 
@@ -258,7 +273,10 @@ void main() {
         'failed',
         trace,
       ).mapErr((error) => error.length);
+      final successful = const Ok<int, String>(2)
+          .mapErr((error) => error.length);
 
+      check(mapped).isA<Result<int, int>>();
       check(mapped)
           .isA<Err<int, int>>()
           .has((value) => value.error, 'error')
@@ -267,8 +285,8 @@ void main() {
           .isA<Err<int, int>>()
           .has((value) => value.stackTrace, 'stack trace')
           .equals(trace);
-      check(const Ok<int, String>(2).mapErr((error) => error.length))
-          .equals(const Ok<int, int>(2));
+      check(successful).isA<Result<int, int>>();
+      check(successful).equals(const Ok<int, int>(2));
     });
 
     test('orElse recovers errors and preserves successes', () {

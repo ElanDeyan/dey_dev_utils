@@ -38,8 +38,8 @@ typedef FutureResult<T extends Object?, E extends Object> =
 
 /// Represents a failed result containing an error and its stack trace.
 ///
-/// This is used when an operation fails. The [stackTrace] is automatically
-/// captured from the current context if not provided.
+/// The [stackTrace] must be provided explicitly. Use [StackTrace.current] for
+/// a new failure or preserve the original trace when forwarding an [Err].
 ///
 /// Example:
 /// ```dart
@@ -56,8 +56,7 @@ final class const Err<T extends Object?, E extends Object>(
   /// The stack trace at the point where this error was created.
   final StackTrace stackTrace,
 ) extends Result<T, E> {
-  /// Creates an error result with the given [error] and the provided
-  /// [stackTrace].
+  /// Creates an error result with the given [error] and explicit [stackTrace].
   this;
 
   @override
@@ -219,15 +218,18 @@ sealed class const Result<T extends Object?, E extends Object>() {
     Err() => null,
   };
 
-  /// Combines two results using the [and] operator (&).
+  /// Combines two same-typed results using the `&` operator.
   ///
-  /// Shorthand for calling [and]. Returns this result if it's an error,
-  /// otherwise returns [other]. Use this for sequential operations where all
-  /// must succeed. If this fails, subsequent operations are skipped.
+  /// This deprecated operator is shorthand for [and]. Prefer [and], which
+  /// supports different success types. Dart evaluates [other] before invoking
+  /// the operator, even if this result is an error. Use [andLazy] or [andThen]
+  /// when the next operation should run only after success.
   ///
   /// Example:
   /// ```dart
-  /// final result = checkAuth(user) & validateData(data) & saveData(data);
+  /// final result = checkAuth(user)
+  ///   .and(validateData(data))
+  ///   .and(saveData(data));
   /// ```
   @Deprecated(
     'due to dart not support generics on operators, prefer the and method',
@@ -299,11 +301,10 @@ sealed class const Result<T extends Object?, E extends Object>() {
     Err(:final error, :final stackTrace) => .err(error, stackTrace),
   };
 
-  /// Returns a new independent copy of this result.
+  /// Returns a distinct wrapper containing the same value or error.
   ///
-  /// Useful when you need to pass the result to multiple places without
-  /// sharing state. Clones preserve error stack traces. For creating new
-  /// results, prefer [Ok] or [Err] constructors directly.
+  /// This is a shallow copy: it does not clone the success value or error
+  /// object. Error stack traces are preserved.
   Result<T, E> clone() => switch (this) {
     Err<T, E>(:final error, :final stackTrace) => .err(error, stackTrace),
     Ok<T, E>(:final value) => .ok(value),
@@ -595,17 +596,18 @@ sealed class const Result<T extends Object?, E extends Object>() {
     Err() => null,
   };
 
-  /// Combines two results using the [or] operator (|).
+  /// Combines two same-typed results using the `|` operator.
   ///
-  /// Shorthand for calling [or]. Returns this result if it's a success,
-  /// otherwise returns [other]. Use this to provide fallback values when
-  /// the first operation fails. The first success is returned.
+  /// This deprecated operator is shorthand for [or]. Prefer [or], which
+  /// supports different error types. Dart evaluates [other] before invoking
+  /// the operator, even if this result is successful. Use [orLazy] or [orElse]
+  /// when the fallback should run only after an error.
   ///
   /// Example:
   /// ```dart
-  /// final result = fetchFromCache() | fetchFromNetwork();
+  /// final result = fetchFromCache().or(fetchFromNetwork());
   /// ```
-    @Deprecated(
+  @Deprecated(
     'due to dart not support generics on operators, prefer the or method',
   )
   Result<T, E> operator |(Result<T, E> other) => or(other);
