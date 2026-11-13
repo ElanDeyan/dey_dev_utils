@@ -1,5 +1,9 @@
 ## Unreleased
 
+- Aligns `Result` composition with Rust-style cross-type `and`/`or`, adds
+  `unwrapErr`, `mapOr`, and `mapOrElse`, and names success inspection `inspect`.
+- Makes `expect` and `expectErr` include the unexpected value in their messages.
+- Deprecates & and | operators for result type.
 - Promotes `Option` to a supported public API and documents nullable
   `Result.toOption()` behavior (`Ok(null)` becomes `None`).
 - Exposes Option/Result conversions through the dedicated

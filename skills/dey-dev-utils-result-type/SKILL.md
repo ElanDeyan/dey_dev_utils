@@ -27,13 +27,19 @@ Prefer the smallest operation that expresses the intended control flow:
 | Requirement | API |
 |---|---|
 | Transform a successful value without changing the error type | `map` |
+| Transform a success or provide a fixed fallback | `mapOr` |
+| Transform a success or compute a fallback from the error | `mapOrElse` |
 | Run a success-dependent operation that returns another result | `andThen` |
 | Transform an error into another error type | `mapErr` |
 | Recover from an error using its value and stack trace | `orElse` |
-| Combine with an already-computed result | `and` / `&`, `or` / `|` |
+| Chain results with different success types and the same error type | `and` |
+| Provide fallback results with different error types and the same success type | `or` |
+| Use legacy same-typed operator syntax | Deprecated `&` / `|`; prefer `and` / `or` |
 | Compute a result only when the current state requires it | `andLazy`, `orLazy` |
 | Remove one nested `Result` layer | `flatten` |
 | Convert to an option when absence is sufficient and failure details can be discarded | `toOption` |
+| Extract the error when the result is known to have failed | `unwrapErr` |
+| Inspect a success or failure without changing the result | `inspect`, `inspectErr` |
 
 ## Interoperate with `Option`
 
@@ -78,8 +84,10 @@ must remain uncaught.
 At an extraction boundary, choose deliberately:
 
 - Use pattern matching, `isOk`, or `isErr` when the variant matters.
-- Use `unwrap` to rethrow the original error with its stored stack trace.
-- Use `expect` when a failed expectation needs a custom message.
+- Use `unwrap` to rethrow the original error with its stored stack trace, or
+  `unwrapErr` to extract the error value.
+- Use `expect` or `expectErr` when a failed expectation needs a custom message;
+  each includes the unexpected value and `expect` preserves an `Err`'s trace.
 - Use `unwrapOr`, `unwrapOrElse`, or `unwrapOrNull` for explicit fallbacks.
 - Use `isOkAnd` or `isErrAnd` to test a value or error without extracting it.
 
@@ -87,22 +95,27 @@ At an extraction boundary, choose deliberately:
 
 ### Eager and lazy composition
 
-Dart evaluates operator operands before invoking an operator. Therefore, `&`
-and `|` do not prevent the other operand's computation from running.
+Dart evaluates operator operands before invoking an operator. Therefore,
+deprecated `&` and `|` do not defer the right-hand computation. The method
+arguments to `and` and `or` are eager in the same way. Prefer `and` and `or`
+over the deprecated operators, especially when the result or error types need
+to differ.
 
 ```dart
-final selected = cachedResult | freshResult;
-// Both results already exist before | is invoked.
+final selected = cachedResult.or(freshResult);
+// freshResult is evaluated before or is invoked.
 
-final recovered = await loadCache().orLazy(loadNetwork);
-// loadNetwork is called only if the cache result is an error.
+final recovered = cacheResult.orLazy(fetchFromNetwork);
+// fetchFromNetwork is called only if cacheResult is an error.
 
 final saved = validate(input).andLazy(() => save(input));
 // save is called only if validation succeeds.
 ```
 
-Do not describe `&` or `|` as lazy. Use the lazy methods when the next
-computation must be conditional.
+Use `andLazy` or `orLazy` to defer a computation, or `andThen`/`orElse` when
+the deferred operation needs the current success value or error and stack
+trace. Do not describe the deprecated operators as lazy or as skipping the
+right-hand computation.
 
 ### Nullability and variant identity
 
@@ -125,8 +138,9 @@ callback propagates to the caller; it is not automatically converted into
 `clone()` copies the result wrapper shallowly. It does not clone the success
 value or error object.
 
-`inspectOk` and `inspectErr` invoke only the callback for the matching variant
+`inspect` and `inspectErr` invoke only the callback for the matching variant
 and return the original result instance when the callback completes normally.
+`inspectOk` remains as a deprecated alias for `inspect`.
 
 `Ok` equality compares its value. `Err` equality compares its error payload.
 The `Err.stackTrace` and phantom generic parameter are not part of equality.

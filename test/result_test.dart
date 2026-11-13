@@ -94,19 +94,47 @@ void main() {
 
     test('andLazy invokes only after success', () {
       var calls = 0;
+      final trace = StackTrace.current;
       final success = const Ok<int, String>(1).andLazy(() {
         calls++;
-        return const Ok(2);
+        return const Ok('done');
       });
-      final failure = const Err<int, String>('failed', .empty).andLazy(() {
+      final failure = Err<int, String>('failed', trace).andLazy(() {
         calls++;
-        return const Ok(3);
+        return const Ok('skipped');
       });
 
-      check(success).equals(const Ok<int, String>(2));
-      check(failure).equals(const Err<int, String>('failed', .empty));
+      check(success).isA<Result<String, String>>();
+      check(success).equals(const Ok<String, String>('done'));
+      check(failure).isA<Result<String, String>>();
+      check(failure).equals(const Err<String, String>('failed', .empty));
+      check(failure)
+          .isA<Err<String, String>>()
+          .has((result) => result.stackTrace, 'stack trace')
+          .equals(trace);
       check(calls).equals(1);
     });
+
+    test(
+      'and supports a different success type and preserves error traces',
+      () {
+        final trace = StackTrace.current;
+        final success = const Ok<int, String>(1)
+            .and(const Ok<String, String>('done'));
+        final failure = Err<int, String>(
+          'failed',
+          trace,
+        ).and(const Ok<String, String>('skipped'));
+
+        check(success).isA<Result<String, String>>();
+        check(success).equals(const Ok<String, String>('done'));
+        check(failure).isA<Result<String, String>>();
+        check(failure)
+            .isA<Err<String, String>>()
+            .has((result) => result.stackTrace, 'stack trace')
+            .equals(trace);
+      },
+    );
 
     test('or returns the other result after failure', () {
       const failure = Err<int, String>('failed', .empty);
@@ -128,16 +156,31 @@ void main() {
       var calls = 0;
       final success = const Ok<int, String>(1).orLazy(() {
         calls++;
-        return const Ok(2);
+        return const Ok<int, FormatException>(2);
       });
       final failure = const Err<int, String>('failed', .empty).orLazy(() {
         calls++;
-        return const Ok(3);
+        return const Ok<int, FormatException>(3);
       });
 
-      check(success).equals(const Ok<int, String>(1));
-      check(failure).equals(const Ok<int, String>(3));
+      check(success).isA<Result<int, FormatException>>();
+      check(success).equals(const Ok<int, FormatException>(1));
+      check(failure).isA<Result<int, FormatException>>();
+      check(failure).equals(const Ok<int, FormatException>(3));
       check(calls).equals(1);
+    });
+
+    test('or supports a different error type and preserves success', () {
+      const success = Ok<int, String>(1);
+      const fallback = Ok<int, FormatException>(2);
+      const failure = Err<int, String>('failed', .empty);
+      final recovered = success.or(fallback);
+      final propagated = failure.or(fallback);
+
+      check(recovered).isA<Result<int, FormatException>>();
+      check(recovered).equals(const Ok<int, FormatException>(1));
+      check(propagated).isA<Result<int, FormatException>>();
+      check(propagated).equals(fallback);
     });
   });
 
@@ -178,6 +221,43 @@ void main() {
           .equals(const Err<int, String>('failed', .empty));
     });
 
+    test('mapOr maps successes and returns an eager default for errors', () {
+      const success = Ok<int, String>(2);
+      const failure = Err<int, String>('failed', .empty);
+
+      check(success.mapOr((value) => value * 2, defaultValue: 0)).equals(4);
+      check(failure.mapOr((value) => value * 2, defaultValue: 0)).equals(0);
+    });
+
+    test('mapOrElse invokes only the matching callback', () {
+      var mapperCalls = 0;
+      var defaultCalls = 0;
+      int mapper(int value) {
+        mapperCalls++;
+        return value * 2;
+      }
+
+      int defaultValue(String error) {
+        defaultCalls++;
+        return error.length;
+      }
+
+      check(
+        const Ok<int, String>(2).mapOrElse(mapper, defaultValue: defaultValue),
+      ).equals(4);
+      check(mapperCalls).equals(1);
+      check(defaultCalls).equals(0);
+
+      check(
+        const Err<int, String>(
+          'failed',
+          .empty,
+        ).mapOrElse(mapper, defaultValue: defaultValue),
+      ).equals(6);
+      check(mapperCalls).equals(1);
+      check(defaultCalls).equals(1);
+    });
+
     test('nullable map and extraction preserve the success state', () {
       const success = Ok<String?, String>(null);
       const failure = Err<String?, String>('failed', .empty);
@@ -193,7 +273,10 @@ void main() {
         'failed',
         trace,
       ).mapErr((error) => error.length);
+      final successful = const Ok<int, String>(2)
+          .mapErr((error) => error.length);
 
+      check(mapped).isA<Result<int, int>>();
       check(mapped)
           .isA<Err<int, int>>()
           .has((value) => value.error, 'error')
@@ -202,8 +285,8 @@ void main() {
           .isA<Err<int, int>>()
           .has((value) => value.stackTrace, 'stack trace')
           .equals(trace);
-      check(const Ok<int, String>(2).mapErr((error) => error.length))
-          .equals(const Ok<int, int>(2));
+      check(successful).isA<Result<int, int>>();
+      check(successful).equals(const Ok<int, int>(2));
     });
 
     test('orElse recovers errors and preserves successes', () {
@@ -272,7 +355,7 @@ void main() {
         result.expect('must succeed');
         throw StateError('expect did not throw');
       } on Exception catch (caught, caughtTrace) {
-        check(caught.toString()).contains('must succeed');
+        check(caught.toString()).contains('must succeed: Bad state: failed');
         check(caughtTrace).equals(trace);
       }
     });
@@ -285,7 +368,7 @@ void main() {
           )
           .throws<Exception>()
           .has((error) => error.toString(), 'message')
-          .contains('must succeed');
+          .contains('must succeed: failed');
     });
 
     test('expectErr returns errors and throws for successes', () {
@@ -294,7 +377,16 @@ void main() {
       check(() => const Ok<int, String>(30).expectErr('must fail'))
           .throws<Exception>()
           .has((error) => error.toString(), 'message')
-          .contains('must fail');
+          .contains('must fail: 30');
+    });
+
+    test('unwrapErr returns an error and rejects a success', () {
+      check(const Err<int, String>('failed', .empty).unwrapErr())
+          .equals('failed');
+      check(() => const Ok<int, String>(30).unwrapErr())
+          .throws<StateError>()
+          .has((error) => error.toString(), 'message')
+          .contains('30');
     });
 
     test('fallback extraction methods use the correct branch', () {
@@ -342,10 +434,10 @@ void main() {
         ),
       ).isTrue();
       check(
-        identical(success.inspectOk((value) => observedValue = value), success),
+        identical(success.inspect((value) => observedValue = value), success),
       ).isTrue();
       check(
-        identical(failure.inspectOk((value) => observedValue = value), failure),
+        identical(failure.inspect((value) => observedValue = value), failure),
       ).isTrue();
       check(observedError).equals('failed');
       check(observedValue).equals(30);
